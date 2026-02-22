@@ -1,4 +1,3 @@
-import { Link } from '@inertiajs/react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -7,16 +6,19 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import type { NavItem } from '@/types';
+import type { RoleNavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({ items }: { items: RoleNavItem }) {
     const { isCurrentUrl } = useCurrentUrl();
+
+    const { role } = usePage().props.auth.user;
 
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
-                {items.map((item) => (
+                {items[role].map((item) => (
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                             asChild

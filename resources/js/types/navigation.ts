@@ -12,3 +12,7 @@ export type NavItem = {
     icon?: LucideIcon | null;
     isActive?: boolean;
 };
+
+export type RoleNavItem = {
+    [key: string]: NavItem[];
+};
