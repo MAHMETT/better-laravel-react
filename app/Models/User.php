@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
         'role',
     ];
 
@@ -50,4 +51,10 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    public function media()
+    {
+        return $this->hasMany(Media::class);
+    }
+
 }
