@@ -1,4 +1,3 @@
-import { Link, usePage } from '@inertiajs/react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -8,6 +7,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { RoleNavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 
 export function NavMain({ items }: { items: RoleNavItem }) {
     const { isCurrentUrl } = useCurrentUrl();
@@ -15,24 +15,30 @@ export function NavMain({ items }: { items: RoleNavItem }) {
     const { role } = usePage().props.auth.user;
 
     return (
-        <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarMenu>
-                {items[role].map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={isCurrentUrl(item.href)}
-                            tooltip={{ children: item.title }}
-                        >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
-        </SidebarGroup>
+        <>
+            {items[role].map((item, index) => (
+                <SidebarGroup key={index} className="px-2 py-0">
+                    <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {item.items.map((navItem) => {
+                            return (
+                                <SidebarMenuItem key={navItem.title}>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={isCurrentUrl(navItem.href)}
+                                        tooltip={{ children: navItem.title }}
+                                    >
+                                        <Link href={navItem.href} prefetch>
+                                            {navItem.icon && <navItem.icon />}
+                                            <span>{navItem.title}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            );
+                        })}
+                    </SidebarMenu>
+                </SidebarGroup>
+            ))}
+        </>
     );
 }

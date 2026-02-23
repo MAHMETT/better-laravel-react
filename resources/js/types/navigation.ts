@@ -13,6 +13,11 @@ export type NavItem = {
     isActive?: boolean;
 };
 
+export type sidebarNav = {
+    title: string;
+    items: NavItem[];
+};
+
 export type RoleNavItem = {
-    [key: string]: NavItem[];
+    [key: string]: sidebarNav[];
 };

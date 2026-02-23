@@ -35,25 +35,34 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user()?->load('avatarMedia');
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user()?->load('avatarMedia')
-                        ?->only(['id', 'name', 'email', 'email_verified_at', 'role']) + [
-                    'avatar' => $request->user()?->avatarMedia
-                        ? [
-                            'id' => $request->user()->avatarMedia->id,
-                            'name' => $request->user()->avatarMedia->name,
-                            'path' => $request->user()->avatarMedia->path,
-                            'url' => asset('storage/' . $request->user()->avatarMedia->path),
-                            'size' => $request->user()->avatarMedia->size,
-                            'type' => $request->user()->avatarMedia->type,
-                        ]
-                        : null
-                ],
+                'user' => $user
+                    ? [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'email_verified_at' => $user->email_verified_at,
+                        'role' => $user->role,
+                        'avatar' => $user->avatarMedia
+                            ? [
+                                'id' => $user->avatarMedia->id,
+                                'name' => $user->avatarMedia->name,
+                                'path' => $user->avatarMedia->path,
+                                'url' => asset('storage/' . $user->avatarMedia->path),
+                                'size' => $user->avatarMedia->size,
+                                'type' => $user->avatarMedia->type,
+                            ]
+                            : null,
+                    ]
+                    : null,
             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state')
+                || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }
