@@ -39,9 +39,21 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user()?->load('avatarMedia')
+                        ?->only(['id', 'name', 'email', 'email_verified_at', 'role']) + [
+                    'avatar' => $request->user()?->avatarMedia
+                        ? [
+                            'id' => $request->user()->avatarMedia->id,
+                            'name' => $request->user()->avatarMedia->name,
+                            'path' => $request->user()->avatarMedia->path,
+                            'url' => asset('storage/' . $request->user()->avatarMedia->path),
+                            'size' => $request->user()->avatarMedia->size,
+                            'type' => $request->user()->avatarMedia->type,
+                        ]
+                        : null
+                ],
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

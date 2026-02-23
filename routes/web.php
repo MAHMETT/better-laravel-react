@@ -12,8 +12,8 @@ Route::get('/', function () {
 
 Route::get('dashboard', function () {
     return Inertia::render('dashboard');
-})->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
+})->middleware(['auth', 'verified', 'role:admin,user'])->name('dashboard');
 
-require __DIR__ . '/settings.php';
-require __DIR__ . '/admin.php';
-require __DIR__ . '/user.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/admin.php';
+require __DIR__.'/user.php';

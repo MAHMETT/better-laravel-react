@@ -4,7 +4,6 @@ namespace App\Services\Media;
 
 use App\Enums\MediaType;
 use App\Models\Media;
-use App\Services\Media\MediaUploadOptions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -35,13 +34,30 @@ class MediaService
 
     public function upload(UploadedFile|array $files, int $userId, ?MediaUploadOptions $options = null): Media|array
     {
-        $options ??= new MediaUploadOptions();
+        $options ??= new MediaUploadOptions;
 
         if (is_array($files)) {
-            return array_map(fn($file) => $this->uploadSingle($file, $userId, $options), $files);
+            return array_map(fn ($file) => $this->uploadSingle($file, $userId, $options), $files);
         }
 
         return $this->uploadSingle($files, $userId, $options);
+    }
+
+    /**
+     * Upload a new file or replace an existing media file.
+     * When replacing, deletes the old file and creates a new media record.
+     */
+    public function uploadOrUpdate(UploadedFile $file, int $userId, ?Media $existingMedia, ?MediaUploadOptions $options = null): Media
+    {
+        $options ??= new MediaUploadOptions;
+
+        return DB::transaction(function () use ($file, $userId, $existingMedia, $options) {
+            if ($existingMedia) {
+                $this->deleteMediaFiles($existingMedia);
+            }
+
+            return $this->uploadSingle($file, $userId, $options);
+        });
     }
 
     protected function uploadSingle(UploadedFile $file, int $userId, MediaUploadOptions $options): Media
@@ -81,29 +97,31 @@ class MediaService
     protected function validateFile(UploadedFile $file, MediaUploadOptions $options): void
     {
         $allowed = $options->allowedMimes ?: $this->globalAllowedMimes;
-        if (!in_array($file->getMimeType(), $allowed)) {
+        if (! in_array($file->getMimeType(), $allowed)) {
             throw new \InvalidArgumentException("File type not allowed: {$file->getMimeType()}");
         }
 
         $maxSize = $options->maxSize ?? $this->globalMaxSize;
         if ($file->getSize() > $maxSize) {
-            throw new \InvalidArgumentException("File size exceeds maximum allowed (" . ($maxSize / 1024 / 1024) . "MB)");
+            throw new \InvalidArgumentException('File size exceeds maximum allowed ('.($maxSize / 1024 / 1024).'MB)');
         }
     }
 
     protected function generateSecureFileName(string $originalName, string $extension): string
     {
         $safeName = Str::slug($originalName) ?: 'file';
-        return now()->timestamp . '_' . Str::uuid() . '_' . $safeName . '.' . $extension;
+
+        return now()->timestamp.'_'.Str::uuid().'_'.$safeName.'.'.$extension;
     }
 
     protected function defaultDirectory(UploadedFile $file, ?string $collection): string
     {
         $base = 'media/';
         if ($collection) {
-            $base .= $collection . '/';
+            $base .= $collection.'/';
         }
-        return $base . date('Y/m');
+
+        return $base.date('Y/m');
     }
 
     protected function processImage(UploadedFile $file, string $path, MediaUploadOptions $options): array
@@ -127,11 +145,11 @@ class MediaService
 
         if ($options->generateThumbnail) {
             [$thumbWidth, $thumbHeight] = $options->thumbnailDimensions;
-            $thumbDir = dirname($fullPath) . '/thumbnails';
-            if (!is_dir($thumbDir)) {
+            $thumbDir = dirname($fullPath).'/thumbnails';
+            if (! is_dir($thumbDir)) {
                 mkdir($thumbDir, 0755, true);
             }
-            $thumbPath = $thumbDir . '/' . basename($path);
+            $thumbPath = $thumbDir.'/'.basename($path);
             $thumb = Image::read($fullPath)->cover($thumbWidth, $thumbHeight);
             $thumb->save($thumbPath);
             $metadata['thumbnail_path'] = str_replace(Storage::disk($options->disk)->path(''), '', $thumbPath);
@@ -140,20 +158,27 @@ class MediaService
         return $metadata;
     }
 
+    /**
+     * Delete media files (image and thumbnail) from storage.
+     */
+    protected function deleteMediaFiles(Media $media): void
+    {
+        Storage::disk($media->disk)->delete($media->path);
+
+        if (! empty($media->metadata['thumbnail_path'])) {
+            Storage::disk($media->disk)->delete($media->metadata['thumbnail_path']);
+        }
+    }
+
     public function delete(Media|string $media): bool
     {
         $media = $this->resolveMedia($media);
-        if (!$media) {
+        if (! $media) {
             return false;
         }
 
         DB::transaction(function () use ($media) {
-            Storage::disk($media->disk)->delete($media->path);
-
-            if (!empty($media->metadata['thumbnail_path'])) {
-                Storage::disk($media->disk)->delete($media->metadata['thumbnail_path']);
-            }
-
+            $this->deleteMediaFiles($media);
             $media->delete();
         });
 
@@ -168,6 +193,7 @@ class MediaService
                 $count++;
             }
         }
+
         return $count;
     }
 
@@ -176,6 +202,7 @@ class MediaService
         if ($signed) {
             return Storage::disk($media->disk)->temporaryUrl($media->path, $expiration ?? now()->addHours(24));
         }
+
         return Storage::disk($media->disk)->url($media->path);
     }
 
@@ -184,6 +211,7 @@ class MediaService
         $fillable = ['name', 'alt', 'title', 'collection', 'metadata'];
         $updateData = array_intersect_key($data, array_flip($fillable));
         $media->update($updateData);
+
         return $media;
     }
 
@@ -198,6 +226,7 @@ class MediaService
         if ($collection) {
             $query->where('collection', $collection);
         }
+
         return $query->latest()->get();
     }
 

@@ -16,16 +16,17 @@ class EnsureUserRoleIs
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        // if (!Auth::check() || !in_array($request->user()->role, $roles)) {
-        //     abort(403, "Unauthhhh");
-        // }
+        if (! Auth::check()) {
+            abort(403, 'Unauthorized');
+        }
 
-        // if (Auth::user()->role !== $roles) {
-        //     abort(403, "Unauthorized");
-        // }
+        $userRole = $request->user()?->role;
 
+        if (empty($userRole) || empty($roles)) {
+            abort(403, 'Unauthorized');
+        }
 
-        if (!Auth::check() || !in_array(strtolower($request->user()->role), array_map('strtolower', $roles))) {
+        if (! in_array(strtolower($userRole), array_map('strtolower', $roles))) {
             abort(403, 'Unauthorized');
         }
 

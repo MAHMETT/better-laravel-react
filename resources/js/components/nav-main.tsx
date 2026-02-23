@@ -1,3 +1,4 @@
+import { Link, usePage } from '@inertiajs/react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -7,7 +8,6 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { RoleNavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
 
 export function NavMain({ items }: { items: RoleNavItem }) {
     const { isCurrentUrl } = useCurrentUrl();

@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\Media;
+use App\Services\Media\MediaService;
+use App\Services\Media\MediaUploadOptions;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,11 +17,17 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(protected MediaService $mediaService)
+    {
+    }
+
     /**
      * Show the user's profile settings page.
      */
     public function edit(Request $request): Response
     {
+        $request->user()->load('avatarMedia');
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -30,13 +39,35 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar')) {
+            $existingMedia = $user->avatar ? Media::find($user->avatar) : null;
+
+            $options = new MediaUploadOptions(
+                collection: 'avatars',
+                resizeDimensions: [400, 400, 'fit']
+            );
+
+            $newMedia = $this->mediaService->uploadOrUpdate(
+                $request->file('avatar'),
+                $user->id,
+                $existingMedia,
+                $options
+            );
         }
 
-        $request->user()->save();
+        $user->fill($request->validated());
+
+        if (isset($newMedia) && $newMedia instanceof Media) {
+            $user->avatar = $newMedia->id;
+        }
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return to_route('profile.edit');
     }

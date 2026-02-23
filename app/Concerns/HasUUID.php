@@ -6,11 +6,21 @@ use Illuminate\Support\Str;
 
 trait HasUUID
 {
-    protected static function bootHasUuid()
+    public function getIncrementing()
+    {
+        return false;
+    }
+
+    public function getKeyType()
+    {
+        return 'string';
+    }
+
+    public static function bootHasUUID()
     {
         static::creating(function ($model) {
-            if (!$model->uuid) {
-                $model->uuid = (string) Str::uuid();
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
             }
         });
     }
