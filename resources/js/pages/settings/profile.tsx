@@ -4,6 +4,13 @@ import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -13,6 +20,7 @@ import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Camera, Download, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -48,7 +56,7 @@ export default function Profile({
 
     const currentAvatar = avatarPreview || auth.user.avatar?.url;
 
-    console.log(auth);
+    const [open, setOpen] = useState(false);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -77,36 +85,129 @@ export default function Profile({
                                 <>
                                     <div className="grid gap-2">
                                         <Label>Avatar</Label>
+
                                         <div className="flex items-center gap-4">
-                                            <Avatar className="size-20">
-                                                <AvatarImage
-                                                    src={currentAvatar}
-                                                    alt={auth.user.name}
-                                                />
-                                                <AvatarFallback>
-                                                    {auth.user.name
-                                                        ?.charAt(0)
-                                                        .toUpperCase()}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col gap-2">
-                                                <Input
-                                                    ref={fileInputRef}
-                                                    id="avatar"
-                                                    name="avatar"
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="max-w-xs"
-                                                    onChange={
-                                                        handleAvatarChange
-                                                    }
-                                                />
-                                                <InputError
-                                                    className="mt-2"
-                                                    message={errors.avatar}
-                                                />
-                                            </div>
+                                            <Dialog
+                                                open={open}
+                                                onOpenChange={setOpen}
+                                            >
+                                                <DialogTrigger asChild>
+                                                    <div className="group relative cursor-pointer">
+                                                        <Avatar className="size-24 transition-all duration-200 group-hover:scale-105">
+                                                            <AvatarImage
+                                                                src={
+                                                                    currentAvatar
+                                                                }
+                                                                alt={
+                                                                    auth.user
+                                                                        .name
+                                                                }
+                                                            />
+                                                            <AvatarFallback>
+                                                                {auth.user.name
+                                                                    ?.charAt(0)
+                                                                    .toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+
+                                                        {/* Hover camera icon */}
+                                                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                                            <Camera className="size-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </DialogTrigger>
+
+                                                <DialogContent className="sm:max-w-md">
+                                                    <DialogHeader>
+                                                        <DialogTitle>
+                                                            Profile Picture
+                                                        </DialogTitle>
+                                                    </DialogHeader>
+
+                                                    <div className="flex flex-col items-center gap-6">
+                                                        {currentAvatar ? (
+                                                            <>
+                                                                {/* Preview large */}
+                                                                <img
+                                                                    src={
+                                                                        currentAvatar
+                                                                    }
+                                                                    alt="Profile"
+                                                                    className="h-64 w-64 rounded-full border object-cover"
+                                                                />
+
+                                                                <div className="flex gap-3">
+                                                                    {/* Download */}
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        onClick={() => {
+                                                                            const link =
+                                                                                document.createElement(
+                                                                                    'a',
+                                                                                );
+                                                                            link.href =
+                                                                                currentAvatar;
+                                                                            link.download =
+                                                                                'profile-picture';
+                                                                            link.click();
+                                                                        }}
+                                                                    >
+                                                                        <Download className="mr-2 size-4" />
+                                                                        Download
+                                                                    </Button>
+
+                                                                    {/* Upload */}
+                                                                    <Button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            fileInputRef.current?.click()
+                                                                        }
+                                                                    >
+                                                                        <Upload className="mr-2 size-4" />
+                                                                        Upload
+                                                                        New
+                                                                    </Button>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                {/* Empty State */}
+                                                                <div className="flex h-64 w-64 items-center justify-center rounded-full border border-dashed text-muted-foreground">
+                                                                    No profile
+                                                                    picture
+                                                                </div>
+
+                                                                <Button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        fileInputRef.current?.click()
+                                                                    }
+                                                                >
+                                                                    <Upload className="mr-2 size-4" />
+                                                                    Upload
+                                                                    Picture
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
                                         </div>
+                                        {/* Hidden input */}
+                                        <Input
+                                            ref={fileInputRef}
+                                            id="avatar"
+                                            name="avatar"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleAvatarChange}
+                                        />
+                                        <InputError
+                                            className="mt-2"
+                                            message={errors.avatar}
+                                        />
                                     </div>
 
                                     <div className="grid gap-2">

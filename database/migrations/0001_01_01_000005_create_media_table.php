@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->bigInteger('size');
             $table->string('collection')->nullable()->index();
             $table->json('metadata')->nullable();
-            $table->foreignId('uploaded_by')->constrained("users", "id")->restrictOnDelete();
+            $table->foreignId('uploaded_by');
             $table->timestamps();
         });
     }
