@@ -8,22 +8,44 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { MainNavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import { memo, useMemo } from 'react';
 
-export function NavMain({ items, role }: { items: MainNavItem; role: string }) {
+interface NavMainProps {
+    items: MainNavItem;
+    role: string;
+}
+
+export const NavMain = memo(function NavMain({ items, role }: NavMainProps) {
     const { isCurrentUrl } = useCurrentUrl();
+
+    // ✅ Memoize role items
+    const roleItems = useMemo(() => {
+        const data = items?.[role];
+        return Array.isArray(data) ? data : [];
+    }, [items, role]);
+
+    // ✅ Stop render kalau kosong
+    if (roleItems.length === 0) return null;
+
     return (
         <>
-            {items[role].map((item, index) => (
-                <SidebarGroup key={index} className="px-2 py-0">
-                    <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {item.items.map((navItem) => {
-                            return (
+            {roleItems.map((group) => {
+                if (!Array.isArray(group.items) || group.items.length === 0)
+                    return null;
+
+                return (
+                    <SidebarGroup key={group.title} className="px-2 py-0">
+                        <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+
+                        <SidebarMenu>
+                            {group.items.map((navItem) => (
                                 <SidebarMenuItem key={navItem.title}>
                                     <SidebarMenuButton
                                         asChild
                                         isActive={isCurrentUrl(navItem.href)}
-                                        tooltip={{ children: navItem.title }}
+                                        tooltip={{
+                                            children: navItem.title,
+                                        }}
                                     >
                                         <Link href={navItem.href} prefetch>
                                             {navItem.icon && <navItem.icon />}
@@ -31,11 +53,11 @@ export function NavMain({ items, role }: { items: MainNavItem; role: string }) {
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
-                            );
-                        })}
-                    </SidebarMenu>
-                </SidebarGroup>
-            ))}
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroup>
+                );
+            })}
         </>
     );
-}
+});

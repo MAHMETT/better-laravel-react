@@ -8,24 +8,36 @@ import {
 import { toUrl } from '@/lib/utils';
 import type { FooterNavItem } from '@/types';
 import type { ComponentPropsWithoutRef } from 'react';
+import { memo, useMemo } from 'react';
 
-export function NavFooter({
+interface NavFooterProps extends ComponentPropsWithoutRef<typeof SidebarGroup> {
+    items: FooterNavItem;
+    role: string;
+}
+
+export const NavFooter = memo(function NavFooter({
     items,
     role,
     className,
     ...props
-}: ComponentPropsWithoutRef<typeof SidebarGroup> & {
-    items: FooterNavItem;
-    role: string;
-}) {
+}: NavFooterProps) {
+    // ✅ Cache role items
+    const roleItems = useMemo(() => {
+        const data = items?.[role];
+        return Array.isArray(data) ? data : [];
+    }, [items, role]);
+
+    // ✅ Early return kalau kosong
+    if (roleItems.length === 0) return null;
+
     return (
         <SidebarGroup
             {...props}
-            className={`group-data-[collapsible=icon]:p-0 ${className || ''}`}
+            className={`group-data-[collapsible=icon]:p-0 ${className ?? ''}`}
         >
             <SidebarGroupContent>
                 <SidebarMenu>
-                    {items[role].map((item) => (
+                    {roleItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild
@@ -48,4 +60,4 @@ export function NavFooter({
             </SidebarGroupContent>
         </SidebarGroup>
     );
-}
+});
