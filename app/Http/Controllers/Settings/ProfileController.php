@@ -17,9 +17,7 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function __construct(protected MediaService $mediaService)
-    {
-    }
+    public function __construct(protected MediaService $mediaService) {}
 
     /**
      * Show the user's profile settings page.
@@ -55,13 +53,13 @@ class ProfileController extends Controller
                 $existingMedia,
                 $options
             );
+
+            if ($newMedia instanceof Media) {
+                $user->avatar = $newMedia->id;
+            }
         }
 
-        $user->fill($request->validated());
-
-        if (isset($newMedia) && $newMedia instanceof Media) {
-            $user->avatar = $newMedia->id;
-        }
+        $user->fill($request->except('avatar'));
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

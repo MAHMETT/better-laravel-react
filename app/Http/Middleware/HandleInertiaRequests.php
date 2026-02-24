@@ -48,20 +48,23 @@ class HandleInertiaRequests extends Middleware
                         'email' => $user->email,
                         'email_verified_at' => $user->email_verified_at,
                         'role' => $user->role,
-                        'avatar' => $user->avatarMedia
+                        'avatar' => $user->avatar_url,
+                        'avatarMedia' => $user->avatarMedia
                             ? [
                                 'id' => $user->avatarMedia->id,
                                 'name' => $user->avatarMedia->name,
                                 'path' => $user->avatarMedia->path,
-                                'url' => asset('storage/' . $user->avatarMedia->path),
+                                'url' => $user->avatarMedia->getUrl(),
                                 'size' => $user->avatarMedia->size,
                                 'type' => $user->avatarMedia->type,
+                                'extension' => $user->avatarMedia->extension,
+                                'metadata' => $user->avatarMedia->metadata,
                             ]
                             : null,
                     ]
                     : null,
             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state')
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state')
                 || $request->cookie('sidebar_state') === 'true',
         ];
     }

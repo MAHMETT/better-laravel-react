@@ -123,4 +123,19 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Image Conversion Format
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the default image format conversion for uploaded
+    | images. Set to "none" to disable conversion, or specify a format like
+    | "webp", "avif", "jpg", "png", "gif", or "bmp".
+    |
+    | This can be overridden per-request using MediaUploadOptions.
+    |
+    */
+
+    'convert_image' => env('CONVERT_IMAGE', 'none'),
+
 ];

@@ -32,6 +32,14 @@ class MediaService
 
     protected int $globalMaxSize = 10 * 1024 * 1024;
 
+    protected ?string $convertFormat;
+
+    public function __construct()
+    {
+        $this->convertFormat = config('app.convert_image') ?? env('CONVERT_IMAGE', 'none');
+        $this->convertFormat = $this->convertFormat === 'none' ? null : $this->convertFormat;
+    }
+
     public function upload(UploadedFile|array $files, int $userId, ?MediaUploadOptions $options = null): Media|array
     {
         $options ??= new MediaUploadOptions;
@@ -75,9 +83,29 @@ class MediaService
             $metadata = $options->extraMetadata;
             $mime = $file->getMimeType();
             $type = MediaType::fromMime($mime);
+            $fileSize = $file->getSize();
 
             if ($type === MediaType::IMAGE) {
-                $metadata = array_merge($metadata, $this->processImage($file, $path, $options));
+                $imageProcessingResult = $this->processImage($file, $path, $options);
+                $metadata = array_merge($metadata, $imageProcessingResult);
+
+                // Handle format conversion
+                if ($options->convertFormat || $this->convertFormat) {
+                    $targetFormat = $options->convertFormat ?? $this->convertFormat;
+                    $conversionResult = $this->convertImageFormat($path, $targetFormat, $options);
+                    $metadata = array_merge($metadata, $conversionResult);
+                    // Update path to converted path
+                    if (isset($conversionResult['converted_path'])) {
+                        $path = $conversionResult['converted_path'];
+                        // Update file size after conversion
+                        $fileSize = Storage::disk($options->disk)->size($path);
+                    }
+                    // Update MIME type and extension based on conversion
+                    if (isset($conversionResult['converted_to'])) {
+                        $mime = $this->getMimeTypeFromFormat($conversionResult['converted_to']);
+                        $extension = $conversionResult['converted_to'];
+                    }
+                }
             }
 
             return Media::create([
@@ -86,7 +114,7 @@ class MediaService
                 'disk' => $options->disk,
                 'type' => $mime,
                 'extension' => $extension,
-                'size' => $file->getSize(),
+                'size' => $fileSize,
                 'uploaded_by' => $userId,
                 'collection' => $options->collection,
                 'metadata' => $metadata,
@@ -132,6 +160,7 @@ class MediaService
 
         $metadata['original_width'] = $image->width();
         $metadata['original_height'] = $image->height();
+        $metadata['original_format'] = $file->extension();
 
         if ($options->optimizeImage) {
             $image->save($fullPath, 80);
@@ -156,6 +185,63 @@ class MediaService
         }
 
         return $metadata;
+    }
+
+    /**
+     * Convert image to a different format (webp, avif, jpg, png, etc.).
+     * Deletes the original file and returns updated path and metadata.
+     */
+    protected function convertImageFormat(string $path, string $targetFormat, MediaUploadOptions $options): array
+    {
+        $metadata = [];
+        $fullPath = Storage::disk($options->disk)->path($path);
+        $image = Image::read($fullPath);
+
+        // Get new extension
+        $newExtension = strtolower($targetFormat);
+        $newMimeType = $this->getMimeTypeFromFormat($newExtension);
+
+        // Generate new file path with new extension
+        $originalPathInfo = pathinfo($path);
+        $newPath = $originalPathInfo['dirname'].'/'.$originalPathInfo['filename'].'.'.$newExtension;
+        $newFullPath = Storage::disk($options->disk)->path($newPath);
+
+        // Save in new format
+        $image->save($newFullPath);
+
+        // Delete original file if different
+        if ($fullPath !== $newFullPath) {
+            Storage::disk($options->disk)->delete($path);
+
+            // Update thumbnail path if exists
+            if (! empty($metadata['thumbnail_path'])) {
+                $oldThumbPath = $metadata['thumbnail_path'];
+                $newThumbPath = dirname($oldThumbPath).'/'.pathinfo($newPath, PATHINFO_FILENAME).'.'.pathinfo($oldThumbPath, PATHINFO_EXTENSION);
+                $metadata['thumbnail_path'] = $newThumbPath;
+            }
+        }
+
+        $metadata['converted_from'] = $originalPathInfo['extension'];
+        $metadata['converted_to'] = $newExtension;
+        $metadata['converted_path'] = $newPath;
+
+        return $metadata;
+    }
+
+    /**
+     * Get MIME type from format extension.
+     */
+    protected function getMimeTypeFromFormat(string $extension): string
+    {
+        return match (strtolower($extension)) {
+            'webp' => 'image/webp',
+            'avif' => 'image/avif',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            default => 'image/jpeg',
+        };
     }
 
     /**

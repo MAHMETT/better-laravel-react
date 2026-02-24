@@ -30,6 +30,15 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_MIME_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+];
+
 export default function Profile({
     mustVerifyEmail,
     status,
@@ -39,11 +48,37 @@ export default function Profile({
 }) {
     const { auth } = usePage().props;
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [avatarError, setAvatarError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const validateAvatar = (file: File): string | null => {
+        // Check file size
+        if (file.size > MAX_FILE_SIZE) {
+            return 'File size must be less than 2MB';
+        }
+
+        // Check file type
+        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+            return 'File type must be JPEG, PNG, GIF, WebP, or SVG';
+        }
+
+        return null;
+    };
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+        setAvatarError(null);
+
         if (file) {
+            // Validate file
+            const error = validateAvatar(file);
+            if (error) {
+                setAvatarError(error);
+                e.target.value = '';
+                setAvatarPreview(null);
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 setAvatarPreview(event.target?.result as string);
@@ -54,9 +89,11 @@ export default function Profile({
         }
     };
 
-    const currentAvatar = avatarPreview || auth.user.avatar?.url;
+    const currentAvatar = avatarPreview || auth.user.avatar;
 
     const [open, setOpen] = useState(false);
+
+    console.log(auth.user);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -85,6 +122,10 @@ export default function Profile({
                                 <>
                                     <div className="grid gap-2">
                                         <Label>Avatar</Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            JPEG, PNG, GIF, WebP, or SVG. Max
+                                            size: 2MB
+                                        </p>
 
                                         <div className="flex items-center gap-4">
                                             <Dialog
@@ -204,6 +245,14 @@ export default function Profile({
                                             className="hidden"
                                             onChange={handleAvatarChange}
                                         />
+                                        {/* Frontend validation error */}
+                                        {avatarError && (
+                                            <InputError
+                                                className="mt-2"
+                                                message={avatarError}
+                                            />
+                                        )}
+                                        {/* Backend validation error */}
                                         <InputError
                                             className="mt-2"
                                             message={errors.avatar}
