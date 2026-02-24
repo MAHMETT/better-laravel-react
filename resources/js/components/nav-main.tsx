@@ -6,14 +6,11 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import type { RoleNavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import type { MainNavItem } from '@/types';
+import { Link } from '@inertiajs/react';
 
-export function NavMain({ items }: { items: RoleNavItem }) {
+export function NavMain({ items, role }: { items: MainNavItem; role: string }) {
     const { isCurrentUrl } = useCurrentUrl();
-
-    const { role } = usePage().props.auth.user;
-
     return (
         <>
             {items[role].map((item, index) => (

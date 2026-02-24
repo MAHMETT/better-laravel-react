@@ -1,4 +1,3 @@
-import type { ComponentPropsWithoutRef } from 'react';
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -7,14 +6,17 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { toUrl } from '@/lib/utils';
-import type { NavItem } from '@/types';
+import type { FooterNavItem } from '@/types';
+import type { ComponentPropsWithoutRef } from 'react';
 
 export function NavFooter({
     items,
+    role,
     className,
     ...props
 }: ComponentPropsWithoutRef<typeof SidebarGroup> & {
-    items: NavItem[];
+    items: FooterNavItem;
+    role: string;
 }) {
     return (
         <SidebarGroup
@@ -23,7 +25,7 @@ export function NavFooter({
         >
             <SidebarGroupContent>
                 <SidebarMenu>
-                    {items.map((item) => (
+                    {items[role].map((item) => (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild

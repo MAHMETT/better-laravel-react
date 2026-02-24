@@ -13,11 +13,15 @@ export type NavItem = {
     isActive?: boolean;
 };
 
-export type sidebarNav = {
+export type SidebarNav = {
     title: string;
     items: NavItem[];
 };
 
-export type RoleNavItem = {
-    [key: string]: sidebarNav[];
+export type MainNavItem = {
+    [key: string]: SidebarNav[];
+};
+
+export type FooterNavItem = {
+    [key: string]: NavItem[];
 };
