@@ -4,6 +4,7 @@ namespace App\Concerns;
 
 use App\Models\User;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\ImageFile;
 
 trait ProfileValidationRules
 {
@@ -51,6 +52,12 @@ trait ProfileValidationRules
 
     protected function avatarRules(): array
     {
-        return ['nullable', 'image', 'max:2048', 'mimes:jpeg,png,gif,webp,svg'];
+        return [
+            'nullable',
+            ImageFile::defaults()
+                ->types('jpeg,png,gif,webp')
+                ->max(5120) // 5MB
+                ->min(10), // 10KB
+        ];
     }
 }

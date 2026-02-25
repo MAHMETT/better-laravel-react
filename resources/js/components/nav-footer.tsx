@@ -1,3 +1,5 @@
+import type { ComponentPropsWithoutRef } from 'react';
+import { memo, useMemo } from 'react';
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -7,8 +9,6 @@ import {
 } from '@/components/ui/sidebar';
 import { toUrl } from '@/lib/utils';
 import type { FooterNavItem } from '@/types';
-import type { ComponentPropsWithoutRef } from 'react';
-import { memo, useMemo } from 'react';
 
 interface NavFooterProps extends ComponentPropsWithoutRef<typeof SidebarGroup> {
     items: FooterNavItem;

@@ -44,18 +44,28 @@ class ProfileController extends Controller
 
             $options = new MediaUploadOptions(
                 collection: 'avatars',
-                resizeDimensions: [400, 400, 'fit']
+                resizeDimensions: [400, 400, 'fit'],
+                convertFormat: 'webp',
+                optimizeImage: true,
+                generateThumbnail: true,
+                thumbnailDimensions: [200, 200]
             );
 
-            $newMedia = $this->mediaService->uploadOrUpdate(
-                $request->file('avatar'),
-                $user->id,
-                $existingMedia,
-                $options
-            );
+            try {
+                $newMedia = $this->mediaService->uploadOrUpdate(
+                    $request->file('avatar'),
+                    $user->id,
+                    $existingMedia,
+                    $options
+                );
 
-            if ($newMedia instanceof Media) {
-                $user->avatar = $newMedia->id;
+                if ($newMedia instanceof Media) {
+                    $user->avatar = $newMedia->id;
+                }
+            } catch (\Exception $e) {
+                return back()->withErrors([
+                    'avatar' => 'Failed to upload avatar. Please try again.',
+                ]);
             }
         }
 

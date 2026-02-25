@@ -1,42 +1,28 @@
+import { Transition } from '@headlessui/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Camera, Check } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import { AvatarUploadModal } from '@/components/avatar/avatar-upload-modal';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { edit } from '@/routes/profile';
+import { edit, update } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
-import { Transition } from '@headlessui/react';
-import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { Camera, Download, Upload } from 'lucide-react';
-import { useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Profile settings',
         href: edit().url,
     },
-];
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ALLOWED_MIME_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/svg+xml',
 ];
 
 export default function Profile({
@@ -47,53 +33,34 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props;
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-    const [avatarError, setAvatarError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [avatarUploadOpen, setAvatarUploadOpen] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
-    const validateAvatar = (file: File): string | null => {
-        // Check file size
-        if (file.size > MAX_FILE_SIZE) {
-            return 'File size must be less than 2MB';
-        }
+    const handleAvatarSelect = (file: File) => {
+        // Create form data and submit
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('name', auth.user.name);
+        formData.append('email', auth.user.email);
 
-        // Check file type
-        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-            return 'File type must be JPEG, PNG, GIF, WebP, or SVG';
-        }
+        setIsUploading(true);
 
-        return null;
+        router.patch(update().url, formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Profile picture updated successfully');
+                setAvatarUploadOpen(false);
+            },
+            onError: (errors: Record<string, string>) => {
+                toast.error(errors.avatar || 'Failed to update profile picture');
+            },
+            onFinish: () => {
+                setIsUploading(false);
+            },
+        });
     };
 
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        setAvatarError(null);
-
-        if (file) {
-            // Validate file
-            const error = validateAvatar(file);
-            if (error) {
-                setAvatarError(error);
-                e.target.value = '';
-                setAvatarPreview(null);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setAvatarPreview(event.target?.result as string);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            setAvatarPreview(null);
-        }
-    };
-
-    const currentAvatar = avatarPreview || auth.user.avatar;
-
-    const [open, setOpen] = useState(false);
-
-    console.log(auth.user);
+    const currentAvatar = auth.user.avatar;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -106,7 +73,7 @@ export default function Profile({
                     <Heading
                         variant="small"
                         title="Profile information"
-                        description="Update your name and email address"
+                        description="Update your name, email address, and profile picture"
                     />
 
                     <Form
@@ -120,145 +87,125 @@ export default function Profile({
                         {({ processing, recentlySuccessful, errors }) => {
                             return (
                                 <>
-                                    <div className="grid gap-2">
-                                        <Label>Avatar</Label>
-                                        <p className="text-xs text-muted-foreground">
-                                            JPEG, PNG, GIF, WebP, or SVG. Max
-                                            size: 2MB
-                                        </p>
+                                    {/* Avatar Section */}
+                                    <div className="grid gap-4">
+                                        <Label>Profile Picture</Label>
 
-                                        <div className="flex items-center gap-4">
-                                            <Dialog
-                                                open={open}
-                                                onOpenChange={setOpen}
-                                            >
-                                                <DialogTrigger asChild>
-                                                    <div className="group relative cursor-pointer">
-                                                        <Avatar className="size-24 transition-all duration-200 group-hover:scale-105">
-                                                            <AvatarImage
-                                                                src={
-                                                                    currentAvatar
-                                                                }
-                                                                alt={
-                                                                    auth.user
-                                                                        .name
-                                                                }
+                                        <div className="flex items-start gap-6">
+                                            {/* Avatar Display */}
+                                            <div className="group relative">
+                                                <Avatar className="h-24 w-24 overflow-hidden rounded-full border-2 border-muted transition-colors group-hover:border-primary">
+                                                    <AvatarImage
+                                                        src={currentAvatar ?? undefined}
+                                                        alt={auth.user.name}
+                                                    />
+                                                    <AvatarFallback className="text-2xl font-semibold">
+                                                        {auth.user.name
+                                                            ?.charAt(0)
+                                                            .toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+
+                                                {/* Change button overlay */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setAvatarUploadOpen(true)
+                                                    }
+                                                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                                                    aria-label="Change profile picture"
+                                                >
+                                                    <Camera className="h-6 w-6 text-white" />
+                                                </button>
+                                            </div>
+
+                                            {/* Avatar Info & Actions */}
+                                            <div className="flex flex-1 flex-col justify-center gap-2">
+                                                <div>
+                                                    <h3 className="font-medium">
+                                                        {auth.user.name}
+                                                    </h3>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {currentAvatar
+                                                            ? 'Click the image or button to change your profile picture'
+                                                            : 'Add a profile picture to personalize your account'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setAvatarUploadOpen(
+                                                                true
+                                                            )
+                                                        }
+                                                    >
+                                                        <Camera className="mr-2 h-4 w-4" />
+                                                        {currentAvatar
+                                                            ? 'Change Picture'
+                                                            : 'Upload Picture'}
+                                                    </Button>
+
+                                                    {currentAvatar && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const link =
+                                                                    document.createElement(
+                                                                        'a'
+                                                                    );
+                                                                link.href =
+                                                                    currentAvatar;
+                                                                link.download =
+                                                                    'profile-picture';
+                                                                link.click();
+                                                            }}
+                                                        >
+                                                            Download
+                                                        </Button>
+                                                    )}
+                                                </div>
+
+                                                {/* Upload status */}
+                                                {isUploading && (
+                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                        <svg
+                                                            className="h-4 w-4 animate-spin"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <circle
+                                                                className="opacity-25"
+                                                                cx="12"
+                                                                cy="12"
+                                                                r="10"
+                                                                stroke="currentColor"
+                                                                strokeWidth="4"
+                                                                fill="none"
                                                             />
-                                                            <AvatarFallback>
-                                                                {auth.user.name
-                                                                    ?.charAt(0)
-                                                                    .toUpperCase()}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-
-                                                        {/* Hover camera icon */}
-                                                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                                            <Camera className="size-6 text-white" />
-                                                        </div>
+                                                            <path
+                                                                className="opacity-75"
+                                                                fill="currentColor"
+                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                            />
+                                                        </svg>
+                                                        Uploading...
                                                     </div>
-                                                </DialogTrigger>
-
-                                                <DialogContent className="sm:max-w-md">
-                                                    <DialogHeader>
-                                                        <DialogTitle>
-                                                            Profile Picture
-                                                        </DialogTitle>
-                                                    </DialogHeader>
-
-                                                    <div className="flex flex-col items-center gap-6">
-                                                        {currentAvatar ? (
-                                                            <>
-                                                                {/* Preview large */}
-                                                                <img
-                                                                    src={
-                                                                        currentAvatar
-                                                                    }
-                                                                    alt="Profile"
-                                                                    className="h-64 w-64 rounded-full border object-cover"
-                                                                />
-
-                                                                <div className="flex gap-3">
-                                                                    {/* Download */}
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        onClick={() => {
-                                                                            const link =
-                                                                                document.createElement(
-                                                                                    'a',
-                                                                                );
-                                                                            link.href =
-                                                                                currentAvatar;
-                                                                            link.download =
-                                                                                'profile-picture';
-                                                                            link.click();
-                                                                        }}
-                                                                    >
-                                                                        <Download className="mr-2 size-4" />
-                                                                        Download
-                                                                    </Button>
-
-                                                                    {/* Upload */}
-                                                                    <Button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            fileInputRef.current?.click()
-                                                                        }
-                                                                    >
-                                                                        <Upload className="mr-2 size-4" />
-                                                                        Upload
-                                                                        New
-                                                                    </Button>
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                {/* Empty State */}
-                                                                <div className="flex h-64 w-64 items-center justify-center rounded-full border border-dashed text-muted-foreground">
-                                                                    No profile
-                                                                    picture
-                                                                </div>
-
-                                                                <Button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        fileInputRef.current?.click()
-                                                                    }
-                                                                >
-                                                                    <Upload className="mr-2 size-4" />
-                                                                    Upload
-                                                                    Picture
-                                                                </Button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+                                                )}
+                                            </div>
                                         </div>
-                                        {/* Hidden input */}
-                                        <Input
-                                            ref={fileInputRef}
-                                            id="avatar"
-                                            name="avatar"
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handleAvatarChange}
-                                        />
-                                        {/* Frontend validation error */}
-                                        {avatarError && (
-                                            <InputError
-                                                className="mt-2"
-                                                message={avatarError}
-                                            />
+
+                                        {/* Backend validation errors */}
+                                        {errors.avatar && (
+                                            <InputError message={errors.avatar} />
                                         )}
-                                        {/* Backend validation error */}
-                                        <InputError
-                                            className="mt-2"
-                                            message={errors.avatar}
-                                        />
                                     </div>
 
+                                    {/* Name Section */}
                                     <div className="grid gap-2">
                                         <Label htmlFor="name">Name</Label>
 
@@ -278,6 +225,7 @@ export default function Profile({
                                         />
                                     </div>
 
+                                    {/* Email Section */}
                                     <div className="grid gap-2">
                                         <Label htmlFor="email">
                                             Email address
@@ -300,6 +248,7 @@ export default function Profile({
                                         />
                                     </div>
 
+                                    {/* Email Verification Notice */}
                                     {mustVerifyEmail &&
                                         auth.user.email_verified_at ===
                                             null && (
@@ -319,7 +268,8 @@ export default function Profile({
 
                                                 {status ===
                                                     'verification-link-sent' && (
-                                                    <div className="mt-2 text-sm font-medium text-green-600">
+                                                    <div className="mt-2 flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                                                        <Check className="h-4 w-4" />
                                                         A new verification link
                                                         has been sent to your
                                                         email address.
@@ -328,12 +278,41 @@ export default function Profile({
                                             </div>
                                         )}
 
-                                    <div className="flex items-center gap-4">
+                                    {/* Save Button */}
+                                    <div className="flex items-center gap-4 border-t pt-6">
                                         <Button
-                                            disabled={processing}
+                                            type="submit"
+                                            disabled={
+                                                processing || isUploading
+                                            }
                                             data-test="update-profile-button"
                                         >
-                                            Save
+                                            {processing ? (
+                                                <>
+                                                    <svg
+                                                        className="mr-2 h-4 w-4 animate-spin"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <circle
+                                                            className="opacity-25"
+                                                            cx="12"
+                                                            cy="12"
+                                                            r="10"
+                                                            stroke="currentColor"
+                                                            strokeWidth="4"
+                                                            fill="none"
+                                                        />
+                                                        <path
+                                                            className="opacity-75"
+                                                            fill="currentColor"
+                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                        />
+                                                    </svg>
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                'Save Changes'
+                                            )}
                                         </Button>
 
                                         <Transition
@@ -343,8 +322,8 @@ export default function Profile({
                                             leave="transition ease-in-out"
                                             leaveTo="opacity-0"
                                         >
-                                            <p className="text-sm text-neutral-600">
-                                                Saved
+                                            <p className="text-sm text-muted-foreground">
+                                                Saved successfully
                                             </p>
                                         </Transition>
                                     </div>
@@ -355,6 +334,15 @@ export default function Profile({
                 </div>
 
                 <DeleteUser />
+
+                {/* Avatar Upload Modal */}
+                <AvatarUploadModal
+                    open={avatarUploadOpen}
+                    onOpenChange={setAvatarUploadOpen}
+                    currentAvatar={currentAvatar}
+                    userName={auth.user.name}
+                    onAvatarSelect={handleAvatarSelect}
+                />
             </SettingsLayout>
         </AppLayout>
     );

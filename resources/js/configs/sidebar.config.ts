@@ -1,6 +1,6 @@
+import { BookOpenIcon, FolderIcon, LayoutGridIcon } from 'lucide-react';
 import { dashboard } from '@/routes';
 import type { FooterNavItem, MainNavItem } from '@/types';
-import { BookOpenIcon, FolderIcon, LayoutGridIcon } from 'lucide-react';
 
 export const mainNavItems: MainNavItem = {
     admin: [

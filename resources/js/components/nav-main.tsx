@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import { memo, useMemo } from 'react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -7,8 +9,6 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { MainNavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { memo, useMemo } from 'react';
 
 interface NavMainProps {
     items: MainNavItem;
