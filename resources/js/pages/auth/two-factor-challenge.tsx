@@ -12,10 +12,13 @@ import {
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
+import { twoFactorChallengeSchema, type TwoFactorChallengeData } from '@/schemas';
+import { validateForm } from '@/schemas/validate';
 
 export default function TwoFactorChallenge() {
     const [showRecoveryInput, setShowRecoveryInput] = useState<boolean>(false);
     const [code, setCode] = useState<string>('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
     const authConfigContent = useMemo<{
         title: string;
@@ -43,6 +46,26 @@ export default function TwoFactorChallenge() {
         setShowRecoveryInput(!showRecoveryInput);
         clearErrors();
         setCode('');
+        setValidationErrors({});
+    };
+
+    const handleSubmit = (formData: FormData) => {
+        const data: TwoFactorChallengeData = {
+            code: showRecoveryInput ? undefined : formData.get('code') as string,
+            recovery_code: showRecoveryInput ? formData.get('recovery_code') as string : undefined,
+        };
+
+        const result = validateForm(twoFactorChallengeSchema, data, {
+            code: { length: 6 },
+        });
+
+        if (!result.success) {
+            setValidationErrors(result.errors);
+            throw new Error('Validation failed');
+        }
+
+        setValidationErrors({});
+        return data;
     };
 
     return (
@@ -58,6 +81,16 @@ export default function TwoFactorChallenge() {
                     className="space-y-4"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
+                    onSubmit={(e) => {
+                        const formData = new FormData(e.currentTarget);
+                        const data = handleSubmit(formData);
+                        Object.entries(data).forEach(([key, value]) => {
+                            if (value !== undefined) {
+                                formData.set(key, value.toString());
+                            }
+                        });
+                        return formData;
+                    }}
                 >
                     {({ errors, processing, clearErrors }) => (
                         <>
@@ -66,12 +99,13 @@ export default function TwoFactorChallenge() {
                                     <Input
                                         name="recovery_code"
                                         type="text"
-                                        placeholder="Enter recovery code"
+                                        placeholder="Enter recovery code (XXXXXXXX-XXXXXXXX)"
                                         autoFocus={showRecoveryInput}
                                         required
+                                        className="uppercase"
                                     />
                                     <InputError
-                                        message={errors.recovery_code}
+                                        message={validationErrors.recovery_code || errors.recovery_code}
                                     />
                                 </>
                             ) : (
@@ -98,7 +132,7 @@ export default function TwoFactorChallenge() {
                                             </InputOTPGroup>
                                         </InputOTP>
                                     </div>
-                                    <InputError message={errors.code} />
+                                    <InputError message={validationErrors.code || errors.code} />
                                 </div>
                             )}
 

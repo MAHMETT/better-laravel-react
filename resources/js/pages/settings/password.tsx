@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
+import { passwordUpdateSchema, type PasswordUpdateData } from '@/schemas';
+import { validateForm } from '@/schemas/validate';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -22,6 +24,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+    const handleSubmit = (formData: FormData) => {
+        const data: PasswordUpdateData = {
+            current_password: formData.get('current_password') as string,
+            password: formData.get('password') as string,
+            password_confirmation: formData.get('password_confirmation') as string,
+        };
+
+        const result = validateForm(passwordUpdateSchema, data, {
+            password: { min: 8, max: 255 },
+        });
+
+        if (!result.success) {
+            setValidationErrors(result.errors);
+            throw new Error('Validation failed');
+        }
+
+        setValidationErrors({});
+        return data;
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -58,6 +81,14 @@ export default function Password() {
                             }
                         }}
                         className="space-y-6"
+                        onSubmit={(e) => {
+                            const formData = new FormData(e.currentTarget);
+                            const data = handleSubmit(formData);
+                            Object.entries(data).forEach(([key, value]) => {
+                                formData.set(key, value);
+                            });
+                            return formData;
+                        }}
                     >
                         {({ errors, processing, recentlySuccessful }) => (
                             <>
@@ -77,7 +108,7 @@ export default function Password() {
                                     />
 
                                     <InputError
-                                        message={errors.current_password}
+                                        message={validationErrors.current_password || errors.current_password}
                                     />
                                 </div>
 
@@ -96,7 +127,12 @@ export default function Password() {
                                         placeholder="New password"
                                     />
 
-                                    <InputError message={errors.password} />
+                                    <InputError message={validationErrors.password || errors.password} />
+                                    {errors.password && !validationErrors.password && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Must be at least 8 characters with uppercase, lowercase, and number
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="grid gap-2">
@@ -114,7 +150,7 @@ export default function Password() {
                                     />
 
                                     <InputError
-                                        message={errors.password_confirmation}
+                                        message={validationErrors.password_confirmation || errors.password_confirmation}
                                     />
                                 </div>
 

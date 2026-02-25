@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -8,8 +9,34 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+import { registerSchema, type RegisterData } from '@/schemas';
+import { validateForm } from '@/schemas/validate';
 
 export default function Register() {
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+    const handleSubmit = (formData: FormData) => {
+        const data: RegisterData = {
+            name: formData.get('name') as string,
+            email: formData.get('email') as string,
+            password: formData.get('password') as string,
+            password_confirmation: formData.get('password_confirmation') as string,
+        };
+
+        const result = validateForm(registerSchema, data, {
+            name: { min: 2, max: 255 },
+            password: { min: 8, max: 255 },
+        });
+
+        if (!result.success) {
+            setValidationErrors(result.errors);
+            throw new Error('Validation failed');
+        }
+
+        setValidationErrors({});
+        return data;
+    };
+
     return (
         <AuthLayout
             title="Create an account"
@@ -21,6 +48,14 @@ export default function Register() {
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
                 className="flex flex-col gap-6"
+                onSubmit={(e) => {
+                    const formData = new FormData(e.currentTarget);
+                    const data = handleSubmit(formData);
+                    Object.entries(data).forEach(([key, value]) => {
+                        formData.set(key, value);
+                    });
+                    return formData;
+                }}
             >
                 {({ processing, errors }) => (
                     <>
@@ -38,7 +73,7 @@ export default function Register() {
                                     placeholder="Full name"
                                 />
                                 <InputError
-                                    message={errors.name}
+                                    message={validationErrors.name || errors.name}
                                     className="mt-2"
                                 />
                             </div>
@@ -54,7 +89,7 @@ export default function Register() {
                                     name="email"
                                     placeholder="email@example.com"
                                 />
-                                <InputError message={errors.email} />
+                                <InputError message={validationErrors.email || errors.email} />
                             </div>
 
                             <div className="grid gap-2">
@@ -68,7 +103,12 @@ export default function Register() {
                                     name="password"
                                     placeholder="Password"
                                 />
-                                <InputError message={errors.password} />
+                                <InputError message={validationErrors.password || errors.password} />
+                                {errors.password && !validationErrors.password && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Must be at least 8 characters with uppercase, lowercase, and number
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
@@ -85,7 +125,7 @@ export default function Register() {
                                     placeholder="Confirm password"
                                 />
                                 <InputError
-                                    message={errors.password_confirmation}
+                                    message={validationErrors.password_confirmation || errors.password_confirmation}
                                 />
                             </div>
 

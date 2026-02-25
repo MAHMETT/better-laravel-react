@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { loginSchema, type LoginData } from '@/schemas';
+import { validateForm } from '@/schemas/validate';
 
 type Props = {
     status?: string;
@@ -22,6 +25,26 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+    const handleSubmit = (formData: FormData) => {
+        const data: LoginData = {
+            email: formData.get('email') as string,
+            password: formData.get('password') as string,
+            remember: formData.get('remember') === 'on',
+        };
+
+        const result = validateForm(loginSchema, data);
+
+        if (!result.success) {
+            setValidationErrors(result.errors);
+            throw new Error('Validation failed');
+        }
+
+        setValidationErrors({});
+        return data;
+    };
+
     return (
         <AuthLayout
             title="Log in to your account"
@@ -33,6 +56,16 @@ export default function Login({
                 {...store.form()}
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
+                onSubmit={(e) => {
+                    const formData = new FormData(e.currentTarget);
+                    const data = handleSubmit(formData);
+                    Object.entries(data).forEach(([key, value]) => {
+                        if (value !== undefined) {
+                            formData.set(key, value.toString());
+                        }
+                    });
+                    return formData;
+                }}
             >
                 {({ processing, errors }) => (
                     <>
@@ -49,7 +82,7 @@ export default function Login({
                                     autoComplete="email"
                                     placeholder="email@example.com"
                                 />
-                                <InputError message={errors.email} />
+                                <InputError message={validationErrors.email || errors.email} />
                             </div>
 
                             <div className="grid gap-2">
@@ -74,7 +107,7 @@ export default function Login({
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
-                                <InputError message={errors.password} />
+                                <InputError message={validationErrors.password || errors.password} />
                             </div>
 
                             <div className="flex items-center space-x-3">
