@@ -9,7 +9,7 @@ import typescript from 'typescript-eslint';
 /** @type {import('eslint').Linter.Config[]} */
 export default [
     js.configs.recommended,
-    reactHooks.configs.flat.recommended,
+    reactHooks.configs.flat['recommended-latest'],
     ...typescript.configs.recommended,
     {
         ...react.configs.flat.recommended,
@@ -31,42 +31,40 @@ export default [
         },
     },
     {
-        ...importPlugin.flatConfigs.recommended,
+        plugins: {
+            import: importPlugin,
+        },
         settings: {
             'import/resolver': {
-                typescript: true,
+                typescript: {
+                    alwaysTryTypes: true,
+                    project: './tsconfig.json',
+                },
                 node: true,
             },
         },
-        // rules: {
-        //     'import/order': [
-        //         'error',
-        //         {
-        //             groups: [
-        //                 'builtin',
-        //                 'external',
-        //                 'internal',
-        //                 'parent',
-        //                 'sibling',
-        //             ],
-        //             alphabetize: {
-        //                 order: 'asc',
-        //                 caseInsensitive: true,
-        //             },
-        //         },
-        //     ],
-        // },
-    },
-    {
-        ...importPlugin.flatConfigs.typescript,
-        files: ['**/*.{ts,tsx}'],
         rules: {
+            '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/consistent-type-imports': [
                 'error',
                 {
                     prefer: 'type-imports',
                     fixStyle: 'separate-type-imports',
                 },
+            ],
+            // 'import/order': [
+            //     'error',
+            //     {
+            //         groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+            //         alphabetize: {
+            //             order: 'asc',
+            //             caseInsensitive: true,
+            //         },
+            //     },
+            // ],
+            'import/consistent-type-specifier-style': [
+                'error',
+                'prefer-top-level',
             ],
         },
     },
