@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRouteBinding();
     }
 
     /**
@@ -46,5 +49,16 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null
         );
+    }
+
+    /**
+     * Configure route model binding to include soft-deleted users.
+     */
+    protected function configureRouteBinding(): void
+    {
+        // Allow route binding to find soft-deleted users for admin management
+        Route::bind('user', function ($value) {
+            return User::withTrashed()->findOrFail($value);
+        });
     }
 }

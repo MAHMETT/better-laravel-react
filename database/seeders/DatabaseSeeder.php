@@ -13,20 +13,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'role' => 'user'
-        ]);
-
-        User::factory()->create([
-            'name' => 'Test Admin',
+        // Create admin user
+        User::factory()->admin()->enabled()->create([
+            'name' => 'Admin User',
             'email' => 'admin@example.com',
             'password' => 'password',
-            'role' => 'admin'
         ]);
+
+        // Create regular users
+        User::factory(10)->create();
+
+        // Create some disabled users for testing
+        User::factory(3)->disabled()->create();
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -12,7 +12,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'avatar',
         'role',
+        'status',
     ];
 
     /**
@@ -46,6 +47,7 @@ class User extends Authenticatable
      */
     protected $appends = [
         'avatar_url',
+        'is_enabled',
     ];
 
     /**
@@ -63,6 +65,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Scope a query to only include enabled users.
+     */
+    public function scopeEnabled($query)
+    {
+        return $query->where('status', 'enable');
+    }
+
+    /**
+     * Scope a query to only include disabled users.
+     */
+    public function scopeDisabled($query)
+    {
+        return $query->where('status', 'disable');
+    }
+
+    /**
+     * Scope a query to only include admin users.
+     */
+    public function scopeAdmin($query)
+    {
+        return $query->where('role', 'admin');
+    }
+
+    /**
      * Get the avatar media record for the user.
      */
     public function avatarMedia(): BelongsTo
@@ -75,17 +101,25 @@ class User extends Authenticatable
      */
     public function getAvatarUrlAttribute(): ?string
     {
-        if (!$this->avatar) {
+        if (! $this->avatar) {
             return null;
         }
 
         $media = $this->avatarMedia;
 
-        if (!$media) {
+        if (! $media) {
             return null;
         }
 
         return $media->getUrl();
+    }
+
+    /**
+     * Check if the user is enabled.
+     */
+    public function getIsEnabledAttribute(): bool
+    {
+        return $this->status === 'enable';
     }
 
     public function media()
@@ -93,4 +127,24 @@ class User extends Authenticatable
         return $this->hasMany(Media::class);
     }
 
+    /**
+     * Apply filters to the query.
+     */
+    public function scopeFilter($query, array $filters): void
+    {
+        $query->when(
+            $filters['search'] ?? '',
+            fn ($q, $search) => $q->where(fn ($query) => $query
+                ->where('name', 'ilike', "%{$search}%")
+                ->orWhere('email', 'ilike', "%{$search}%"))
+        )
+            ->when(
+                in_array($filters['status'] ?? '', ['enable', 'disable']),
+                fn ($q) => $q->where('status', $filters['status'])
+            )
+            ->when(
+                in_array($filters['role'] ?? '', ['admin', 'user']),
+                fn ($q) => $q->where('role', $filters['role'])
+            );
+    }
 }

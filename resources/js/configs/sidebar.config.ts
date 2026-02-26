@@ -1,53 +1,34 @@
-import { BookOpenIcon, FolderIcon, LayoutGridIcon } from 'lucide-react';
+import {
+    BookOpenIcon,
+    FolderIcon,
+    LayoutGridIcon,
+    UsersIcon,
+} from 'lucide-react';
 import { dashboard } from '@/routes';
+import users from '@/routes/users';
 import type { FooterNavItem, MainNavItem } from '@/types';
 
 export const mainNavItems: MainNavItem = {
     admin: [
         {
-            title: 'platform',
+            title: 'Platform',
             items: [
                 {
                     title: 'Dashboard',
                     href: dashboard(),
                     icon: LayoutGridIcon,
                 },
-            ],
-        },
-        {
-            title: 'platform',
-            items: [
                 {
-                    title: 'Dashboard',
-                    href: dashboard(),
-                    icon: LayoutGridIcon,
-                },
-            ],
-        },
-        {
-            title: 'platform',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: dashboard(),
-                    icon: LayoutGridIcon,
+                    title: 'Users',
+                    href: users.index.url(),
+                    icon: UsersIcon,
                 },
             ],
         },
     ],
     user: [
         {
-            title: 'platform',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: dashboard(),
-                    icon: LayoutGridIcon,
-                },
-            ],
-        },
-        {
-            title: 'platform',
+            title: 'Platform',
             items: [
                 {
                     title: 'Dashboard',

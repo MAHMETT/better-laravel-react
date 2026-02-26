@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -18,9 +19,14 @@ return new class extends Migration {
             $table->string('password');
             $table->uuid('avatar')->nullable();
             $table->enum('role', ['admin', 'user'])->default('user')->nullable();
+            $table->enum('status', ['enable', 'disable'])->default('enable');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+
+            // Index for status filtering
+            $table->index('status');
+            $table->index(['role', 'status']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

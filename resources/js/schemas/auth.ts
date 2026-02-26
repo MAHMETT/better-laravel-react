@@ -88,6 +88,18 @@ export const profileUpdateSchema = type({
 });
 
 /**
+ * User create/update schema
+ */
+export const userSchema = type({
+    name: 'string',
+    email: 'string.email',
+    password: 'string | undefined',
+    password_confirmation: 'string | undefined',
+    role: 'string | undefined',
+    status: 'string | undefined',
+});
+
+/**
  * Login form type
  */
 export type LoginData = typeof loginSchema.infer;
@@ -116,3 +128,8 @@ export type ConfirmPasswordData = typeof confirmPasswordSchema.infer;
  * Profile update form type
  */
 export type ProfileUpdateData = typeof profileUpdateSchema.infer;
+
+/**
+ * User create/update form type
+ */
+export type UserData = typeof userSchema.infer;

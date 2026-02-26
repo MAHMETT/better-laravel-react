@@ -20,7 +20,29 @@ class EnsureUserRoleIs
             abort(403, 'Unauthorized');
         }
 
-        $userRole = $request->user()?->role;
+        $user = $request->user();
+
+        // Check if user is soft-deleted
+        if ($user->trashed()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Your account has been deleted. Please contact support.']);
+        }
+
+        // Check if user is disabled
+        if ($user->status === 'disable') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Your account has been disabled. Please contact support.']);
+        }
+
+        $userRole = $user->role;
 
         if (empty($userRole) || empty($roles)) {
             abort(403, 'Unauthorized');

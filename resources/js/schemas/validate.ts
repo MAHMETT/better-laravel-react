@@ -16,6 +16,7 @@ interface ValidationRules {
     name?: { min?: number; max?: number };
     password?: { min?: number; max?: number };
     code?: { length: number };
+    email?: boolean;
 }
 
 /**
@@ -94,17 +95,23 @@ function applyCustomRules(
         const password = data.password as string;
         const passwordConfirmation = data.password_confirmation as string;
 
-        if (password && typeof password === 'string') {
+        // Only validate password if it's provided and not empty
+        if (password && password.length > 0 && typeof password === 'string') {
             if (rules.password.min && password.length < rules.password.min) {
                 errors.password = `Password must be at least ${rules.password.min} characters`;
             }
             if (rules.password.max && password.length > rules.password.max) {
                 errors.password = `Password must be no more than ${rules.password.max} characters`;
             }
-        }
+            // Check for uppercase, lowercase, and number
+            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+                errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+            }
 
-        if (passwordConfirmation && password !== passwordConfirmation) {
-            errors.password_confirmation = 'Passwords must match';
+            // Only check confirmation if password is provided
+            if (passwordConfirmation && password !== passwordConfirmation) {
+                errors.password_confirmation = 'Passwords must match';
+            }
         }
     }
 
@@ -112,6 +119,13 @@ function applyCustomRules(
         const code = data.code as string;
         if (code && code.length !== rules.code.length) {
             errors.code = `Code must be exactly ${rules.code.length} digits`;
+        }
+    }
+
+    if (rules?.email) {
+        const email = data.email as string;
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errors.email = 'Please enter a valid email address';
         }
     }
 
