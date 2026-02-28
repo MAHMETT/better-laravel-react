@@ -10,19 +10,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Paginations } from '@/components/ui/pagination';
 import { UsersFilters } from '@/components/users/users-filters';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, User, UserPagination } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Power, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -34,16 +26,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: users.index.url(),
     },
 ];
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: 'admin' | 'user';
-    status: 'enable' | 'disable';
-    avatar_url?: string | null;
-    created_at: string;
-}
 
 interface Stats {
     total: number;
@@ -59,19 +41,7 @@ interface Filters {
     per_page: number;
 }
 
-interface Props {
-    users: {
-        data: User[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-        links: Array<{
-            url: string | null;
-            label: string;
-            active: boolean;
-        }>;
-    };
+interface Props extends UserPagination {
     stats: Stats;
     filters: Filters;
 }
@@ -215,18 +185,11 @@ export default function UsersIndex({
         );
     };
 
-    const handlePageChange = (page: number) => {
-        const link = paginatedUsers.links.find((l) => l.label === String(page));
-        if (link?.url) {
-            router.visit(link.url, { replace: true });
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Users" />
 
-            <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
@@ -463,104 +426,7 @@ export default function UsersIndex({
                 </div>
 
                 {/* Pagination */}
-                {paginatedUsers.last_page > 1 && (
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (paginatedUsers.current_page > 1) {
-                                            handlePageChange(
-                                                paginatedUsers.current_page - 1,
-                                            );
-                                        }
-                                    }}
-                                    className={
-                                        paginatedUsers.current_page === 1
-                                            ? 'pointer-events-none opacity-50'
-                                            : ''
-                                    }
-                                />
-                            </PaginationItem>
-                            {Array.from(
-                                { length: paginatedUsers.last_page },
-                                (_, i) => i + 1,
-                            ).map((page) => {
-                                const showPage =
-                                    page === 1 ||
-                                    page === paginatedUsers.last_page ||
-                                    Math.abs(
-                                        page - paginatedUsers.current_page,
-                                    ) <= 1;
-
-                                const showEllipsisBefore =
-                                    page === paginatedUsers.current_page - 2 &&
-                                    page > 2;
-                                const showEllipsisAfter =
-                                    page === paginatedUsers.current_page + 2 &&
-                                    page < paginatedUsers.last_page - 1;
-
-                                if (
-                                    !showPage &&
-                                    !showEllipsisBefore &&
-                                    !showEllipsisAfter
-                                ) {
-                                    return null;
-                                }
-
-                                if (showEllipsisBefore || showEllipsisAfter) {
-                                    return (
-                                        <PaginationEllipsis
-                                            key={`ellipsis-${page}`}
-                                        />
-                                    );
-                                }
-
-                                return (
-                                    <PaginationItem key={page}>
-                                        <PaginationLink
-                                            href="#"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handlePageChange(page);
-                                            }}
-                                            isActive={
-                                                page ===
-                                                paginatedUsers.current_page
-                                            }
-                                        >
-                                            {page}
-                                        </PaginationLink>
-                                    </PaginationItem>
-                                );
-                            })}
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (
-                                            paginatedUsers.current_page <
-                                            paginatedUsers.last_page
-                                        ) {
-                                            handlePageChange(
-                                                paginatedUsers.current_page + 1,
-                                            );
-                                        }
-                                    }}
-                                    className={
-                                        paginatedUsers.current_page ===
-                                        paginatedUsers.last_page
-                                            ? 'pointer-events-none opacity-50'
-                                            : ''
-                                    }
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                )}
+                <Paginations users={paginatedUsers} />
             </div>
 
             {/* Delete Confirmation Modal */}

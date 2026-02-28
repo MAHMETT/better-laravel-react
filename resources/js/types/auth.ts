@@ -27,17 +27,23 @@ export type AvatarMedia = {
     };
 };
 
+export type Roles = 'admin' | 'user';
+export type UserStatus = 'enable' | 'disable';
+
 export type User = {
     id: number;
     name: string;
     email: string;
-    role: string;
+    role: Roles;
+    status: UserStatus;
     avatar?: string | null;
+    avatar_url?: string | null;
     avatarMedia?: AvatarMedia | null;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
+    deleted_at: string;
     [key: string]: unknown;
 };
 
@@ -52,4 +58,19 @@ export type TwoFactorSetupData = {
 
 export type TwoFactorSecretKey = {
     secretKey: string;
+};
+
+export type UserPagination = {
+    users: {
+        data: User[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
+    };
 };

@@ -19,32 +19,11 @@ import {
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, User } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Power, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
-interface Media {
-    id: string;
-    file_name: string;
-    url: string;
-}
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    email_verified_at: string | null;
-    role: 'admin' | 'user';
-    status: 'enable' | 'disable';
-    avatar_url?: string | null;
-    avatarMedia?: Media | null;
-    created_at: string;
-    updated_at: string;
-    deleted_at: string | null;
-    is_enabled: boolean;
-}
 
 interface Props {
     user: User;
@@ -152,7 +131,7 @@ export default function ShowUser({ user }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={user.name} />
 
-            <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">

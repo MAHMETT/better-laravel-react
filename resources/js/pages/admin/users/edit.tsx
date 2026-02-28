@@ -18,19 +18,11 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, User } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, UserCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: 'admin' | 'user';
-    status: 'enable' | 'disable';
-}
 
 interface Props {
     user: User;
@@ -52,7 +44,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Edit',
-        href: users.edit.url({ user: { id: 0 } }),
+        href: users.edit.url({ user: 0 }),
     },
 ];
 
@@ -194,7 +186,7 @@ export default function EditUser({ user }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit User" />
 
-            <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">

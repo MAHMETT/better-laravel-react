@@ -146,7 +146,7 @@ export default function CreateUser() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create User" />
 
-            <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
