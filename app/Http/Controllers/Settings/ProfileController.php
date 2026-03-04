@@ -5,9 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
-use App\Models\Media;
 use App\Services\Media\MediaService;
-use App\Services\Media\MediaUploadOptions;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,31 +38,19 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if ($request->hasFile('avatar')) {
-            $existingMedia = $user->avatar ? Media::find($user->avatar) : null;
-
-            $options = new MediaUploadOptions(
-                collection: 'avatars',
-                resizeDimensions: [400, 400, 'fit'],
-                convertFormat: 'webp',
-                optimizeImage: true,
-                generateThumbnail: true,
-                thumbnailDimensions: [200, 200]
-            );
-
             try {
-                $newMedia = $this->mediaService->uploadOrUpdate(
-                    $request->file('avatar'),
-                    $user->id,
-                    $existingMedia,
-                    $options
+                $this->mediaService->replaceUserAvatar(
+                    user: $user,
+                    file: $request->file('avatar'),
                 );
-
-                if ($newMedia instanceof Media) {
-                    $user->avatar = $newMedia->id;
-                }
             } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Avatar upload failed: '.$e->getMessage(), [
+                    'user_id' => $user->id,
+                    'exception' => $e,
+                ]);
+
                 return back()->withErrors([
-                    'avatar' => 'Failed to upload avatar. Please try again.',
+                    'avatar' => 'Failed to upload avatar. Please try again. '.$e->getMessage(),
                 ]);
             }
         }

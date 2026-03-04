@@ -37,7 +37,7 @@ export function UsersFilters({
     return (
         <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full max-w-sm flex-1">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     placeholder="Search users..."
                     value={search}
@@ -91,7 +91,7 @@ export function UsersFilters({
                         onClick={onClearFilters}
                         className="h-9 w-9"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="size-4" />
                         <span className="sr-only">Clear filters</span>
                     </Button>
                 )}

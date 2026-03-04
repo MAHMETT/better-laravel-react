@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Services\Media\MediaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
+    public function __construct(protected MediaService $mediaService) {}
+
     /**
      * Display a listing of users.
      */
@@ -260,5 +263,55 @@ class UserController extends Controller
             'users' => $users,
             'filters' => array_merge($filters, ['per_page' => $perPage]),
         ]);
+    }
+
+    /**
+     * Update user avatar.
+     */
+    public function updateAvatar(Request $request): RedirectResponse
+    {
+        $userId = $this->getUserIdFromRequest($request);
+        $user = User::withTrashed()->find($userId);
+
+        if (! $user) {
+            return back()->withErrors(['avatar' => 'User not found.']);
+        }
+
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120', 'min:10'],
+        ]);
+
+        try {
+            $this->mediaService->replaceUserAvatar(
+                user: $user,
+                file: $request->file('avatar'),
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Avatar upload failed: '.$e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+
+            return back()->withErrors(['avatar' => 'Failed to upload avatar. Please try again. '.$e->getMessage()]);
+        }
+
+        return back()->with('success', 'Avatar updated successfully.');
+    }
+
+    /**
+     * Delete user avatar.
+     */
+    public function deleteAvatar(Request $request): RedirectResponse
+    {
+        $userId = $this->getUserIdFromRequest($request);
+        $user = User::withTrashed()->find($userId);
+
+        if (! $user) {
+            return back()->withErrors(['avatar' => 'User not found.']);
+        }
+
+        $this->mediaService->deleteUserAvatar($user);
+
+        return back()->with('success', 'Avatar deleted successfully.');
     }
 }

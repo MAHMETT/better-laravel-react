@@ -1,7 +1,7 @@
 import { Form } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { confirm } from '@/routes/two-factor';
+import { create } from 'zustand';
 import AlertError from './alert-error';
 import { Spinner } from './ui/spinner';
 
@@ -145,7 +146,8 @@ function TwoFactorVerificationStep({
     onClose: () => void;
     onBack: () => void;
 }) {
-    const [code, setCode] = useState<string>('');
+    const code = useTwoFactorSetupModalStore((state) => state.code);
+    const setCode = useTwoFactorSetupModalStore((state) => state.setCode);
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -240,6 +242,22 @@ type Props = {
     errors: string[];
 };
 
+interface TwoFactorSetupModalState {
+    showVerificationStep: boolean;
+    code: string;
+    setShowVerificationStep: (showVerificationStep: boolean) => void;
+    setCode: (code: string) => void;
+    reset: () => void;
+}
+
+const useTwoFactorSetupModalStore = create<TwoFactorSetupModalState>((set) => ({
+    showVerificationStep: false,
+    code: '',
+    setShowVerificationStep: (showVerificationStep) => set({ showVerificationStep }),
+    setCode: (code) => set({ code }),
+    reset: () => set({ showVerificationStep: false, code: '' }),
+}));
+
 export default function TwoFactorSetupModal({
     isOpen,
     onClose,
@@ -251,8 +269,14 @@ export default function TwoFactorSetupModal({
     fetchSetupData,
     errors,
 }: Props) {
-    const [showVerificationStep, setShowVerificationStep] =
-        useState<boolean>(false);
+    const showVerificationStep = useTwoFactorSetupModalStore(
+        (state) => state.showVerificationStep,
+    );
+    const setShowVerificationStep = useTwoFactorSetupModalStore(
+        (state) => state.setShowVerificationStep,
+    );
+    const setCode = useTwoFactorSetupModalStore((state) => state.setCode);
+    const resetStore = useTwoFactorSetupModalStore((state) => state.reset);
 
     const modalConfig = useMemo<{
         title: string;
@@ -293,15 +317,15 @@ export default function TwoFactorSetupModal({
 
         clearSetupData();
         onClose();
-    }, [requiresConfirmation, clearSetupData, onClose]);
+    }, [clearSetupData, onClose, requiresConfirmation, setShowVerificationStep]);
 
     const resetModalState = useCallback(() => {
-        setShowVerificationStep(false);
+        resetStore();
 
         if (twoFactorEnabled) {
             clearSetupData();
         }
-    }, [twoFactorEnabled, clearSetupData]);
+    }, [clearSetupData, resetStore, twoFactorEnabled]);
 
     useEffect(() => {
         if (isOpen && !qrCodeSvg) {
@@ -313,6 +337,12 @@ export default function TwoFactorSetupModal({
         resetModalState();
         onClose();
     }, [onClose, resetModalState]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setCode('');
+        }
+    }, [isOpen, setCode]);
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>

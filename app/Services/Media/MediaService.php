@@ -4,14 +4,41 @@ namespace App\Services\Media;
 
 use App\Enums\MediaType;
 use App\Models\Media;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image;
+use Throwable;
 
 class MediaService
 {
+    protected const AVATAR_DISK = 'public';
+
+    protected const AVATAR_DIRECTORY_TEMPLATE = 'users/%d/avatar';
+
+    protected const AVATAR_ORIGINAL_FILENAME = 'original.webp';
+
+    protected const AVATAR_THUMBNAIL_PREFIX = 'thumbnail_';
+
+    protected const AVATAR_THUMBNAIL_WIDTH = 200;
+
+    protected const AVATAR_THUMBNAIL_HEIGHT = 200;
+
+    protected const AVATAR_ORIGINAL_QUALITY = 90;
+
+    protected const AVATAR_THUMBNAIL_QUALITY = 80;
+
+    protected const AVATAR_ALLOWED_MIME_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+    ];
+
+    protected const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
+
     protected array $globalAllowedMimes = [
         'image/jpeg',
         'image/png',
@@ -68,16 +95,123 @@ class MediaService
         });
     }
 
+    /**
+     * Replace a user's avatar with deterministic original and thumbnail paths.
+     * Ensures a single active avatar media record and removes stale avatar files.
+     */
+    public function replaceUserAvatar(User $user, UploadedFile $file): Media
+    {
+        $avatarOptions = new MediaUploadOptions(
+            disk: self::AVATAR_DISK,
+            collection: 'avatars',
+            allowedMimes: self::AVATAR_ALLOWED_MIME_TYPES,
+            maxSize: self::AVATAR_MAX_SIZE,
+        );
+
+        $this->validateFile($file, $avatarOptions);
+
+        return DB::transaction(function () use ($file, $user) {
+            /** @var User $lockedUser */
+            $lockedUser = User::query()
+                ->whereKey($user->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $existingAvatarMedia = $lockedUser->avatar
+                ? Media::query()->whereKey($lockedUser->avatar)->lockForUpdate()->first()
+                : null;
+
+            $oldOriginalPath = $existingAvatarMedia?->path;
+            $oldThumbnailPath = $this->extractThumbnailPath($existingAvatarMedia);
+
+            $storedAvatar = $this->storeAvatarVariants($file, $lockedUser->id);
+
+            if ($existingAvatarMedia) {
+                $existingAvatarMedia->fill([
+                    'name' => $storedAvatar['name'],
+                    'path' => $storedAvatar['path'],
+                    'disk' => self::AVATAR_DISK,
+                    'type' => $storedAvatar['type'],
+                    'extension' => $storedAvatar['extension'],
+                    'size' => $storedAvatar['size'],
+                    'uploaded_by' => $lockedUser->id,
+                    'collection' => 'avatars',
+                    'metadata' => $storedAvatar['metadata'],
+                ])->save();
+
+                $avatarMedia = $existingAvatarMedia;
+            } else {
+                $avatarMedia = Media::create([
+                    'name' => $storedAvatar['name'],
+                    'path' => $storedAvatar['path'],
+                    'disk' => self::AVATAR_DISK,
+                    'type' => $storedAvatar['type'],
+                    'extension' => $storedAvatar['extension'],
+                    'size' => $storedAvatar['size'],
+                    'uploaded_by' => $lockedUser->id,
+                    'collection' => 'avatars',
+                    'metadata' => $storedAvatar['metadata'],
+                ]);
+            }
+
+            $lockedUser->avatar = $avatarMedia->id;
+            $lockedUser->save();
+
+            $this->deleteOldAvatarPathsIfChanged(
+                oldOriginalPath: $oldOriginalPath,
+                oldThumbnailPath: $oldThumbnailPath,
+                newOriginalPath: $storedAvatar['path'],
+                newThumbnailPath: $storedAvatar['metadata']['thumbnail_path'],
+            );
+
+            $this->deleteOrphanAvatarMedia(
+                userId: $lockedUser->id,
+                keepMediaId: $avatarMedia->id,
+            );
+
+            return $avatarMedia;
+        });
+    }
+
+    /**
+     * Delete a user's avatar media and all stale avatar files.
+     */
+    public function deleteUserAvatar(User $user): void
+    {
+        DB::transaction(function () use ($user) {
+            /** @var User $lockedUser */
+            $lockedUser = User::query()
+                ->whereKey($user->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $avatarMedia = Media::query()
+                ->where('uploaded_by', $lockedUser->id)
+                ->where('collection', 'avatars')
+                ->get();
+
+            foreach ($avatarMedia as $media) {
+                $this->deleteMediaFiles($media);
+                $media->delete();
+            }
+
+            if ($lockedUser->avatar !== null) {
+                $lockedUser->avatar = null;
+                $lockedUser->save();
+            }
+        });
+    }
+
     protected function uploadSingle(UploadedFile $file, int $userId, MediaUploadOptions $options): Media
     {
         $this->validateFile($file, $options);
 
         return DB::transaction(function () use ($file, $userId, $options) {
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->extension();
-            $fileName = $this->generateSecureFileName($originalName, $extension);
+            $extension = $options->convertFormat ?? $file->extension();
+            $fileName = $this->generateAvatarFileName($extension);
 
-            $directory = $options->directory ?? $this->defaultDirectory($file, $options->collection);
+            $directory = $options->directory ?? $this->avatarDirectory($userId, $options);
             $path = $file->storeAs($directory, $fileName, $options->disk);
 
             $metadata = $options->extraMetadata;
@@ -97,8 +231,11 @@ class MediaService
                     // Update path to converted path
                     if (isset($conversionResult['converted_path'])) {
                         $path = $conversionResult['converted_path'];
-                        // Update file size after conversion
-                        $fileSize = Storage::disk($options->disk)->size($path);
+                        $fileSize = $this->resolveStoredFileSize(
+                            disk: $options->disk,
+                            path: $path,
+                            fallbackSize: $fileSize,
+                        );
                     }
                     // Update MIME type and extension based on conversion
                     if (isset($conversionResult['converted_to'])) {
@@ -142,6 +279,41 @@ class MediaService
         return now()->timestamp.'_'.Str::uuid().'_'.$safeName.'.'.$extension;
     }
 
+    protected function generateAvatarFileName(string $extension): string
+    {
+        return 'avatar_'.Str::uuid()->toString().'.'.$extension;
+    }
+
+    /**
+     * @return array{directory: string, original: string, thumbnail: string}
+     */
+    protected function avatarPaths(int $userId, ?string $thumbnailFileName = null): array
+    {
+        $directory = sprintf(self::AVATAR_DIRECTORY_TEMPLATE, $userId);
+        $thumbnailFileName ??= self::AVATAR_THUMBNAIL_PREFIX.Str::uuid()->toString().'.webp';
+
+        return [
+            'directory' => trim($directory, '/'),
+            'original' => trim($directory, '/').'/'.self::AVATAR_ORIGINAL_FILENAME,
+            'thumbnail' => trim($directory, '/').'/'.$thumbnailFileName,
+        ];
+    }
+
+    protected function avatarDirectory(int $userId, MediaUploadOptions $options): string
+    {
+        if ($options->directory) {
+            return $options->directory;
+        }
+
+        $base = 'users/'.$userId.'/avatar/';
+
+        if ($options->generateThumbnail) {
+            return $base;
+        }
+
+        return $base;
+    }
+
     protected function defaultDirectory(UploadedFile $file, ?string $collection): string
     {
         $base = 'media/';
@@ -174,14 +346,11 @@ class MediaService
 
         if ($options->generateThumbnail) {
             [$thumbWidth, $thumbHeight] = $options->thumbnailDimensions;
-            $thumbDir = dirname($fullPath).'/thumbnails';
-            if (! is_dir($thumbDir)) {
-                mkdir($thumbDir, 0755, true);
-            }
-            $thumbPath = $thumbDir.'/'.basename($path);
+            $thumbPath = str_replace(basename($path), 'thumbnail_'.basename($path), $path);
+            $thumbFullPath = Storage::disk($options->disk)->path($thumbPath);
             $thumb = Image::read($fullPath)->cover($thumbWidth, $thumbHeight);
-            $thumb->save($thumbPath);
-            $metadata['thumbnail_path'] = str_replace(Storage::disk($options->disk)->path(''), '', $thumbPath);
+            $thumb->save($thumbFullPath);
+            $metadata['thumbnail_path'] = $thumbPath;
         }
 
         return $metadata;
@@ -245,14 +414,168 @@ class MediaService
     }
 
     /**
+     * @return array{
+     *     name: string,
+     *     path: string,
+     *     type: string,
+     *     extension: string,
+     *     size: int,
+     *     metadata: array{
+     *         original_width: int,
+     *         original_height: int,
+     *         original_format: string,
+     *         thumbnail_path: string,
+     *         thumbnail_width: int,
+     *         thumbnail_height: int,
+     *         thumbnail_size: int
+     *     }
+     * }
+     */
+    protected function storeAvatarVariants(UploadedFile $file, int $userId): array
+    {
+        $paths = $this->avatarPaths($userId);
+        $disk = Storage::disk(self::AVATAR_DISK);
+        $disk->makeDirectory($paths['directory']);
+
+        try {
+            $originalImage = Image::read($file->getRealPath());
+        } catch (Throwable $exception) {
+            throw new \RuntimeException('The uploaded avatar image is corrupted or unreadable.', previous: $exception);
+        }
+
+        $originalWidth = $originalImage->width();
+        $originalHeight = $originalImage->height();
+
+        $originalFullPath = $disk->path($paths['original']);
+        $thumbnailFullPath = $disk->path($paths['thumbnail']);
+
+        $originalImage->save($originalFullPath, self::AVATAR_ORIGINAL_QUALITY);
+
+        $thumbnailImage = Image::read($file->getRealPath())->cover(
+            self::AVATAR_THUMBNAIL_WIDTH,
+            self::AVATAR_THUMBNAIL_HEIGHT,
+        );
+        $thumbnailImage->save($thumbnailFullPath, self::AVATAR_THUMBNAIL_QUALITY);
+
+        try {
+            $disk->setVisibility($paths['original'], 'public');
+            $disk->setVisibility($paths['thumbnail'], 'public');
+        } catch (Throwable) {
+            // Some drivers may not support explicit visibility updates.
+        }
+
+        $fallbackOriginalSize = max(0, (int) ($file->getSize() ?? 0));
+        $originalSize = $this->resolveStoredFileSize(
+            disk: self::AVATAR_DISK,
+            path: $paths['original'],
+            fallbackSize: $fallbackOriginalSize,
+        );
+        $thumbnailSize = $this->resolveStoredFileSize(
+            disk: self::AVATAR_DISK,
+            path: $paths['thumbnail'],
+            fallbackSize: 0,
+        );
+
+        return [
+            'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+            'path' => $paths['original'],
+            'type' => 'image/webp',
+            'extension' => 'webp',
+            'size' => $originalSize,
+            'metadata' => [
+                'original_width' => $originalWidth,
+                'original_height' => $originalHeight,
+                'original_format' => strtolower($file->extension()),
+                'thumbnail_path' => $paths['thumbnail'],
+                'thumbnail_width' => self::AVATAR_THUMBNAIL_WIDTH,
+                'thumbnail_height' => self::AVATAR_THUMBNAIL_HEIGHT,
+                'thumbnail_size' => $thumbnailSize,
+            ],
+        ];
+    }
+
+    protected function resolveStoredFileSize(string $disk, string $path, int $fallbackSize): int
+    {
+        try {
+            $storedSize = Storage::disk($this->resolveDiskName($disk))->size($path);
+
+            return is_int($storedSize) && $storedSize > 0 ? $storedSize : $fallbackSize;
+        } catch (Throwable) {
+            return $fallbackSize;
+        }
+    }
+
+    protected function extractThumbnailPath(?Media $media): ?string
+    {
+        if (! $media || ! is_array($media->metadata)) {
+            return null;
+        }
+
+        $thumbnailPath = $media->metadata['thumbnail_path'] ?? null;
+
+        return is_string($thumbnailPath) && $thumbnailPath !== ''
+            ? $thumbnailPath
+            : null;
+    }
+
+    protected function deleteOldAvatarPathsIfChanged(
+        ?string $oldOriginalPath,
+        ?string $oldThumbnailPath,
+        string $newOriginalPath,
+        string $newThumbnailPath,
+    ): void {
+        $disk = Storage::disk(self::AVATAR_DISK);
+
+        if (
+            is_string($oldOriginalPath) &&
+            $oldOriginalPath !== '' &&
+            $oldOriginalPath !== $newOriginalPath &&
+            $oldOriginalPath !== $newThumbnailPath
+        ) {
+            $disk->delete($oldOriginalPath);
+        }
+
+        if (
+            is_string($oldThumbnailPath) &&
+            $oldThumbnailPath !== '' &&
+            $oldThumbnailPath !== $newOriginalPath &&
+            $oldThumbnailPath !== $newThumbnailPath
+        ) {
+            $disk->delete($oldThumbnailPath);
+        }
+    }
+
+    protected function deleteOrphanAvatarMedia(int $userId, string $keepMediaId): void
+    {
+        $orphanMedia = Media::query()
+            ->where('uploaded_by', $userId)
+            ->where('collection', 'avatars')
+            ->where('id', '!=', $keepMediaId)
+            ->get();
+
+        foreach ($orphanMedia as $media) {
+            $this->deleteMediaFiles($media);
+            $media->delete();
+        }
+    }
+
+    /**
      * Delete media files (image and thumbnail) from storage.
      */
     protected function deleteMediaFiles(Media $media): void
     {
-        Storage::disk($media->disk)->delete($media->path);
+        try {
+            Storage::disk($this->resolveDiskName($media->disk))->delete($media->path);
+        } catch (Throwable) {
+            // File may already be deleted; ignore to keep deletion idempotent.
+        }
 
-        if (! empty($media->metadata['thumbnail_path'])) {
-            Storage::disk($media->disk)->delete($media->metadata['thumbnail_path']);
+        if (is_array($media->metadata) && ! empty($media->metadata['thumbnail_path'])) {
+            try {
+                Storage::disk($this->resolveDiskName($media->disk))->delete($media->metadata['thumbnail_path']);
+            } catch (Throwable) {
+                // File may already be deleted; ignore to keep deletion idempotent.
+            }
         }
     }
 
@@ -285,11 +608,13 @@ class MediaService
 
     public function getUrl(Media $media, bool $signed = false, ?\DateTimeInterface $expiration = null): string
     {
+        $disk = $this->resolveDiskName($media->disk);
+
         if ($signed) {
-            return Storage::disk($media->disk)->temporaryUrl($media->path, $expiration ?? now()->addHours(24));
+            return Storage::disk($disk)->temporaryUrl($media->path, $expiration ?? now()->addHours(24));
         }
 
-        return Storage::disk($media->disk)->url($media->path);
+        return Storage::disk($disk)->url($media->path);
     }
 
     public function update(Media $media, array $data): Media
@@ -324,5 +649,14 @@ class MediaService
     protected function resolveMedia(Media|string $media): ?Media
     {
         return is_string($media) ? $this->find($media) : $media;
+    }
+
+    protected function resolveDiskName(string $disk): string
+    {
+        if (config()->has("filesystems.disks.{$disk}")) {
+            return $disk;
+        }
+
+        return $disk === 'private' ? 'local' : $disk;
     }
 }

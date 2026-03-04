@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,13 +12,49 @@ import {
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
-import { twoFactorChallengeSchema, type TwoFactorChallengeData } from '@/schemas';
+import { twoFactorChallengeSchema  } from '@/schemas';
+import type {TwoFactorChallengeData} from '@/schemas';
 import { validateForm } from '@/schemas/validate';
+import { create } from 'zustand';
+
+interface TwoFactorChallengeState {
+    showRecoveryInput: boolean;
+    code: string;
+    validationErrors: Record<string, string>;
+    setShowRecoveryInput: (showRecoveryInput: boolean) => void;
+    setCode: (code: string) => void;
+    setValidationErrors: (validationErrors: Record<string, string>) => void;
+    clearValidationErrors: () => void;
+}
+
+const useTwoFactorChallengeStore = create<TwoFactorChallengeState>((set) => ({
+    showRecoveryInput: false,
+    code: '',
+    validationErrors: {},
+    setShowRecoveryInput: (showRecoveryInput) => set({ showRecoveryInput }),
+    setCode: (code) => set({ code }),
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    clearValidationErrors: () => set({ validationErrors: {} }),
+}));
 
 export default function TwoFactorChallenge() {
-    const [showRecoveryInput, setShowRecoveryInput] = useState<boolean>(false);
-    const [code, setCode] = useState<string>('');
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const showRecoveryInput = useTwoFactorChallengeStore(
+        (state) => state.showRecoveryInput,
+    );
+    const code = useTwoFactorChallengeStore((state) => state.code);
+    const validationErrors = useTwoFactorChallengeStore(
+        (state) => state.validationErrors,
+    );
+    const setShowRecoveryInput = useTwoFactorChallengeStore(
+        (state) => state.setShowRecoveryInput,
+    );
+    const setCode = useTwoFactorChallengeStore((state) => state.setCode);
+    const setValidationErrors = useTwoFactorChallengeStore(
+        (state) => state.setValidationErrors,
+    );
+    const clearValidationErrors = useTwoFactorChallengeStore(
+        (state) => state.clearValidationErrors,
+    );
 
     const authConfigContent = useMemo<{
         title: string;
@@ -46,7 +82,7 @@ export default function TwoFactorChallenge() {
         setShowRecoveryInput(!showRecoveryInput);
         clearErrors();
         setCode('');
-        setValidationErrors({});
+        clearValidationErrors();
     };
 
     const handleSubmit = (formData: FormData) => {
@@ -64,7 +100,7 @@ export default function TwoFactorChallenge() {
             throw new Error('Validation failed');
         }
 
-        setValidationErrors({});
+        clearValidationErrors();
         return data;
     };
 

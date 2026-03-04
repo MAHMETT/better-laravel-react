@@ -7,6 +7,7 @@ class MediaUploadOptions
     public function __construct(
         public string $disk = 'public',
         public ?string $directory = null,
+        public ?int $userId = null,
         public array $allowedMimes = [],
         public ?int $maxSize = null,
         public bool $optimizeImage = true,

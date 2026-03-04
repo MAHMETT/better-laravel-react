@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head } from '@inertiajs/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
-import { passwordUpdateSchema, type PasswordUpdateData } from '@/schemas';
+import { passwordUpdateSchema  } from '@/schemas';
+import type {PasswordUpdateData} from '@/schemas';
 import { validateForm } from '@/schemas/validate';
 import type { BreadcrumbItem } from '@/types';
+import { create } from 'zustand';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -21,10 +23,34 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+interface PasswordSettingsState {
+    validationErrors: Record<string, string>;
+    setValidationErrors: (validationErrors: Record<string, string>) => void;
+    clearValidationErrors: () => void;
+}
+
+const usePasswordSettingsStore = create<PasswordSettingsState>((set) => ({
+    validationErrors: {},
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    clearValidationErrors: () => set({ validationErrors: {} }),
+}));
+
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const validationErrors = usePasswordSettingsStore(
+        (state) => state.validationErrors,
+    );
+    const setValidationErrors = usePasswordSettingsStore(
+        (state) => state.setValidationErrors,
+    );
+    const clearValidationErrors = usePasswordSettingsStore(
+        (state) => state.clearValidationErrors,
+    );
+
+    useEffect(() => {
+        clearValidationErrors();
+    }, [clearValidationErrors]);
 
     const handleSubmit = (formData: FormData) => {
         const data: PasswordUpdateData = {
@@ -42,7 +68,7 @@ export default function Password() {
             throw new Error('Validation failed');
         }
 
-        setValidationErrors({});
+        clearValidationErrors();
         return data;
     };
 

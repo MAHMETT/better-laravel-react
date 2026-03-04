@@ -1,3 +1,4 @@
+import { PhotoUploadModal } from '@/components/avatar';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,8 +21,9 @@ import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, User } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, UserCog } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, LoaderCircleIcon, UserCog } from 'lucide-react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 import { toast } from 'sonner';
 
 interface Props {
@@ -36,6 +38,53 @@ interface FormData {
     role: 'admin' | 'user';
     status: 'enable' | 'disable';
 }
+
+interface EditUserPageState {
+    formData: FormData;
+    validationErrors: Record<string, string>;
+    processing: boolean;
+    showPasswordFields: boolean;
+    isUploadingAvatar: boolean;
+    showAvatarModal: boolean;
+    setFormData: (formData: FormData) => void;
+    setValidationErrors: (validationErrors: Record<string, string>) => void;
+    setProcessing: (processing: boolean) => void;
+    setShowPasswordFields: (showPasswordFields: boolean) => void;
+    setIsUploadingAvatar: (isUploadingAvatar: boolean) => void;
+    setShowAvatarModal: (showAvatarModal: boolean) => void;
+    initialize: (formData: FormData) => void;
+}
+
+const useEditUserPageStore = create<EditUserPageState>((set) => ({
+    formData: {
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
+        role: 'user',
+        status: 'enable',
+    },
+    validationErrors: {},
+    processing: false,
+    showPasswordFields: false,
+    isUploadingAvatar: false,
+    showAvatarModal: false,
+    setFormData: (formData) => set({ formData }),
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    setProcessing: (processing) => set({ processing }),
+    setShowPasswordFields: (showPasswordFields) => set({ showPasswordFields }),
+    setIsUploadingAvatar: (isUploadingAvatar) => set({ isUploadingAvatar }),
+    setShowAvatarModal: (showAvatarModal) => set({ showAvatarModal }),
+    initialize: (formData) =>
+        set({
+            formData,
+            validationErrors: {},
+            processing: false,
+            showPasswordFields: false,
+            isUploadingAvatar: false,
+            showAvatarModal: false,
+        }),
+}));
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -53,28 +102,51 @@ export default function EditUser({ user }: Props) {
     const flash = page.props.flash as
         | { success?: string; error?: string }
         | undefined;
-    const [formData, setFormData] = useState<FormData>({
-        name: user.name,
-        email: user.email,
-        password: '',
-        password_confirmation: '',
-        role: user.role,
-        status: user.status,
-    });
-    const [validationErrors, setValidationErrors] = useState<
-        Record<string, string>
-    >({});
-    const [processing, setProcessing] = useState(false);
-    const [showPasswordFields, setShowPasswordFields] = useState(false);
+    const formData = useEditUserPageStore((state) => state.formData);
+    const validationErrors = useEditUserPageStore(
+        (state) => state.validationErrors,
+    );
+    const processing = useEditUserPageStore((state) => state.processing);
+    const showPasswordFields = useEditUserPageStore(
+        (state) => state.showPasswordFields,
+    );
+    const isUploadingAvatar = useEditUserPageStore(
+        (state) => state.isUploadingAvatar,
+    );
+    const showAvatarModal = useEditUserPageStore((state) => state.showAvatarModal);
+    const setFormData = useEditUserPageStore((state) => state.setFormData);
+    const setValidationErrors = useEditUserPageStore(
+        (state) => state.setValidationErrors,
+    );
+    const setProcessing = useEditUserPageStore((state) => state.setProcessing);
+    const setShowPasswordFields = useEditUserPageStore(
+        (state) => state.setShowPasswordFields,
+    );
+    const setIsUploadingAvatar = useEditUserPageStore(
+        (state) => state.setIsUploadingAvatar,
+    );
+    const setShowAvatarModal = useEditUserPageStore(
+        (state) => state.setShowAvatarModal,
+    );
+    const initialize = useEditUserPageStore((state) => state.initialize);
 
-    // Show success messages from flash
+    useEffect(() => {
+        initialize({
+            name: user.name,
+            email: user.email,
+            password: '',
+            password_confirmation: '',
+            role: user.role,
+            status: user.status,
+        });
+    }, [initialize, user.email, user.name, user.role, user.status]);
+
     useEffect(() => {
         if (flash?.success) {
             toast.success(flash.success);
         }
     }, [flash]);
 
-    // Track if form has changes
     const hasChanges =
         formData.name !== user.name ||
         formData.email !== user.email ||
@@ -82,12 +154,54 @@ export default function EditUser({ user }: Props) {
         formData.status !== user.status ||
         formData.password !== '';
 
+    const handleAvatarUpload = (file: File) => {
+        setIsUploadingAvatar(true);
+        const toastId = toast.loading('Updating avatar...');
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        router.patch(users.updateAvatar.url({ id: user.id }), formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Avatar updated successfully', { id: toastId });
+            },
+            onError: (errors: Record<string, string>) => {
+                toast.error(errors.avatar || 'Failed to update avatar', {
+                    id: toastId,
+                });
+            },
+            onFinish: () => {
+                setIsUploadingAvatar(false);
+            },
+        });
+    };
+
+    const handleAvatarDelete = () => {
+        setIsUploadingAvatar(true);
+        const toastId = toast.loading('Removing avatar...');
+
+        router.delete(users.deleteAvatar.url({ id: user.id }), {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Avatar removed successfully', { id: toastId });
+            },
+            onError: (errors: Record<string, string>) => {
+                toast.error(errors.avatar || 'Failed to remove avatar', {
+                    id: toastId,
+                });
+            },
+            onFinish: () => {
+                setIsUploadingAvatar(false);
+            },
+        });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setProcessing(true);
         setValidationErrors({});
 
-        // Prepare data for submission - only send changed fields
         const dataToSubmit: Record<string, string> = {};
 
         if (formData.name !== user.name) {
@@ -106,13 +220,11 @@ export default function EditUser({ user }: Props) {
             dataToSubmit.status = formData.status;
         }
 
-        // Only include password if changed
         if (formData.password && formData.password.length > 0) {
             dataToSubmit.password = formData.password;
             dataToSubmit.password_confirmation = formData.password_confirmation;
         }
 
-        // Validate only sent fields
         const errors: Record<string, string> = {};
 
         if (dataToSubmit.name) {
@@ -148,7 +260,6 @@ export default function EditUser({ user }: Props) {
             return;
         }
 
-        // If no changes, don't submit
         if (Object.keys(dataToSubmit).length === 0) {
             toast.info('No changes to save');
             setProcessing(false);
@@ -187,7 +298,6 @@ export default function EditUser({ user }: Props) {
             <Head title="Edit User" />
 
             <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
-                {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <Button
@@ -209,7 +319,6 @@ export default function EditUser({ user }: Props) {
                     </div>
                 </div>
 
-                {/* Form */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -223,8 +332,49 @@ export default function EditUser({ user }: Props) {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="flex items-center gap-6">
+                                <div
+                                    className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full border-2 border-muted"
+                                    onClick={() => setShowAvatarModal(true)}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (
+                                            e.key === 'Enter' ||
+                                            e.key === ' '
+                                        ) {
+                                            setShowAvatarModal(true);
+                                        }
+                                    }}
+                                >
+                                    {user.avatar_url ? (
+                                        <img
+                                            src={user.avatar_url}
+                                            alt={user.name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-muted text-xl font-semibold">
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                                        <span className="text-xs text-white">
+                                            Change
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="font-medium">{user.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {user.avatar_url
+                                            ? 'Click to change profile photo'
+                                            : 'No profile photo'}
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="grid gap-4 sm:grid-cols-2">
-                                {/* Name */}
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Full Name</Label>
                                     <Input
@@ -244,7 +394,6 @@ export default function EditUser({ user }: Props) {
                                     />
                                 </div>
 
-                                {/* Email */}
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email Address</Label>
                                     <Input
@@ -265,7 +414,6 @@ export default function EditUser({ user }: Props) {
                                 </div>
                             </div>
 
-                            {/* Password Section */}
                             {!showPasswordFields ? (
                                 <div className="rounded-lg border bg-muted/50 p-4">
                                     <div className="flex items-center justify-between">
@@ -292,7 +440,6 @@ export default function EditUser({ user }: Props) {
                                 </div>
                             ) : (
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    {/* Password */}
                                     <div className="space-y-2">
                                         <Label htmlFor="password">
                                             New Password
@@ -321,7 +468,6 @@ export default function EditUser({ user }: Props) {
                                         )}
                                     </div>
 
-                                    {/* Password Confirmation */}
                                     <div className="space-y-2">
                                         <Label htmlFor="password_confirmation">
                                             Confirm New Password
@@ -369,7 +515,6 @@ export default function EditUser({ user }: Props) {
                             )}
 
                             <div className="grid gap-4 sm:grid-cols-2">
-                                {/* Role */}
                                 <div className="space-y-2">
                                     <Label htmlFor="role">Role</Label>
                                     <Select
@@ -398,7 +543,6 @@ export default function EditUser({ user }: Props) {
                                     />
                                 </div>
 
-                                {/* Status */}
                                 <div className="space-y-2">
                                     <Label htmlFor="status">Status</Label>
                                     <Select
@@ -430,7 +574,6 @@ export default function EditUser({ user }: Props) {
                                 </div>
                             </div>
 
-                            {/* Actions */}
                             <div className="flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center">
                                 <Button
                                     type="submit"
@@ -439,30 +582,12 @@ export default function EditUser({ user }: Props) {
                                 >
                                     {processing ? (
                                         <>
-                                            <svg
-                                                className="mr-2 h-4 w-4 animate-spin"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <circle
-                                                    className="opacity-25"
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="10"
-                                                    stroke="currentColor"
-                                                    strokeWidth="4"
-                                                    fill="none"
-                                                />
-                                                <path
-                                                    className="opacity-75"
-                                                    fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                />
-                                            </svg>
+                                            <LoaderCircleIcon className="size-4 animate-spin" />
                                             Saving...
                                         </>
                                     ) : (
                                         <>
-                                            <UserCog className="mr-2 h-4 w-4" />
+                                            <UserCog className="mr-2 size-4" />
                                             Save Changes
                                         </>
                                     )}
@@ -480,6 +605,19 @@ export default function EditUser({ user }: Props) {
                         </form>
                     </CardContent>
                 </Card>
+
+                <PhotoUploadModal
+                    open={showAvatarModal}
+                    onOpenChange={setShowAvatarModal}
+                    currentAvatar={user.avatar_original_url ?? user.avatar_url}
+                    userName={user.name}
+                    userId={user.id}
+                    onUpload={handleAvatarUpload}
+                    onDelete={handleAvatarDelete}
+                    canDelete={!!user.avatar_url}
+                    isUploading={isUploadingAvatar}
+                    isDeleting={isUploadingAvatar}
+                />
             </div>
         </AppLayout>
     );

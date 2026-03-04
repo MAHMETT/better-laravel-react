@@ -15,6 +15,8 @@ export type AvatarMedia = {
     size: number;
     type: string;
     extension: string;
+    original_url?: string;
+    thumbnail_url?: string;
     metadata: {
         original_width?: number;
         original_height?: number;
@@ -38,6 +40,10 @@ export type User = {
     status: UserStatus;
     avatar?: string | null;
     avatar_url?: string | null;
+    avatar_thumbnail?: string | null;
+    avatar_original?: string | null;
+    avatar_thumbnail_url?: string | null;
+    avatar_original_url?: string | null;
     avatarMedia?: AvatarMedia | null;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

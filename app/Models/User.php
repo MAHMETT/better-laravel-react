@@ -47,6 +47,8 @@ class User extends Authenticatable
      */
     protected $appends = [
         'avatar_url',
+        'avatar_thumbnail_url',
+        'avatar_original_url',
         'is_enabled',
     ];
 
@@ -101,6 +103,14 @@ class User extends Authenticatable
      */
     public function getAvatarUrlAttribute(): ?string
     {
+        return $this->getAvatarThumbnailUrlAttribute();
+    }
+
+    /**
+     * Get the avatar thumbnail URL for the user.
+     */
+    public function getAvatarThumbnailUrlAttribute(): ?string
+    {
         if (! $this->avatar) {
             return null;
         }
@@ -111,7 +121,25 @@ class User extends Authenticatable
             return null;
         }
 
-        return $media->getUrl();
+        return $media->getThumbnailUrl();
+    }
+
+    /**
+     * Get the avatar original URL for the user.
+     */
+    public function getAvatarOriginalUrlAttribute(): ?string
+    {
+        if (! $this->avatar) {
+            return null;
+        }
+
+        $media = $this->avatarMedia;
+
+        if (! $media) {
+            return null;
+        }
+
+        return $media->getOriginalUrl();
     }
 
     /**

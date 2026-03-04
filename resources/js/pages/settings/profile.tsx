@@ -1,22 +1,22 @@
-import { Transition } from '@headlessui/react';
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
-import { Camera, Check } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import { AvatarUploadModal } from '@/components/avatar/avatar-upload-modal';
+import { PhotoUploadModal } from '@/components/avatar';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit, update } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
+import { Transition } from '@headlessui/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Check, Camera } from 'lucide-react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -24,6 +24,22 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: edit().url,
     },
 ];
+
+interface ProfilePageState {
+    showAvatarModal: boolean;
+    isUploading: boolean;
+    setShowAvatarModal: (showAvatarModal: boolean) => void;
+    setIsUploading: (isUploading: boolean) => void;
+    reset: () => void;
+}
+
+const useProfilePageStore = create<ProfilePageState>((set) => ({
+    showAvatarModal: false,
+    isUploading: false,
+    setShowAvatarModal: (showAvatarModal) => set({ showAvatarModal }),
+    setIsUploading: (isUploading) => set({ isUploading }),
+    reset: () => set({ showAvatarModal: false, isUploading: false }),
+}));
 
 export default function Profile({
     mustVerifyEmail,
@@ -33,26 +49,40 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props;
-    const [avatarUploadOpen, setAvatarUploadOpen] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
+    const showAvatarModal = useProfilePageStore((state) => state.showAvatarModal);
+    const isUploading = useProfilePageStore((state) => state.isUploading);
+    const setShowAvatarModal = useProfilePageStore(
+        (state) => state.setShowAvatarModal,
+    );
+    const setIsUploading = useProfilePageStore((state) => state.setIsUploading);
+    const resetStore = useProfilePageStore((state) => state.reset);
 
-    const handleAvatarSelect = (file: File) => {
-        // Create form data and submit
+    useEffect(() => {
+        resetStore();
+    }, [resetStore]);
+
+    const handleAvatarUpload = (file: File) => {
+        setIsUploading(true);
+        const toastId = toast.loading('Updating profile picture...');
+
         const formData = new FormData();
         formData.append('avatar', file);
         formData.append('name', auth.user.name);
         formData.append('email', auth.user.email);
 
-        setIsUploading(true);
-
         router.patch(update().url, formData, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Profile picture updated successfully');
-                setAvatarUploadOpen(false);
+                toast.success('Profile picture updated successfully', {
+                    id: toastId,
+                });
+                setShowAvatarModal(false);
             },
             onError: (errors: Record<string, string>) => {
-                toast.error(errors.avatar || 'Failed to update profile picture');
+                toast.error(
+                    errors.avatar || 'Failed to update profile picture',
+                    { id: toastId },
+                );
             },
             onFinish: () => {
                 setIsUploading(false);
@@ -60,7 +90,14 @@ export default function Profile({
         });
     };
 
-    const currentAvatar = auth.user.avatar;
+    const currentAvatar =
+        auth.user.avatar ??
+        auth.user.avatar_thumbnail ??
+        auth.user.avatar_thumbnail_url;
+    const currentAvatarOriginal =
+        auth.user.avatar_original ??
+        auth.user.avatar_original_url ??
+        currentAvatar;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -77,7 +114,8 @@ export default function Profile({
                     />
 
                     <Form
-                        {...ProfileController.update.form()}
+                        method="patch"
+                        action={update().url}
                         options={{
                             preserveScroll: true,
                         }}
@@ -87,30 +125,48 @@ export default function Profile({
                         {({ processing, recentlySuccessful, errors }) => {
                             return (
                                 <>
-                                    {/* Avatar Section */}
                                     <div className="grid gap-4">
                                         <Label>Profile Picture</Label>
 
                                         <div className="flex items-start gap-6">
-                                            {/* Avatar Display */}
                                             <div className="group relative">
-                                                <Avatar className="h-24 w-24 overflow-hidden rounded-full border-2 border-muted transition-colors group-hover:border-primary">
-                                                    <AvatarImage
-                                                        src={currentAvatar ?? undefined}
-                                                        alt={auth.user.name}
-                                                    />
-                                                    <AvatarFallback className="text-2xl font-semibold">
-                                                        {auth.user.name
-                                                            ?.charAt(0)
-                                                            .toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                                <div
+                                                    className="h-24 w-24 cursor-pointer overflow-hidden rounded-full border-2 border-muted transition-colors group-hover:border-primary"
+                                                    onClick={() =>
+                                                        setShowAvatarModal(true)
+                                                    }
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onKeyDown={(e) => {
+                                                        if (
+                                                            e.key === 'Enter' ||
+                                                            e.key === ' '
+                                                        ) {
+                                                            setShowAvatarModal(
+                                                                true,
+                                                            );
+                                                        }
+                                                    }}
+                                                >
+                                                    {currentAvatar ? (
+                                                        <img
+                                                            src={currentAvatar}
+                                                            alt={auth.user.name}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center bg-muted text-2xl font-semibold">
+                                                            {auth.user.name
+                                                                ?.charAt(0)
+                                                                .toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                                {/* Change button overlay */}
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        setAvatarUploadOpen(true)
+                                                        setShowAvatarModal(true)
                                                     }
                                                     className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                                                     aria-label="Change profile picture"
@@ -119,7 +175,6 @@ export default function Profile({
                                                 </button>
                                             </div>
 
-                                            {/* Avatar Info & Actions */}
                                             <div className="flex flex-1 flex-col justify-center gap-2">
                                                 <div>
                                                     <h3 className="font-medium">
@@ -138,12 +193,12 @@ export default function Profile({
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() =>
-                                                            setAvatarUploadOpen(
-                                                                true
+                                                            setShowAvatarModal(
+                                                                true,
                                                             )
                                                         }
                                                     >
-                                                        <Camera className="mr-2 h-4 w-4" />
+                                                        <Camera className="mr-2 size-4" />
                                                         {currentAvatar
                                                             ? 'Change Picture'
                                                             : 'Upload Picture'}
@@ -157,10 +212,10 @@ export default function Profile({
                                                             onClick={() => {
                                                                 const link =
                                                                     document.createElement(
-                                                                        'a'
+                                                                        'a',
                                                                     );
                                                                 link.href =
-                                                                    currentAvatar;
+                                                                    currentAvatarOriginal;
                                                                 link.download =
                                                                     'profile-picture';
                                                                 link.click();
@@ -170,42 +225,16 @@ export default function Profile({
                                                         </Button>
                                                     )}
                                                 </div>
-
-                                                {/* Upload status */}
-                                                {isUploading && (
-                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                        <svg
-                                                            className="h-4 w-4 animate-spin"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <circle
-                                                                className="opacity-25"
-                                                                cx="12"
-                                                                cy="12"
-                                                                r="10"
-                                                                stroke="currentColor"
-                                                                strokeWidth="4"
-                                                                fill="none"
-                                                            />
-                                                            <path
-                                                                className="opacity-75"
-                                                                fill="currentColor"
-                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                            />
-                                                        </svg>
-                                                        Uploading...
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
 
-                                        {/* Backend validation errors */}
                                         {errors.avatar && (
-                                            <InputError message={errors.avatar} />
+                                            <InputError
+                                                message={errors.avatar}
+                                            />
                                         )}
                                     </div>
 
-                                    {/* Name Section */}
                                     <div className="grid gap-2">
                                         <Label htmlFor="name">Name</Label>
 
@@ -225,7 +254,6 @@ export default function Profile({
                                         />
                                     </div>
 
-                                    {/* Email Section */}
                                     <div className="grid gap-2">
                                         <Label htmlFor="email">
                                             Email address
@@ -248,7 +276,6 @@ export default function Profile({
                                         />
                                     </div>
 
-                                    {/* Email Verification Notice */}
                                     {mustVerifyEmail &&
                                         auth.user.email_verified_at ===
                                             null && (
@@ -269,7 +296,7 @@ export default function Profile({
                                                 {status ===
                                                     'verification-link-sent' && (
                                                     <div className="mt-2 flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
-                                                        <Check className="h-4 w-4" />
+                                                        <Check className="size-4" />
                                                         A new verification link
                                                         has been sent to your
                                                         email address.
@@ -278,36 +305,15 @@ export default function Profile({
                                             </div>
                                         )}
 
-                                    {/* Save Button */}
                                     <div className="flex items-center gap-4 border-t pt-6">
                                         <Button
                                             type="submit"
-                                            disabled={
-                                                processing || isUploading
-                                            }
+                                            disabled={processing || isUploading}
                                             data-test="update-profile-button"
                                         >
                                             {processing ? (
                                                 <>
-                                                    <svg
-                                                        className="mr-2 h-4 w-4 animate-spin"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <circle
-                                                            className="opacity-25"
-                                                            cx="12"
-                                                            cy="12"
-                                                            r="10"
-                                                            stroke="currentColor"
-                                                            strokeWidth="4"
-                                                            fill="none"
-                                                        />
-                                                        <path
-                                                            className="opacity-75"
-                                                            fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                        />
-                                                    </svg>
+                                                    <Spinner className="mr-2" />
                                                     Saving...
                                                 </>
                                             ) : (
@@ -335,13 +341,13 @@ export default function Profile({
 
                 <DeleteUser />
 
-                {/* Avatar Upload Modal */}
-                <AvatarUploadModal
-                    open={avatarUploadOpen}
-                    onOpenChange={setAvatarUploadOpen}
-                    currentAvatar={currentAvatar}
+                <PhotoUploadModal
+                    open={showAvatarModal}
+                    onOpenChange={setShowAvatarModal}
+                    currentAvatar={currentAvatarOriginal}
                     userName={auth.user.name}
-                    onAvatarSelect={handleAvatarSelect}
+                    onUpload={handleAvatarUpload}
+                    isUploading={isUploading}
                 />
             </SettingsLayout>
         </AppLayout>

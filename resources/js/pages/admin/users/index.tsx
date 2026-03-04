@@ -17,7 +17,8 @@ import users from '@/routes/users';
 import type { BreadcrumbItem, User, UserPagination } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Power, Trash2, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { create } from 'zustand';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -46,35 +47,112 @@ interface Props extends UserPagination {
     filters: Filters;
 }
 
+interface UsersIndexPageState {
+    search: string;
+    status: string;
+    role: string;
+    perPage: number;
+    userToDelete: User | null;
+    userToToggle: User | null;
+    isDeleting: boolean;
+    isToggling: boolean;
+    setSearch: (search: string) => void;
+    setStatus: (status: string) => void;
+    setRole: (role: string) => void;
+    setPerPage: (perPage: number) => void;
+    setUserToDelete: (userToDelete: User | null) => void;
+    setUserToToggle: (userToToggle: User | null) => void;
+    setIsDeleting: (isDeleting: boolean) => void;
+    setIsToggling: (isToggling: boolean) => void;
+    initialize: (filters: Filters) => void;
+}
+
+const useUsersIndexPageStore = create<UsersIndexPageState>((set) => ({
+    search: '',
+    status: '',
+    role: '',
+    perPage: 10,
+    userToDelete: null,
+    userToToggle: null,
+    isDeleting: false,
+    isToggling: false,
+    setSearch: (search) => set({ search }),
+    setStatus: (status) => set({ status }),
+    setRole: (role) => set({ role }),
+    setPerPage: (perPage) => set({ perPage }),
+    setUserToDelete: (userToDelete) => set({ userToDelete }),
+    setUserToToggle: (userToToggle) => set({ userToToggle }),
+    setIsDeleting: (isDeleting) => set({ isDeleting }),
+    setIsToggling: (isToggling) => set({ isToggling }),
+    initialize: (filters) =>
+        set({
+            search: filters.search,
+            status: filters.status,
+            role: filters.role,
+            perPage: filters.per_page,
+            userToDelete: null,
+            userToToggle: null,
+            isDeleting: false,
+            isToggling: false,
+        }),
+}));
+
 export default function UsersIndex({
     users: paginatedUsers,
     stats,
     filters,
 }: Props) {
-    const [search, setSearch] = useState(filters.search);
-    const [status, setStatus] = useState(filters.status);
-    const [role, setRole] = useState(filters.role);
+    const search = useUsersIndexPageStore((state) => state.search);
+    const status = useUsersIndexPageStore((state) => state.status);
+    const role = useUsersIndexPageStore((state) => state.role);
+    const perPage = useUsersIndexPageStore((state) => state.perPage);
+    const userToDelete = useUsersIndexPageStore((state) => state.userToDelete);
+    const userToToggle = useUsersIndexPageStore((state) => state.userToToggle);
+    const isDeleting = useUsersIndexPageStore((state) => state.isDeleting);
+    const isToggling = useUsersIndexPageStore((state) => state.isToggling);
+    const setSearch = useUsersIndexPageStore((state) => state.setSearch);
+    const setStatus = useUsersIndexPageStore((state) => state.setStatus);
+    const setRole = useUsersIndexPageStore((state) => state.setRole);
+    const setPerPage = useUsersIndexPageStore((state) => state.setPerPage);
+    const setUserToDelete = useUsersIndexPageStore(
+        (state) => state.setUserToDelete,
+    );
+    const setUserToToggle = useUsersIndexPageStore(
+        (state) => state.setUserToToggle,
+    );
+    const setIsDeleting = useUsersIndexPageStore((state) => state.setIsDeleting);
+    const setIsToggling = useUsersIndexPageStore((state) => state.setIsToggling);
+    const initialize = useUsersIndexPageStore((state) => state.initialize);
 
-    const buildFilterParams = (
-        overrides?: Partial<Filters>,
-    ): Record<string, string> => {
-        const params: Record<string, string> = {};
-        const currentSearch = overrides?.search ?? search;
-        const currentStatus = overrides?.status ?? status;
-        const currentRole = overrides?.role ?? role;
+    useEffect(() => {
+        initialize(filters);
+    }, [filters, initialize]);
 
-        if (currentSearch && currentSearch !== '') {
-            params.search = currentSearch;
-        }
-        if (currentStatus && currentStatus !== '' && currentStatus !== 'all') {
-            params.status = currentStatus;
-        }
-        if (currentRole && currentRole !== '' && currentRole !== 'all') {
-            params.role = currentRole;
-        }
+    const buildFilterParams = useCallback(
+        (overrides?: Partial<Filters>): Record<string, string> => {
+            const params: Record<string, string> = {};
+            const currentSearch = overrides?.search ?? search;
+            const currentStatus = overrides?.status ?? status;
+            const currentRole = overrides?.role ?? role;
 
-        return params;
-    };
+            if (currentSearch && currentSearch !== '') {
+                params.search = currentSearch;
+            }
+            if (
+                currentStatus &&
+                currentStatus !== '' &&
+                currentStatus !== 'all'
+            ) {
+                params.status = currentStatus;
+            }
+            if (currentRole && currentRole !== '' && currentRole !== 'all') {
+                params.role = currentRole;
+            }
+
+            return params;
+        },
+        [search, status, role],
+    );
 
     const handleFilterChange = (newFilters: Partial<Filters>) => {
         const params = buildFilterParams(newFilters);
@@ -85,9 +163,6 @@ export default function UsersIndex({
 
         router.get(users.index.url(), params, { replace: true });
     };
-    const [perPage, setPerPage] = useState(filters.per_page);
-
-    // Debounced search
     useEffect(() => {
         const timer = setTimeout(() => {
             if (search !== filters.search) {
@@ -101,12 +176,7 @@ export default function UsersIndex({
             }
         }, 300);
         return () => clearTimeout(timer);
-    }, [search, filters.search]);
-
-    const [userToDelete, setUserToDelete] = useState<User | null>(null);
-    const [userToToggle, setUserToToggle] = useState<User | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [isToggling, setIsToggling] = useState(false);
+    }, [buildFilterParams, filters.search, search]);
 
     const handleClearFilters = () => {
         setSearch('');
@@ -211,14 +281,14 @@ export default function UsersIndex({
                             onClick={() => router.visit(users.trashed.url())}
                             className="max-sm:w-full"
                         >
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 className="mr-2 size-4" />
                             View Trashed Users
                         </Button>
                         <Button
                             onClick={() => router.visit(users.create.url())}
                             className="max-sm:w-full"
                         >
-                            <Plus className="mr-2 h-4 w-4" />
+                            <Plus className="mr-2 size-4" />
                             Add User
                         </Button>
                     </div>
@@ -374,7 +444,7 @@ export default function UsersIndex({
                                                     }
                                                     className="h-8 w-8"
                                                 >
-                                                    <Eye className="h-4 w-4" />
+                                                    <Eye className="size-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -384,7 +454,7 @@ export default function UsersIndex({
                                                     }
                                                     className="h-8 w-8"
                                                 >
-                                                    <Pencil className="h-4 w-4" />
+                                                    <Pencil className="size-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -394,7 +464,7 @@ export default function UsersIndex({
                                                     }
                                                     className="h-8 w-8"
                                                 >
-                                                    <Power className="h-4 w-4" />
+                                                    <Power className="size-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -404,7 +474,7 @@ export default function UsersIndex({
                                                     }
                                                     className="h-8 w-8 text-red-500 hover:text-red-600"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="size-4" />
                                                 </Button>
                                             </div>
                                         </td>

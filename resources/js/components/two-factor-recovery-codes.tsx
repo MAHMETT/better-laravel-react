@@ -1,6 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -10,6 +10,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
+import { create } from 'zustand';
 import AlertError from './alert-error';
 
 type Props = {
@@ -18,12 +19,29 @@ type Props = {
     errors: string[];
 };
 
+interface TwoFactorRecoveryCodesState {
+    codesAreVisible: boolean;
+    setCodesAreVisible: (codesAreVisible: boolean) => void;
+}
+
+const useTwoFactorRecoveryCodesStore = create<TwoFactorRecoveryCodesState>(
+    (set) => ({
+        codesAreVisible: false,
+        setCodesAreVisible: (codesAreVisible) => set({ codesAreVisible }),
+    }),
+);
+
 export default function TwoFactorRecoveryCodes({
     recoveryCodesList,
     fetchRecoveryCodes,
     errors,
 }: Props) {
-    const [codesAreVisible, setCodesAreVisible] = useState<boolean>(false);
+    const codesAreVisible = useTwoFactorRecoveryCodesStore(
+        (state) => state.codesAreVisible,
+    );
+    const setCodesAreVisible = useTwoFactorRecoveryCodesStore(
+        (state) => state.setCodesAreVisible,
+    );
     const codesSectionRef = useRef<HTMLDivElement | null>(null);
     const canRegenerateCodes = recoveryCodesList.length > 0 && codesAreVisible;
 
@@ -42,7 +60,7 @@ export default function TwoFactorRecoveryCodes({
                 });
             });
         }
-    }, [codesAreVisible, recoveryCodesList.length, fetchRecoveryCodes]);
+    }, [codesAreVisible, fetchRecoveryCodes, recoveryCodesList.length, setCodesAreVisible]);
 
     useEffect(() => {
         if (!recoveryCodesList.length) {

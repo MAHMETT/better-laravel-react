@@ -22,12 +22,43 @@ import users from '@/routes/users';
 import type { BreadcrumbItem, User } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Power, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 import { toast } from 'sonner';
 
 interface Props {
     user: User;
 }
+
+interface ShowUserPageState {
+    showDeleteModal: boolean;
+    showToggleModal: boolean;
+    isDeleting: boolean;
+    isToggling: boolean;
+    setShowDeleteModal: (showDeleteModal: boolean) => void;
+    setShowToggleModal: (showToggleModal: boolean) => void;
+    setIsDeleting: (isDeleting: boolean) => void;
+    setIsToggling: (isToggling: boolean) => void;
+    reset: () => void;
+}
+
+const useShowUserPageStore = create<ShowUserPageState>((set) => ({
+    showDeleteModal: false,
+    showToggleModal: false,
+    isDeleting: false,
+    isToggling: false,
+    setShowDeleteModal: (showDeleteModal) => set({ showDeleteModal }),
+    setShowToggleModal: (showToggleModal) => set({ showToggleModal }),
+    setIsDeleting: (isDeleting) => set({ isDeleting }),
+    setIsToggling: (isToggling) => set({ isToggling }),
+    reset: () =>
+        set({
+            showDeleteModal: false,
+            showToggleModal: false,
+            isDeleting: false,
+            isToggling: false,
+        }),
+}));
 
 export default function ShowUser({ user }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
@@ -41,10 +72,27 @@ export default function ShowUser({ user }: Props) {
         },
     ];
 
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [showToggleModal, setShowToggleModal] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [isToggling, setIsToggling] = useState(false);
+    const showDeleteModal = useShowUserPageStore(
+        (state) => state.showDeleteModal,
+    );
+    const showToggleModal = useShowUserPageStore(
+        (state) => state.showToggleModal,
+    );
+    const isDeleting = useShowUserPageStore((state) => state.isDeleting);
+    const isToggling = useShowUserPageStore((state) => state.isToggling);
+    const setShowDeleteModal = useShowUserPageStore(
+        (state) => state.setShowDeleteModal,
+    );
+    const setShowToggleModal = useShowUserPageStore(
+        (state) => state.setShowToggleModal,
+    );
+    const setIsDeleting = useShowUserPageStore((state) => state.setIsDeleting);
+    const setIsToggling = useShowUserPageStore((state) => state.setIsToggling);
+    const resetStore = useShowUserPageStore((state) => state.reset);
+
+    useEffect(() => {
+        resetStore();
+    }, [resetStore]);
 
     const handleEdit = () => {
         router.visit(users.edit.url({ user: user.id }));
@@ -154,7 +202,7 @@ export default function ShowUser({ user }: Props) {
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={handleEdit}>
-                            <Pencil className="mr-2 h-4 w-4" />
+                            <Pencil className="mr-2 size-4" />
                             Edit
                         </Button>
                         <Button
@@ -165,11 +213,11 @@ export default function ShowUser({ user }: Props) {
                             }
                             onClick={handleToggleStatus}
                         >
-                            <Power className="mr-2 h-4 w-4" />
+                            <Power className="mr-2 size-4" />
                             {user.status === 'enable' ? 'Disable' : 'Enable'}
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 className="mr-2 size-4" />
                             Delete
                         </Button>
                     </div>
@@ -181,7 +229,11 @@ export default function ShowUser({ user }: Props) {
                         <div className="flex items-center gap-4">
                             <Avatar className="h-16 w-16">
                                 <AvatarImage
-                                    src={user.avatar_url ?? undefined}
+                                    src={
+                                        user.avatar_original_url ??
+                                        user.avatar_url ??
+                                        undefined
+                                    }
                                     alt={user.name}
                                 />
                                 <AvatarFallback className="text-lg">

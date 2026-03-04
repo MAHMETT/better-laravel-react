@@ -1,11 +1,13 @@
-import { Camera, Upload, AlertCircle, CheckCircle } from 'lucide-react';
-import { useRef, useState, useCallback } from 'react';
-import type { Point, Area } from 'react-easy-crop';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useInitials } from '@/hooks/use-initials';
+import type { AvatarValidationError } from '@/schemas/avatar';
+import { useAvatarUploadStore } from '@/stores/avatar-upload';
+import { AlertCircle, Camera, CheckCircle, Upload } from 'lucide-react';
+import { useCallback, useRef } from 'react';
+import type { Area } from 'react-easy-crop';
 import { ImageCropDialog } from './image-crop-dialog';
 
 interface AvatarUploadModalProps {
@@ -14,13 +16,6 @@ interface AvatarUploadModalProps {
     currentAvatar?: string | null;
     userName: string;
     onAvatarSelect: (file: File, croppedData?: { blob: Blob; cropData: Area }) => void;
-}
-
-interface ValidationErrors {
-    fileTooLarge?: string;
-    invalidType?: string;
-    invalidDimensions?: string;
-    general?: string;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -38,56 +33,88 @@ export function AvatarUploadModal({
 }: AvatarUploadModalProps) {
     const getInitials = useInitials();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [showCropDialog, setShowCropDialog] = useState(false);
-    const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const previewImage = useAvatarUploadStore((state) => state.previewImage);
+    const selectedFile = useAvatarUploadStore((state) => state.selectedFile);
+    const avatarValidationErrors = useAvatarUploadStore(
+        (state) => state.validationErrors,
+    );
+    const isDragOver = useAvatarUploadStore((state) => state.isDragOver);
+    const showCropDialog = useAvatarUploadStore((state) => state.showCropDialog);
+    const crop = useAvatarUploadStore((state) => state.crop);
+    const zoom = useAvatarUploadStore((state) => state.zoom);
+    const croppedAreaPixels = useAvatarUploadStore(
+        (state) => state.croppedAreaPixels,
+    );
+    const isProcessing = useAvatarUploadStore((state) => state.isProcessing);
+    const setPreviewImage = useAvatarUploadStore((state) => state.setPreviewImage);
+    const setSelectedFile = useAvatarUploadStore((state) => state.setSelectedFile);
+    const setValidationErrors = useAvatarUploadStore(
+        (state) => state.setValidationErrors,
+    );
+    const setIsDragOver = useAvatarUploadStore((state) => state.setIsDragOver);
+    const setShowCropDialog = useAvatarUploadStore(
+        (state) => state.setShowCropDialog,
+    );
+    const setCrop = useAvatarUploadStore((state) => state.setCrop);
+    const setZoom = useAvatarUploadStore((state) => state.setZoom);
+    const setCroppedAreaPixels = useAvatarUploadStore(
+        (state) => state.setCroppedAreaPixels,
+    );
+    const setIsProcessing = useAvatarUploadStore((state) => state.setIsProcessing);
+    const resetState = useAvatarUploadStore((state) => state.reset);
 
-    const validateFile = useCallback((file: File): ValidationErrors => {
-        const errors: ValidationErrors = {};
+    const validateFile = useCallback((file: File): AvatarValidationError[] => {
+        const errors: AvatarValidationError[] = [];
 
         // Check file size
         if (file.size > MAX_FILE_SIZE) {
-            errors.fileTooLarge = `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`;
+            errors.push({
+                field: 'fileSize',
+                message: `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+            });
         }
 
         if (file.size < MIN_FILE_SIZE) {
-            errors.fileTooLarge = 'File is too small';
+            errors.push({ field: 'fileSize', message: 'File is too small' });
         }
 
         // Check file type
         if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-            errors.invalidType = 'File type must be JPEG, PNG, GIF, or WebP';
+            errors.push({
+                field: 'fileType',
+                message: 'File type must be JPEG, PNG, GIF, or WebP',
+            });
         }
 
         return errors;
     }, []);
 
-    const validateImageDimensions = useCallback((image: HTMLImageElement): string | null => {
+    const validateImageDimensions = useCallback((image: HTMLImageElement): AvatarValidationError | null => {
         if (image.width < MIN_DIMENSION || image.height < MIN_DIMENSION) {
-            return `Image must be at least ${MIN_DIMENSION}x${MIN_DIMENSION} pixels`;
+            return {
+                field: 'dimensions',
+                message: `Image must be at least ${MIN_DIMENSION}x${MIN_DIMENSION} pixels`,
+            };
         }
 
         if (image.width > MAX_DIMENSION || image.height > MAX_DIMENSION) {
-            return `Image must be at most ${MAX_DIMENSION}x${MAX_DIMENSION} pixels`;
+            return {
+                field: 'dimensions',
+                message: `Image must be at most ${MAX_DIMENSION}x${MAX_DIMENSION} pixels`,
+            };
         }
 
         return null;
     }, []);
 
     const handleFileSelect = useCallback((file: File) => {
-        setValidationErrors({});
+        setValidationErrors([]);
         setPreviewImage(null);
         setSelectedFile(null);
 
         // Validate file
         const errors = validateFile(file);
-        if (Object.keys(errors).length > 0) {
+        if (errors.length > 0) {
             setValidationErrors(errors);
             return;
         }
@@ -99,7 +126,7 @@ export function AvatarUploadModal({
             img.onload = () => {
                 const dimensionError = validateImageDimensions(img);
                 if (dimensionError) {
-                    setValidationErrors({ invalidDimensions: dimensionError });
+                    setValidationErrors([dimensionError]);
                     return;
                 }
 
@@ -108,15 +135,25 @@ export function AvatarUploadModal({
                 setShowCropDialog(true);
             };
             img.onerror = () => {
-                setValidationErrors({ general: 'Failed to load image. File may be corrupted.' });
+                setValidationErrors([
+                    {
+                        field: 'general',
+                        message: 'Failed to load image. File may be corrupted.',
+                    },
+                ]);
             };
             img.src = e.target?.result as string;
         };
         reader.onerror = () => {
-            setValidationErrors({ general: 'Failed to read file. Please try again.' });
+            setValidationErrors([
+                {
+                    field: 'general',
+                    message: 'Failed to read file. Please try again.',
+                },
+            ]);
         };
         reader.readAsDataURL(file);
-    }, [validateFile, validateImageDimensions]);
+    }, [setPreviewImage, setSelectedFile, setShowCropDialog, setValidationErrors, validateFile, validateImageDimensions]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -128,12 +165,12 @@ export function AvatarUploadModal({
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(true);
-    }, []);
+    }, [setIsDragOver]);
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
-    }, []);
+    }, [setIsDragOver]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -143,13 +180,15 @@ export function AvatarUploadModal({
         if (file && file.type.startsWith('image/')) {
             handleFileSelect(file);
         } else {
-            setValidationErrors({ invalidType: 'Please drop an image file' });
+            setValidationErrors([
+                { field: 'fileType', message: 'Please drop an image file' },
+            ]);
         }
-    }, [handleFileSelect]);
+    }, [handleFileSelect, setIsDragOver, setValidationErrors]);
 
-    const handleCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    const handleCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
-    }, []);
+    }, [setCroppedAreaPixels]);
 
     const createCroppedImage = useCallback(async (): Promise<Blob> => {
         if (!previewImage || !croppedAreaPixels) {
@@ -211,32 +250,31 @@ export function AvatarUploadModal({
             // Close modal and reset state
             setPreviewImage(null);
             setSelectedFile(null);
-            setValidationErrors({});
+            setValidationErrors([]);
             setShowCropDialog(false);
             setCrop({ x: 0, y: 0 });
             setZoom(1);
             setCroppedAreaPixels(null);
             onOpenChange(false);
         } catch {
-            setValidationErrors({ general: 'Failed to process image. Please try again.' });
+            setValidationErrors([
+                {
+                    field: 'general',
+                    message: 'Failed to process image. Please try again.',
+                },
+            ]);
         } finally {
             setIsProcessing(false);
         }
-    }, [selectedFile, croppedAreaPixels, createCroppedImage, onAvatarSelect, onOpenChange]);
+    }, [createCroppedImage, croppedAreaPixels, onAvatarSelect, onOpenChange, selectedFile, setCroppedAreaPixels, setCrop, setIsProcessing, setPreviewImage, setSelectedFile, setShowCropDialog, setValidationErrors, setZoom]);
 
     const handleClose = useCallback(() => {
-        setPreviewImage(null);
-        setSelectedFile(null);
-        setValidationErrors({});
-        setShowCropDialog(false);
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
-        setCroppedAreaPixels(null);
+        resetState();
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
         onOpenChange(false);
-    }, [onOpenChange]);
+    }, [onOpenChange, resetState]);
 
     return (
         <>
@@ -311,32 +349,40 @@ export function AvatarUploadModal({
                         </div>
 
                         {/* Validation Errors */}
-                        {Object.keys(validationErrors).length > 0 && (
+                        {avatarValidationErrors.length > 0 && (
                             <div className="w-full space-y-2">
-                                {validationErrors.fileTooLarge && (
+                                {avatarValidationErrors
+                                    .filter((error) => error.field === 'fileSize')
+                                    .map((error) => (
                                     <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                                        <span>{validationErrors.fileTooLarge}</span>
+                                        <AlertCircle className="size-4 flex-shrink-0" />
+                                        <span>{error.message}</span>
                                     </div>
-                                )}
-                                {validationErrors.invalidType && (
+                                ))}
+                                {avatarValidationErrors
+                                    .filter((error) => error.field === 'fileType')
+                                    .map((error) => (
                                     <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                                        <span>{validationErrors.invalidType}</span>
+                                        <AlertCircle className="size-4 flex-shrink-0" />
+                                        <span>{error.message}</span>
                                     </div>
-                                )}
-                                {validationErrors.invalidDimensions && (
+                                ))}
+                                {avatarValidationErrors
+                                    .filter((error) => error.field === 'dimensions')
+                                    .map((error) => (
                                     <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                                        <span>{validationErrors.invalidDimensions}</span>
+                                        <AlertCircle className="size-4 flex-shrink-0" />
+                                        <span>{error.message}</span>
                                     </div>
-                                )}
-                                {validationErrors.general && (
+                                ))}
+                                {avatarValidationErrors
+                                    .filter((error) => error.field === 'general')
+                                    .map((error) => (
                                     <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                                        <span>{validationErrors.general}</span>
+                                        <AlertCircle className="size-4 flex-shrink-0" />
+                                        <span>{error.message}</span>
                                     </div>
-                                )}
+                                ))}
                             </div>
                         )}
 
@@ -351,7 +397,7 @@ export function AvatarUploadModal({
 
                         {/* Tips */}
                         <div className="flex items-start gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
-                            <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                            <CheckCircle className="mt-0.5 size-4 flex-shrink-0" />
                             <div className="space-y-1">
                                 <p className="font-medium">Tips for best results:</p>
                                 <ul className="list-inside list-disc space-y-0.5 text-xs">

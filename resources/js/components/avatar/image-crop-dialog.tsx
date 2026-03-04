@@ -1,8 +1,8 @@
-import Cropper from 'react-easy-crop';
-import type { Point, Area } from 'react-easy-crop';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
+import type { Area, Point } from 'react-easy-crop';
+import Cropper from 'react-easy-crop';
 
 interface ImageCropDialogProps {
     open: boolean;
@@ -95,7 +95,7 @@ export function ImageCropDialog({
                             {isProcessing ? (
                                 <>
                                     <svg
-                                        className="mr-2 h-4 w-4 animate-spin"
+                                        className="mr-2 size-4 animate-spin"
                                         viewBox="0 0 24 24"
                                     >
                                         <circle

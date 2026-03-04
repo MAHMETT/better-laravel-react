@@ -3,6 +3,8 @@ import type { VariantProps} from "class-variance-authority";
 import { cva } from "class-variance-authority"
 import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react"
 import * as React from "react"
+import { useStore } from "zustand"
+import { createStore } from "zustand/vanilla"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -66,25 +68,60 @@ function SidebarProvider({
   onOpenChange?: (open: boolean) => void
 }) {
   const isMobile = useIsMobile()
-  const [openMobile, setOpenMobile] = React.useState(false)
+  const sidebarStore = React.useMemo(
+    () =>
+    createStore<{
+      openMobile: boolean
+      openInternal: boolean
+      setOpenMobile: (
+        value: boolean | ((previousValue: boolean) => boolean)
+      ) => void
+      setOpenInternal: (
+        value: boolean | ((previousValue: boolean) => boolean)
+      ) => void
+    }>((set) => ({
+      openMobile: false,
+      openInternal: defaultOpen,
+      setOpenMobile: (value) =>
+        set((state) => ({
+          openMobile:
+            typeof value === "function" ? value(state.openMobile) : value,
+        })),
+      setOpenInternal: (value) =>
+        set((state) => ({
+          openInternal:
+            typeof value === "function" ? value(state.openInternal) : value,
+        })),
+    }))
+  , [defaultOpen])
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen)
-  const open = openProp ?? _open
+  const openMobile = useStore(sidebarStore, (state) => state.openMobile)
+  const setOpenMobile = useStore(
+    sidebarStore,
+    (state) => state.setOpenMobile
+  )
+  const openInternal = useStore(
+    sidebarStore,
+    (state) => state.openInternal
+  )
+  const setOpenInternal = useStore(
+    sidebarStore,
+    (state) => state.setOpenInternal
+  )
+  const open = openProp ?? openInternal
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value
       if (setOpenProp) {
         setOpenProp(openState)
       } else {
-        _setOpen(openState)
+        setOpenInternal(openState)
       }
 
       // This sets the cookie to keep the sidebar state.
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
     },
-    [setOpenProp, open]
+    [setOpenInternal, setOpenProp, open]
   )
 
   // Helper to toggle the sidebar.
@@ -602,14 +639,21 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean
 }) {
+  const styleSeed = React.useId()
+  const styleWidth = React.useMemo(() => {
+    const asciiSum = styleSeed
+      .split("")
+      .reduce((accumulator, value) => accumulator + value.charCodeAt(0), 0)
 
-  // wrapping in useState to ensure the width is stable across renders
-  // also ensures we have a stable reference to the style object
-  const [skeletonStyle] = React.useState(() => (
-      {
-        "--skeleton-width": `${Math.floor(Math.random() * 40) + 50}%` // Random width between 50 to 90%.
-    } as React.CSSProperties
-  ))
+    return `${(asciiSum % 40) + 50}%`
+  }, [styleSeed])
+  const skeletonStyle = React.useMemo(
+    () =>
+      ({
+        "--skeleton-width": styleWidth,
+      }) as React.CSSProperties,
+    [styleWidth]
+  )
 
   return (
     <div

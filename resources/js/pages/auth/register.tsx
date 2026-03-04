@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,37 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import { registerSchema, type RegisterData } from '@/schemas';
+import { registerSchema  } from '@/schemas';
+import type {RegisterData} from '@/schemas';
 import { validateForm } from '@/schemas/validate';
+import { create } from 'zustand';
+
+interface RegisterPageState {
+    validationErrors: Record<string, string>;
+    setValidationErrors: (validationErrors: Record<string, string>) => void;
+    clearValidationErrors: () => void;
+}
+
+const useRegisterPageStore = create<RegisterPageState>((set) => ({
+    validationErrors: {},
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    clearValidationErrors: () => set({ validationErrors: {} }),
+}));
 
 export default function Register() {
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const validationErrors = useRegisterPageStore(
+        (state) => state.validationErrors,
+    );
+    const setValidationErrors = useRegisterPageStore(
+        (state) => state.setValidationErrors,
+    );
+    const clearValidationErrors = useRegisterPageStore(
+        (state) => state.clearValidationErrors,
+    );
+
+    useEffect(() => {
+        clearValidationErrors();
+    }, [clearValidationErrors]);
 
     const handleSubmit = (formData: FormData) => {
         const data: RegisterData = {
@@ -33,7 +59,7 @@ export default function Register() {
             throw new Error('Validation failed');
         }
 
-        setValidationErrors({});
+        clearValidationErrors();
         return data;
     };
 

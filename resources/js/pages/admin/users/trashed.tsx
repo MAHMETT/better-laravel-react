@@ -17,7 +17,8 @@ import users from '@/routes/users';
 import type { BreadcrumbItem, User, UserPagination } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Eye, RefreshCw, Trash2, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { create } from 'zustand';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -42,34 +43,114 @@ interface Props extends UserPagination {
     filters: Filters;
 }
 
+interface UsersTrashedPageState {
+    search: string;
+    status: string;
+    role: string;
+    perPage: number;
+    userToRestore: User | null;
+    userToDelete: User | null;
+    isRestoring: boolean;
+    isDeleting: boolean;
+    setSearch: (search: string) => void;
+    setStatus: (status: string) => void;
+    setRole: (role: string) => void;
+    setPerPage: (perPage: number) => void;
+    setUserToRestore: (userToRestore: User | null) => void;
+    setUserToDelete: (userToDelete: User | null) => void;
+    setIsRestoring: (isRestoring: boolean) => void;
+    setIsDeleting: (isDeleting: boolean) => void;
+    initialize: (filters: Filters) => void;
+}
+
+const useUsersTrashedPageStore = create<UsersTrashedPageState>((set) => ({
+    search: '',
+    status: '',
+    role: '',
+    perPage: 10,
+    userToRestore: null,
+    userToDelete: null,
+    isRestoring: false,
+    isDeleting: false,
+    setSearch: (search) => set({ search }),
+    setStatus: (status) => set({ status }),
+    setRole: (role) => set({ role }),
+    setPerPage: (perPage) => set({ perPage }),
+    setUserToRestore: (userToRestore) => set({ userToRestore }),
+    setUserToDelete: (userToDelete) => set({ userToDelete }),
+    setIsRestoring: (isRestoring) => set({ isRestoring }),
+    setIsDeleting: (isDeleting) => set({ isDeleting }),
+    initialize: (filters) =>
+        set({
+            search: filters.search,
+            status: filters.status,
+            role: filters.role,
+            perPage: filters.per_page,
+            userToRestore: null,
+            userToDelete: null,
+            isRestoring: false,
+            isDeleting: false,
+        }),
+}));
+
 export default function UsersTrashed({
     users: paginatedUsers,
     filters,
 }: Props) {
-    const [search, setSearch] = useState(filters.search);
-    const [status, setStatus] = useState(filters.status);
-    const [role, setRole] = useState(filters.role);
+    const search = useUsersTrashedPageStore((state) => state.search);
+    const status = useUsersTrashedPageStore((state) => state.status);
+    const role = useUsersTrashedPageStore((state) => state.role);
+    const perPage = useUsersTrashedPageStore((state) => state.perPage);
+    const userToRestore = useUsersTrashedPageStore(
+        (state) => state.userToRestore,
+    );
+    const userToDelete = useUsersTrashedPageStore((state) => state.userToDelete);
+    const isRestoring = useUsersTrashedPageStore((state) => state.isRestoring);
+    const isDeleting = useUsersTrashedPageStore((state) => state.isDeleting);
+    const setSearch = useUsersTrashedPageStore((state) => state.setSearch);
+    const setStatus = useUsersTrashedPageStore((state) => state.setStatus);
+    const setRole = useUsersTrashedPageStore((state) => state.setRole);
+    const setPerPage = useUsersTrashedPageStore((state) => state.setPerPage);
+    const setUserToRestore = useUsersTrashedPageStore(
+        (state) => state.setUserToRestore,
+    );
+    const setUserToDelete = useUsersTrashedPageStore(
+        (state) => state.setUserToDelete,
+    );
+    const setIsRestoring = useUsersTrashedPageStore(
+        (state) => state.setIsRestoring,
+    );
+    const setIsDeleting = useUsersTrashedPageStore((state) => state.setIsDeleting);
+    const initialize = useUsersTrashedPageStore((state) => state.initialize);
 
-    const buildFilterParams = (
-        overrides?: Partial<Filters>,
-    ): Record<string, string> => {
-        const params: Record<string, string> = {};
-        const currentSearch = overrides?.search ?? search;
-        const currentStatus = overrides?.status ?? status;
-        const currentRole = overrides?.role ?? role;
+    useEffect(() => {
+        initialize(filters);
+    }, [filters, initialize]);
 
-        if (currentSearch && currentSearch !== '') {
-            params.search = currentSearch;
-        }
-        if (currentStatus && currentStatus !== '' && currentStatus !== 'all') {
-            params.status = currentStatus;
-        }
-        if (currentRole && currentRole !== '' && currentRole !== 'all') {
-            params.role = currentRole;
-        }
+    const buildFilterParams = useCallback(
+        (overrides?: Partial<Filters>): Record<string, string> => {
+            const params: Record<string, string> = {};
+            const currentSearch = overrides?.search ?? search;
+            const currentStatus = overrides?.status ?? status;
+            const currentRole = overrides?.role ?? role;
 
-        return params;
-    };
+            if (currentSearch && currentSearch !== '') {
+                params.search = currentSearch;
+            }
+            if (
+                currentStatus &&
+                currentStatus !== '' &&
+                currentStatus !== 'all'
+            ) {
+                params.status = currentStatus;
+            }
+            if (currentRole && currentRole !== '' && currentRole !== 'all') {
+                params.role = currentRole;
+            }
+            return params;
+        },
+        [search, status, role],
+    );
 
     const handleFilterChange = (newFilters: Partial<Filters>) => {
         const params = buildFilterParams(newFilters);
@@ -80,9 +161,6 @@ export default function UsersTrashed({
 
         router.get(users.trashed.url(), params, { replace: true });
     };
-    const [perPage, setPerPage] = useState(filters.per_page);
-
-    // Debounced search
     useEffect(() => {
         const timer = setTimeout(() => {
             if (search !== filters.search) {
@@ -96,12 +174,7 @@ export default function UsersTrashed({
             }
         }, 300);
         return () => clearTimeout(timer);
-    }, [search, filters.search]);
-
-    const [userToRestore, setUserToRestore] = useState<User | null>(null);
-    const [userToDelete, setUserToDelete] = useState<User | null>(null);
-    const [isRestoring, setIsRestoring] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    }, [buildFilterParams, filters.search, search]);
 
     const handleClearFilters = () => {
         setSearch('');
@@ -214,7 +287,7 @@ export default function UsersTrashed({
                             onClick={handleBack}
                             className="max-sm:w-full"
                         >
-                            <Users className="mr-2 h-4 w-4" />
+                            <Users className="mr-2 size-4" />
                             Back to Users
                         </Button>
                     </div>
@@ -339,7 +412,7 @@ export default function UsersTrashed({
                                                     }
                                                     className="h-8 w-8"
                                                 >
-                                                    <Eye className="h-4 w-4" />
+                                                    <Eye className="size-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -349,7 +422,7 @@ export default function UsersTrashed({
                                                     }
                                                     className="h-8 w-8 text-green-500 hover:text-green-600"
                                                 >
-                                                    <RefreshCw className="h-4 w-4" />
+                                                    <RefreshCw className="size-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -359,7 +432,7 @@ export default function UsersTrashed({
                                                     }
                                                     className="h-8 w-8 text-red-500 hover:text-red-600"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="size-4" />
                                                 </Button>
                                             </div>
                                         </td>

@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,10 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { loginSchema, type LoginData } from '@/schemas';
+import { loginSchema  } from '@/schemas';
+import type {LoginData} from '@/schemas';
 import { validateForm } from '@/schemas/validate';
+import { create } from 'zustand';
 
 type Props = {
     status?: string;
@@ -20,12 +22,36 @@ type Props = {
     canRegister: boolean;
 };
 
+interface LoginPageState {
+    validationErrors: Record<string, string>;
+    setValidationErrors: (validationErrors: Record<string, string>) => void;
+    clearValidationErrors: () => void;
+}
+
+const useLoginPageStore = create<LoginPageState>((set) => ({
+    validationErrors: {},
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    clearValidationErrors: () => set({ validationErrors: {} }),
+}));
+
 export default function Login({
     status,
     canResetPassword,
     canRegister,
 }: Props) {
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const validationErrors = useLoginPageStore(
+        (state) => state.validationErrors,
+    );
+    const setValidationErrors = useLoginPageStore(
+        (state) => state.setValidationErrors,
+    );
+    const clearValidationErrors = useLoginPageStore(
+        (state) => state.clearValidationErrors,
+    );
+
+    useEffect(() => {
+        clearValidationErrors();
+    }, [clearValidationErrors]);
 
     const handleSubmit = (formData: FormData) => {
         const data: LoginData = {
@@ -41,7 +67,7 @@ export default function Login({
             throw new Error('Validation failed');
         }
 
-        setValidationErrors({});
+        clearValidationErrors();
         return data;
     };
 

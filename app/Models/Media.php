@@ -40,8 +40,51 @@ class Media extends Model
     /**
      * Get the URL for the media file.
      */
-    public function getUrl(): string
+    public function getUrl(bool $thumbnail = false): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        $path = $thumbnail ? $this->getThumbnailPath() ?? $this->path : $this->path;
+
+        return Storage::disk($this->resolvedDiskName())->url($path);
+    }
+
+    /**
+     * Get the original file URL.
+     */
+    public function getOriginalUrl(): string
+    {
+        return $this->getUrl();
+    }
+
+    /**
+     * Get the thumbnail URL, falling back to original when missing.
+     */
+    public function getThumbnailUrl(): string
+    {
+        return $this->getUrl(thumbnail: true);
+    }
+
+    /**
+     * Get thumbnail path from metadata when available.
+     */
+    public function getThumbnailPath(): ?string
+    {
+        if (! is_array($this->metadata)) {
+            return null;
+        }
+
+        $thumbnailPath = $this->metadata['thumbnail_path'] ?? null;
+
+        return is_string($thumbnailPath) && $thumbnailPath !== ''
+            ? $thumbnailPath
+            : null;
+    }
+
+    protected function resolvedDiskName(): string
+    {
+        if (config()->has("filesystems.disks.{$this->disk}")) {
+            return $this->disk;
+        }
+
+        return $this->disk === 'private' ? 'local' : $this->disk;
     }
 }

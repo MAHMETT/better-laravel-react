@@ -19,6 +19,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('users.force-delete');
     Route::post('users/{id}/toggle-status', [UserController::class, 'toggleStatus'])
         ->name('users.toggle-status');
+    Route::patch('users/{id}/avatar', [UserController::class, 'updateAvatar'])
+        ->name('users.update-avatar');
+    Route::delete('users/{id}/avatar', [UserController::class, 'deleteAvatar'])
+        ->name('users.delete-avatar');
 
     // Users CRUD
     Route::resource('users', UserController::class)->names('users');

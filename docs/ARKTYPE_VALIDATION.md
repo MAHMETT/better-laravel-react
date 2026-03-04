@@ -183,10 +183,11 @@ const cleared = clearFieldErrors(result, ['remember']);
 import { Form } from '@inertiajs/react';
 import { loginSchema, type LoginData } from '@/schemas';
 import { validateForm } from '@/schemas/validate';
-import { useState } from 'react';
+import { useLoginPageStore } from '@/stores/login-page';
 
 export default function LoginForm() {
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const validationErrors = useLoginPageStore((state) => state.validationErrors);
+    const setValidationErrors = useLoginPageStore((state) => state.setValidationErrors);
 
     const handleSubmit = (formData: FormData) => {
         const data: LoginData = {
@@ -482,7 +483,7 @@ const result = validateForm(loginSchema, data);
 - [ ] Create schema in `schemas/auth.ts`
 - [ ] Export TypeScript type
 - [ ] Import in form component
-- [ ] Add `useState` for validation errors
+- [ ] Add Zustand slice for validation errors
 - [ ] Create `handleSubmit` function
 - [ ] Call `validateForm` in submit handler
 - [ ] Display errors with `InputError`

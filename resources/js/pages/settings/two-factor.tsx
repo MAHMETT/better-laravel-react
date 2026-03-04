@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { ShieldBan, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
@@ -11,6 +11,7 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { disable, enable, show } from '@/routes/two-factor';
 import type { BreadcrumbItem } from '@/types';
+import { create } from 'zustand';
 
 type Props = {
     requiresConfirmation?: boolean;
@@ -23,6 +24,18 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: show.url(),
     },
 ];
+
+interface TwoFactorSettingsState {
+    showSetupModal: boolean;
+    setShowSetupModal: (showSetupModal: boolean) => void;
+    reset: () => void;
+}
+
+const useTwoFactorSettingsStore = create<TwoFactorSettingsState>((set) => ({
+    showSetupModal: false,
+    setShowSetupModal: (showSetupModal) => set({ showSetupModal }),
+    reset: () => set({ showSetupModal: false }),
+}));
 
 export default function TwoFactor({
     requiresConfirmation = false,
@@ -38,7 +51,17 @@ export default function TwoFactor({
         fetchRecoveryCodes,
         errors,
     } = useTwoFactorAuth();
-    const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
+    const showSetupModal = useTwoFactorSettingsStore(
+        (state) => state.showSetupModal,
+    );
+    const setShowSetupModal = useTwoFactorSettingsStore(
+        (state) => state.setShowSetupModal,
+    );
+    const resetStore = useTwoFactorSettingsStore((state) => state.reset);
+
+    useEffect(() => {
+        resetStore();
+    }, [resetStore]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

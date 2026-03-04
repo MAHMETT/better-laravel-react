@@ -21,9 +21,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create regular users
-        User::factory(10)->create();
+        User::factory(1000)->create();
 
         // Create some disabled users for testing
-        User::factory(3)->disabled()->create();
+        User::factory(300)->disabled()->create();
     }
 }
