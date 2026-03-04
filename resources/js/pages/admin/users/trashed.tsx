@@ -454,7 +454,7 @@ export default function UsersTrashed({
                 </div>
 
                 {/* Pagination */}
-                <Paginations users={paginatedUsers} />
+                <Paginations pagination={paginatedUsers} />
             </div>
 
             {/* Restore Confirmation Modal */}

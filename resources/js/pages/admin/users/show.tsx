@@ -18,10 +18,11 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import activityLogs from '@/routes/activity-logs';
 import users from '@/routes/users';
 import type { BreadcrumbItem, User } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Power, Trash2 } from 'lucide-react';
+import { ArrowLeft, History, Pencil, Power, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import { toast } from 'sonner';
@@ -96,6 +97,10 @@ export default function ShowUser({ user }: Props) {
 
     const handleEdit = () => {
         router.visit(users.edit.url({ user: user.id }));
+    };
+
+    const handleViewActivityLogs = () => {
+        router.visit(activityLogs.user.url({ user: user.id }));
     };
 
     const handleDelete = () => {
@@ -201,6 +206,10 @@ export default function ShowUser({ user }: Props) {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button variant="outline" onClick={handleViewActivityLogs}>
+                            <History className="mr-2 size-4" />
+                            Activity Logs
+                        </Button>
                         <Button variant="outline" onClick={handleEdit}>
                             <Pencil className="mr-2 size-4" />
                             Edit

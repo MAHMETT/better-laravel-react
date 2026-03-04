@@ -8,7 +8,7 @@ import * as React from 'react';
 import type { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { UserPagination } from '@/types';
+import type { PaginatedData } from '@/types';
 import { router } from '@inertiajs/react';
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
@@ -119,15 +119,86 @@ function PaginationEllipsis({
     );
 }
 
-export const Paginations = ({ users }: UserPagination) => {
+type PaginationCollection = Pick<
+    PaginatedData<unknown>,
+    'current_page' | 'last_page' | 'links'
+>;
+
+type PaginationsProps = {
+    pagination: PaginationCollection;
+    replace?: boolean;
+    preserveScroll?: boolean;
+    onNavigateStart?: () => void;
+    onNavigateFinish?: () => void;
+};
+
+type PaginationItemToken = number | 'ellipsis-left' | 'ellipsis-right';
+
+function resolvePaginationTokens(
+    currentPage: number,
+    lastPage: number,
+): PaginationItemToken[] {
+    if (lastPage <= 7) {
+        return Array.from({ length: lastPage }, (_, index) => index + 1);
+    }
+
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(lastPage - 1, currentPage + 1);
+
+    if (currentPage <= 4) {
+        startPage = 2;
+        endPage = 5;
+    }
+
+    if (currentPage >= lastPage - 3) {
+        startPage = Math.max(2, lastPage - 4);
+        endPage = lastPage - 1;
+    }
+
+    const tokens: PaginationItemToken[] = [1];
+
+    if (startPage > 2) {
+        tokens.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page += 1) {
+        tokens.push(page);
+    }
+
+    if (endPage < lastPage - 1) {
+        tokens.push('ellipsis-right');
+    }
+
+    tokens.push(lastPage);
+
+    return tokens;
+}
+
+export const Paginations = ({
+    pagination,
+    replace = true,
+    preserveScroll = true,
+    onNavigateStart,
+    onNavigateFinish,
+}: PaginationsProps) => {
+    const paginationTokens = resolvePaginationTokens(
+        pagination.current_page,
+        pagination.last_page,
+    );
+
     const handlePageChange = (page: number) => {
-        const link = users.links.find((l) => l.label === String(page));
+        const link = pagination.links.find((l) => l.label === String(page));
         if (link?.url) {
-            router.visit(link.url, { replace: true });
+            router.visit(link.url, {
+                replace,
+                preserveScroll,
+                onStart: onNavigateStart,
+                onFinish: onNavigateFinish,
+            });
         }
     };
 
-    if (users.last_page <= 1) {
+    if (pagination.last_page <= 1) {
         return null;
     }
 
@@ -139,71 +210,51 @@ export const Paginations = ({ users }: UserPagination) => {
                         href="#"
                         onClick={(e) => {
                             e.preventDefault();
-                            if (users.current_page > 1) {
-                                handlePageChange(users.current_page - 1);
+                            if (pagination.current_page > 1) {
+                                handlePageChange(pagination.current_page - 1);
                             }
                         }}
                         className={
-                            users.current_page === 1
+                            pagination.current_page === 1
                                 ? 'pointer-events-none opacity-50'
                                 : ''
                         }
                     />
                 </PaginationItem>
-                {Array.from({ length: users.last_page }, (_, i) => i + 1).map(
-                    (page) => {
-                        const showPage =
-                            page === 1 ||
-                            page === users.last_page ||
-                            Math.abs(page - users.current_page) <= 1;
+                {paginationTokens.map((token) => {
+                    if (token === 'ellipsis-left' || token === 'ellipsis-right') {
+                        return <PaginationEllipsis key={token} />;
+                    }
 
-                        const showEllipsisBefore =
-                            page === users.current_page - 2 && page > 2;
-                        const showEllipsisAfter =
-                            page === users.current_page + 2 &&
-                            page < users.last_page - 1;
-
-                        if (
-                            !showPage &&
-                            !showEllipsisBefore &&
-                            !showEllipsisAfter
-                        ) {
-                            return null;
-                        }
-
-                        if (showEllipsisBefore || showEllipsisAfter) {
-                            return (
-                                <PaginationEllipsis key={`ellipsis-${page}`} />
-                            );
-                        }
-
-                        return (
-                            <PaginationItem key={page}>
-                                <PaginationLink
-                                    href="#"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handlePageChange(page);
-                                    }}
-                                    isActive={page === users.current_page}
-                                >
-                                    {page}
-                                </PaginationLink>
-                            </PaginationItem>
-                        );
-                    },
-                )}
+                    return (
+                        <PaginationItem key={token}>
+                            <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handlePageChange(token);
+                                }}
+                                isActive={token === pagination.current_page}
+                            >
+                                {token}
+                            </PaginationLink>
+                        </PaginationItem>
+                    );
+                })}
                 <PaginationItem>
                     <PaginationNext
                         href="#"
                         onClick={(e) => {
                             e.preventDefault();
-                            if (users.current_page < users.last_page) {
-                                handlePageChange(users.current_page + 1);
+                            if (
+                                pagination.current_page <
+                                pagination.last_page
+                            ) {
+                                handlePageChange(pagination.current_page + 1);
                             }
                         }}
                         className={
-                            users.current_page === users.last_page
+                            pagination.current_page === pagination.last_page
                                 ? 'pointer-events-none opacity-50'
                                 : ''
                         }

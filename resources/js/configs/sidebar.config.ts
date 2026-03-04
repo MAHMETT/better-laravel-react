@@ -1,9 +1,11 @@
 import {
     BookOpenIcon,
     FolderIcon,
+    HistoryIcon,
     LayoutGridIcon,
     UsersIcon,
 } from 'lucide-react';
+import activityLogs from '@/routes/activity-logs';
 import { dashboard } from '@/routes';
 import users from '@/routes/users';
 import type { FooterNavItem, MainNavItem } from '@/types';
@@ -22,6 +24,11 @@ export const mainNavItems: MainNavItem = {
                     title: 'Users',
                     href: users.index.url(),
                     icon: UsersIcon,
+                },
+                {
+                    title: 'Activity Logs',
+                    href: activityLogs.index.url(),
+                    icon: HistoryIcon,
                 },
             ],
         },

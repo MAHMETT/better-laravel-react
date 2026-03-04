@@ -496,7 +496,7 @@ export default function UsersIndex({
                 </div>
 
                 {/* Pagination */}
-                <Paginations users={paginatedUsers} />
+                <Paginations pagination={paginatedUsers} />
             </div>
 
             {/* Delete Confirmation Modal */}

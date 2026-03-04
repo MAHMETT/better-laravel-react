@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminUserLogController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     // Dashboard
@@ -23,6 +23,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('users.update-avatar');
     Route::delete('users/{id}/avatar', [UserController::class, 'deleteAvatar'])
         ->name('users.delete-avatar');
+    Route::get('activity-logs/users', [AdminUserLogController::class, 'users'])
+        ->name('activity-logs.users');
+    Route::get('activity-logs', [AdminUserLogController::class, 'index'])
+        ->name('activity-logs.index');
+    Route::get('users/{user}/activity-logs', [AdminUserLogController::class, 'user'])
+        ->name('activity-logs.user');
 
     // Users CRUD
     Route::resource('users', UserController::class)->names('users');

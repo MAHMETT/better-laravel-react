@@ -24,6 +24,7 @@ class EnsureUserRoleIs
 
         // Check if user is soft-deleted
         if ($user->trashed()) {
+            $request->attributes->set('auth_forced_logout', true);
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -34,6 +35,7 @@ class EnsureUserRoleIs
 
         // Check if user is disabled
         if ($user->status === 'disable') {
+            $request->attributes->set('auth_forced_logout', true);
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
