@@ -10,6 +10,8 @@ export type {
     UserLogEventType,
     UserLogUser,
     UserLogFilterUser,
+    Visit,
+    VisitWithUser,
 } from './models';
 
 // API
@@ -20,6 +22,19 @@ export type {
     UserFilterSearchResponse,
     AdminUserLogFilters,
     SelfUserLogFilters,
+    VisitorAnalyticsFilters,
+    AnalyticsPreset,
+    ChartGranularity,
+    VisitorSummary,
+    DeviceDistribution,
+    UserTypeDistribution,
+    AnalyticsSummaryResponse,
+    ChartDataPoint,
+    ChartDataResponse,
+    TopRoute,
+    TopRoutesResponse,
+    TopReferrer,
+    TopReferrersResponse,
 } from './api';
 
 // Components

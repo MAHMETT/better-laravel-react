@@ -1,8 +1,9 @@
 import { dashboard } from '@/routes';
 import activityLogs from '@/routes/activity-logs';
+import analytics from '@/routes/analytics';
 import users from '@/routes/users';
 import type { FooterNavItem, MainNavItem } from '@/types';
-import { HistoryIcon, LayoutGridIcon, UsersIcon } from 'lucide-react';
+import { BarChart3Icon, HistoryIcon, LayoutGridIcon, UsersIcon } from 'lucide-react';
 
 export const mainNavItems: MainNavItem = {
     admin: [
@@ -33,6 +34,11 @@ export const mainNavItems: MainNavItem = {
 
 export const footerNavItems: FooterNavItem = {
     admin: [
+        {
+            title: 'Analytics',
+            href: analytics.index.url(),
+            icon: BarChart3Icon,
+        },
         {
             title: 'Users',
             href: users.index.url(),

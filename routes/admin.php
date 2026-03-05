@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminUserLogController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +10,20 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Route::get('/dashboard', function () {
     //     return Inertia::render('dashboard');
     // })->name('dashboard');
+
+    // Analytics & Visitor Tracking
+    Route::prefix('admin/analytics')->name('analytics.')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index'])
+            ->name('index');
+        Route::get('/summary', [AnalyticsController::class, 'summary'])
+            ->name('summary');
+        Route::get('/chart-data', [AnalyticsController::class, 'chartData'])
+            ->name('chart-data');
+        Route::get('/top-routes', [AnalyticsController::class, 'topRoutes'])
+            ->name('top-routes');
+        Route::get('/top-referrers', [AnalyticsController::class, 'topReferrers'])
+            ->name('top-referrers');
+    });
 
     // Users additional routes (must be before resource routes)
     Route::get('users/trashed', [UserController::class, 'trashed'])
