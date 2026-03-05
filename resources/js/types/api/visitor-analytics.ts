@@ -18,7 +18,7 @@ export type AnalyticsPreset =
     | 'this_year'
     | 'custom';
 
-export type ChartGranularity = 'hourly' | 'daily' | 'weekly' | 'monthly';
+export type ChartGranularity = 'hourly' | '2hourly' | '12hourly' | 'daily' | 'weekly' | 'monthly';
 
 export interface VisitorSummary {
     total_visitors: number;

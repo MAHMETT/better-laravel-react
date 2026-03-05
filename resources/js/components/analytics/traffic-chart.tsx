@@ -66,6 +66,20 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                     minute: '2-digit',
                     hour12: true,
                 });
+            case '2hourly':
+                return date.toLocaleTimeString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    hour12: true,
+                });
+            case '12hourly':
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    hour12: true,
+                });
             case 'daily':
                 return date.toLocaleDateString('en-US', {
                     month: 'short',
@@ -109,6 +123,8 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
                             {granularity === 'hourly' && 'Visits per hour'}
+                            {granularity === '2hourly' && 'Visits per 2 hours'}
+                            {granularity === '12hourly' && 'Visits per 12 hours'}
                             {granularity === 'daily' && 'Visits per day'}
                             {granularity === 'weekly' && 'Visits per week'}
                             {granularity === 'monthly' && 'Visits per month'}
@@ -116,13 +132,13 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                     </div>
                     <div className="flex gap-4 text-sm">
                         <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded-full bg-primary" />
+                            <div className="h-3 w-3 rounded-full bg-[hsl(var(--chart-1))]" />
                             <span className="text-muted-foreground">
                                 Total: {totalVisits.toLocaleString()}
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded-full bg-secondary" />
+                            <div className="h-3 w-3 rounded-full bg-[hsl(var(--chart-2))]" />
                             <span className="text-muted-foreground">
                                 Unique: {totalUnique.toLocaleString()}
                             </span>
@@ -141,7 +157,7 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart
                                 data={data}
-                                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                                margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
                             >
                                 <defs>
                                     <linearGradient
@@ -153,12 +169,12 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                                     >
                                         <stop
                                             offset="5%"
-                                            stopColor="hsl(var(--primary))"
-                                            stopOpacity={0.3}
+                                            stopColor="hsl(var(--chart-1))"
+                                            stopOpacity={0.4}
                                         />
                                         <stop
                                             offset="95%"
-                                            stopColor="hsl(var(--primary))"
+                                            stopColor="hsl(var(--chart-1))"
                                             stopOpacity={0}
                                         />
                                     </linearGradient>
@@ -171,12 +187,12 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                                     >
                                         <stop
                                             offset="5%"
-                                            stopColor="hsl(var(--secondary))"
-                                            stopOpacity={0.3}
+                                            stopColor="hsl(var(--chart-2))"
+                                            stopOpacity={0.4}
                                         />
                                         <stop
                                             offset="95%"
-                                            stopColor="hsl(var(--secondary))"
+                                            stopColor="hsl(var(--chart-2))"
                                             stopOpacity={0}
                                         />
                                     </linearGradient>
@@ -184,6 +200,7 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                                 <CartesianGrid
                                     strokeDasharray="3 3"
                                     className="stroke-muted"
+                                    stroke="hsl(var(--muted-foreground) / 0.3)"
                                 />
                                 <XAxis
                                     dataKey="period"
@@ -210,16 +227,25 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                                         backgroundColor: 'hsl(var(--card))',
                                         border: '1px solid hsl(var(--border))',
                                         borderRadius: '0.5rem',
+                                        boxShadow: 'var(--shadow-md)',
                                     }}
-                                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                                    labelStyle={{ 
+                                        color: 'hsl(var(--foreground))',
+                                        fontWeight: 500,
+                                    }}
+                                    itemStyle={{
+                                        color: 'hsl(var(--foreground))',
+                                        fontWeight: 500,
+                                    }}
                                     formatter={tooltipFormatter}
                                     labelFormatter={(label) => {
                                         const date = new Date(label);
+                                        const showHour = granularity === 'hourly' || granularity === '2hourly' || granularity === '12hourly';
                                         return date.toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
-                                            hour: granularity === 'hourly' ? 'numeric' : undefined,
+                                            hour: showHour ? 'numeric' : undefined,
                                             minute: granularity === 'hourly' ? '2-digit' : undefined,
                                         });
                                     }}
@@ -227,20 +253,30 @@ export function TrafficChart({ data, granularity, isLoading, error }: TrafficCha
                                 <Area
                                     type="monotone"
                                     dataKey="visits"
-                                    stroke="hsl(var(--primary))"
+                                    stroke="hsl(var(--chart-1))"
                                     strokeWidth={2}
                                     fillOpacity={1}
                                     fill="url(#colorVisits)"
-                                    name="visits"
+                                    name="Total Visits"
+                                    activeDot={{
+                                        r: 6,
+                                        strokeWidth: 0,
+                                        fill: 'hsl(var(--chart-1))',
+                                    }}
                                 />
                                 <Area
                                     type="monotone"
                                     dataKey="unique_visitors"
-                                    stroke="hsl(var(--secondary))"
+                                    stroke="hsl(var(--chart-2))"
                                     strokeWidth={2}
                                     fillOpacity={1}
                                     fill="url(#colorUnique)"
-                                    name="unique_visitors"
+                                    name="Unique Visitors"
+                                    activeDot={{
+                                        r: 6,
+                                        strokeWidth: 0,
+                                        fill: 'hsl(var(--chart-2))',
+                                    }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>

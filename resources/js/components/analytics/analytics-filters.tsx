@@ -17,6 +17,8 @@ const presetLabels: Record<AnalyticsPreset, string> = {
 
 const granularityLabels: Record<ChartGranularity, string> = {
     hourly: 'Hourly',
+    '2hourly': 'Per 2 Hours',
+    '12hourly': 'Per 12 Hours',
     daily: 'Daily',
     weekly: 'Weekly',
     monthly: 'Monthly',

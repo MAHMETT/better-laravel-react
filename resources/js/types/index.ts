@@ -35,6 +35,25 @@ export type {
     TopRoutesResponse,
     TopReferrer,
     TopReferrersResponse,
+    // Visitor Management
+    VisitorAnalyticsFilters as VisitorManagementFilters,
+    TimeRangeOption,
+    ChartMode,
+    KpiStats,
+    KpiStatsResponse,
+    DailyVisitData,
+    DailyVisitsResponse,
+    PeakHourData,
+    PeakHourResponse,
+    ReturningVisitorsData,
+    ReturningVisitorsResponse,
+    PurposeData,
+    PurposeOfVisitResponse,
+    RegionData,
+    RegionDistributionResponse,
+    LiveFeedItem,
+    LiveFeedResponse,
+    ExportResponse,
 } from './api';
 
 // Components

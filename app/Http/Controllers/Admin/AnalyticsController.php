@@ -106,6 +106,8 @@ class AnalyticsController extends Controller
 
         $chartData = match ($granularity) {
             'hourly' => $this->getHourlyData($query),
+            '2hourly' => $this->get2HourlyData($query),
+            '12hourly' => $this->get12HourlyData($query),
             'daily' => $this->getDailyData($query),
             'weekly' => $this->getWeeklyData($query),
             'monthly' => $this->getMonthlyData($query),
@@ -336,6 +338,58 @@ class AnalyticsController extends Controller
             ->get()
             ->map(fn ($row) => [
                 'period' => Carbon::parse($row->date)->format('Y-m-d').' '.str_pad((string) (int) $row->hour, 2, '0', STR_PAD_LEFT).':00',
+                'visits' => (int) $row->visits,
+                'unique_visitors' => (int) $row->unique_visitors,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Get 2-hour aggregated data.
+     *
+     * @return list<array{period: string, visits: int, unique_visitors: int}>
+     */
+    protected function get2HourlyData($query): array
+    {
+        return $query
+            ->select(
+                DB::raw('DATE(visited_at) as date'),
+                DB::raw('FLOOR(EXTRACT(HOUR FROM visited_at) / 2) * 2 as hour_block'),
+                DB::raw('COUNT(*) as visits'),
+                DB::raw('COUNT(DISTINCT session_id) as unique_visitors'),
+            )
+            ->groupBy('date', 'hour_block')
+            ->orderBy('date')
+            ->orderBy('hour_block')
+            ->get()
+            ->map(fn ($row) => [
+                'period' => Carbon::parse($row->date)->format('Y-m-d').' '.str_pad((string) (int) $row->hour_block, 2, '0', STR_PAD_LEFT).':00',
+                'visits' => (int) $row->visits,
+                'unique_visitors' => (int) $row->unique_visitors,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Get 12-hour aggregated data.
+     *
+     * @return list<array{period: string, visits: int, unique_visitors: int}>
+     */
+    protected function get12HourlyData($query): array
+    {
+        return $query
+            ->select(
+                DB::raw('DATE(visited_at) as date'),
+                DB::raw('FLOOR(EXTRACT(HOUR FROM visited_at) / 12) * 12 as hour_block'),
+                DB::raw('COUNT(*) as visits'),
+                DB::raw('COUNT(DISTINCT session_id) as unique_visitors'),
+            )
+            ->groupBy('date', 'hour_block')
+            ->orderBy('date')
+            ->orderBy('hour_block')
+            ->get()
+            ->map(fn ($row) => [
+                'period' => Carbon::parse($row->date)->format('Y-m-d').' '.str_pad((string) (int) $row->hour_block, 2, '0', STR_PAD_LEFT).':00',
                 'visits' => (int) $row->visits,
                 'unique_visitors' => (int) $row->unique_visitors,
             ])

@@ -44,3 +44,4 @@ export interface SelfUserLogFilters {
 }
 
 export * from './visitor-analytics';
+export * from './visitor-management';
