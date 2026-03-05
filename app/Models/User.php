@@ -92,6 +92,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Scope a query to only include regular users.
+     */
+    public function scopeRegular($query)
+    {
+        return $query->where('role', 'user');
+    }
+
+    /**
+     * Scope a query to include soft-deleted records.
+     */
+    public function scopeWithTrashed($query)
+    {
+        return $query->withTrashed();
+    }
+
+    /**
+     * Scope a query to only include soft-deleted records.
+     */
+    public function scopeOnlyTrashed($query)
+    {
+        return $query->onlyTrashed();
+    }
+
+    /**
      * Get the avatar media record for the user.
      */
     public function avatarMedia(): BelongsTo

@@ -3,11 +3,7 @@ import { LogTable } from '@/components/activity-logs/log-table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Paginations } from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app-layout';
-import {
-    selectAdminUserLogFilters,
-    selectAdminUserLogLoading,
-    useAdminUserLogStore,
-} from '@/stores/admin-user-log-store';
+import { useAdminUserLogStore } from '@/stores/admin-user-log-store';
 import activityLogs from '@/routes/activity-logs';
 import users from '@/routes/users';
 import type {
@@ -36,14 +32,14 @@ export default function AdminUserActivityLogs({
     filters,
     schema_ready = true,
 }: Props) {
-    const storeFilters = useAdminUserLogStore(selectAdminUserLogFilters);
-    const isLoading = useAdminUserLogStore(selectAdminUserLogLoading);
-    const initialize = useAdminUserLogStore((state) => state.initialize);
-    const setFilters = useAdminUserLogStore((state) => state.setFilters);
-    const setIsLoading = useAdminUserLogStore((state) => state.setIsLoading);
-    const setCurrentPage = useAdminUserLogStore((state) => state.setCurrentPage);
-    const reset = useAdminUserLogStore((state) => state.reset);
-    const getFilterParams = useAdminUserLogStore((state) => state.getFilterParams);
+    const storeFilters = useAdminUserLogStore.use.filters();
+    const isLoading = useAdminUserLogStore.use.isLoading();
+    const initialize = useAdminUserLogStore.use.initialize();
+    const setFilters = useAdminUserLogStore.use.setFilters();
+    const setIsLoading = useAdminUserLogStore.use.setIsLoading();
+    const setCurrentPage = useAdminUserLogStore.use.setCurrentPage();
+    const reset = useAdminUserLogStore.use.reset();
+    const getFilterParams = useAdminUserLogStore.use.getFilterParams();
 
     const breadcrumbs: BreadcrumbItem[] = [
         {

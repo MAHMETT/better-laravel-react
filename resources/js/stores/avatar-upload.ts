@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { createSelectors } from '@/lib/zustand-selectors';
 import type { Area, Point } from 'react-easy-crop';
 import type { AvatarValidationError } from '@/schemas/avatar';
 
-export interface AvatarUploadState {
+interface AvatarUploadState {
     isOpen: boolean;
     previewImage: string | null;
     selectedFile: File | null;
@@ -15,7 +15,6 @@ export interface AvatarUploadState {
     croppedAreaPixels: Area | null;
     isProcessing: boolean;
     isUploading: boolean;
-
     open: () => void;
     close: () => void;
     setPreviewImage: (image: string | null) => void;
@@ -33,71 +32,70 @@ export interface AvatarUploadState {
     reset: () => void;
 }
 
-const initialState = {
+const initialState: Omit<
+    AvatarUploadState,
+    | 'open'
+    | 'close'
+    | 'setPreviewImage'
+    | 'setSelectedFile'
+    | 'setValidationErrors'
+    | 'addValidationError'
+    | 'clearValidationErrors'
+    | 'setIsDragOver'
+    | 'setShowCropDialog'
+    | 'setCrop'
+    | 'setZoom'
+    | 'setCroppedAreaPixels'
+    | 'setIsProcessing'
+    | 'setIsUploading'
+    | 'reset'
+> = {
     isOpen: false,
     previewImage: null,
     selectedFile: null,
-    validationErrors: [] as AvatarValidationError[],
+    validationErrors: [],
     isDragOver: false,
     showCropDialog: false,
-    crop: { x: 0, y: 0 } as Point,
+    crop: { x: 0, y: 0 },
     zoom: 1,
     croppedAreaPixels: null,
     isProcessing: false,
     isUploading: false,
 };
 
-export const useAvatarUploadStore = create<AvatarUploadState>()(
-    subscribeWithSelector((set) => ({
-        ...initialState,
+const useAvatarUploadStoreBase = create<AvatarUploadState>()((set) => ({
+    ...initialState,
 
-        open: () => set({ isOpen: true }),
-        close: () => set({ isOpen: false }),
+    open: () => set({ isOpen: true }),
+    close: () => set({ isOpen: false }),
 
-        setPreviewImage: (previewImage) => set({ previewImage }),
-        setSelectedFile: (selectedFile) => set({ selectedFile }),
+    setPreviewImage: (previewImage) => set({ previewImage }),
+    setSelectedFile: (selectedFile) => set({ selectedFile }),
 
-        setValidationErrors: (validationErrors) => set({ validationErrors }),
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
 
-        addValidationError: (error) =>
-            set((state) => ({
-                validationErrors: [...state.validationErrors, error],
-            })),
+    addValidationError: (error) =>
+        set((state) => ({
+            validationErrors: [...state.validationErrors, error],
+        })),
 
-        clearValidationErrors: () => set({ validationErrors: [] }),
+    clearValidationErrors: () => set({ validationErrors: [] }),
 
-        setIsDragOver: (isDragOver) => set({ isDragOver }),
+    setIsDragOver: (isDragOver) => set({ isDragOver }),
 
-        setShowCropDialog: (showCropDialog) => set({ showCropDialog }),
+    setShowCropDialog: (showCropDialog) => set({ showCropDialog }),
 
-        setCrop: (crop) => set({ crop }),
+    setCrop: (crop) => set({ crop }),
 
-        setZoom: (zoom) => set({ zoom }),
+    setZoom: (zoom) => set({ zoom }),
 
-        setCroppedAreaPixels: (croppedAreaPixels) => set({ croppedAreaPixels }),
+    setCroppedAreaPixels: (croppedAreaPixels) => set({ croppedAreaPixels }),
 
-        setIsProcessing: (isProcessing) => set({ isProcessing }),
+    setIsProcessing: (isProcessing) => set({ isProcessing }),
 
-        setIsUploading: (isUploading) => set({ isUploading }),
+    setIsUploading: (isUploading) => set({ isUploading }),
 
-        reset: () => set(initialState),
-    })),
-);
+    reset: () => set(initialState),
+}));
 
-export const selectIsOpen = (state: AvatarUploadState) => state.isOpen;
-export const selectPreviewImage = (state: AvatarUploadState) =>
-    state.previewImage;
-export const selectSelectedFile = (state: AvatarUploadState) =>
-    state.selectedFile;
-export const selectValidationErrors = (state: AvatarUploadState) =>
-    state.validationErrors;
-export const selectShowCropDialog = (state: AvatarUploadState) =>
-    state.showCropDialog;
-export const selectIsProcessing = (state: AvatarUploadState) =>
-    state.isProcessing;
-export const selectIsUploading = (state: AvatarUploadState) =>
-    state.isUploading;
-export const selectCrop = (state: AvatarUploadState) => state.crop;
-export const selectZoom = (state: AvatarUploadState) => state.zoom;
-export const selectCroppedAreaPixels = (state: AvatarUploadState) =>
-    state.croppedAreaPixels;
+export const useAvatarUploadStore = createSelectors(useAvatarUploadStoreBase);

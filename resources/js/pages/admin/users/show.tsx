@@ -24,8 +24,8 @@ import type { BreadcrumbItem, User } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, History, Pencil, Power, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
-import { create } from 'zustand';
 import { toast } from 'sonner';
+import { create } from 'zustand';
 
 interface Props {
     user: User;
@@ -118,7 +118,7 @@ export default function ShowUser({ user }: Props) {
             onSuccess: () => {
                 toast.success('User deleted successfully', { id: toastId });
                 setShowDeleteModal(false);
-                router.visit(users.index.url());
+                window.history.back();
             },
             onError: (errors: Record<string, string>) => {
                 const message =
@@ -166,8 +166,7 @@ export default function ShowUser({ user }: Props) {
         );
     };
 
-    const handleBack = () =>
-        window.history.back() ?? router.visit(users.index.url());
+    const handleBack = () => window.history.back() ?? window.history.back();
 
     const formatDate = (date: string | null) => {
         if (!date) return 'N/A';
@@ -206,7 +205,10 @@ export default function ShowUser({ user }: Props) {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleViewActivityLogs}>
+                        <Button
+                            variant="outline"
+                            onClick={handleViewActivityLogs}
+                        >
                             <History className="mr-2 size-4" />
                             Activity Logs
                         </Button>

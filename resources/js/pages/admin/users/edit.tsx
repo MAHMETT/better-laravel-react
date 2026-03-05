@@ -19,40 +19,31 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
-import type { BreadcrumbItem, User } from '@/types';
+import type { BreadcrumbItem, EditUserFormData, User } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, LoaderCircleIcon, UserCog } from 'lucide-react';
 import { useEffect } from 'react';
-import { create } from 'zustand';
 import { toast } from 'sonner';
+import { create } from 'zustand';
 
 interface Props {
     user: User;
 }
 
-interface FormData {
-    name: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-    role: 'admin' | 'user';
-    status: 'enable' | 'disable';
-}
-
 interface EditUserPageState {
-    formData: FormData;
+    formData: EditUserFormData;
     validationErrors: Record<string, string>;
     processing: boolean;
     showPasswordFields: boolean;
     isUploadingAvatar: boolean;
     showAvatarModal: boolean;
-    setFormData: (formData: FormData) => void;
+    setFormData: (formData: EditUserFormData) => void;
     setValidationErrors: (validationErrors: Record<string, string>) => void;
     setProcessing: (processing: boolean) => void;
     setShowPasswordFields: (showPasswordFields: boolean) => void;
     setIsUploadingAvatar: (isUploadingAvatar: boolean) => void;
     setShowAvatarModal: (showAvatarModal: boolean) => void;
-    initialize: (formData: FormData) => void;
+    initialize: (formData: EditUserFormData) => void;
 }
 
 const useEditUserPageStore = create<EditUserPageState>((set) => ({
@@ -113,7 +104,9 @@ export default function EditUser({ user }: Props) {
     const isUploadingAvatar = useEditUserPageStore(
         (state) => state.isUploadingAvatar,
     );
-    const showAvatarModal = useEditUserPageStore((state) => state.showAvatarModal);
+    const showAvatarModal = useEditUserPageStore(
+        (state) => state.showAvatarModal,
+    );
     const setFormData = useEditUserPageStore((state) => state.setFormData);
     const setValidationErrors = useEditUserPageStore(
         (state) => state.setValidationErrors,
@@ -290,8 +283,7 @@ export default function EditUser({ user }: Props) {
         });
     };
 
-    const handleCancel = () =>
-        window.history.back() ?? router.visit(users.index.url());
+    const handleCancel = () => window.history.back() ?? window.history.back();
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

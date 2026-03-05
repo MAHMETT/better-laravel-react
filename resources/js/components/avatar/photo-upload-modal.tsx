@@ -34,23 +34,7 @@ import {
     validateAvatarFile,
     validateAvatarImageSource,
 } from '@/schemas/avatar';
-import {
-    selectPhotoUploadCrop,
-    selectPhotoUploadCroppedAreaPixels,
-    selectPhotoUploadCroppedImageFile,
-    selectPhotoUploadCroppedPreviewUrl,
-    selectPhotoUploadHasUnsavedChanges,
-    selectPhotoUploadIsDragOver,
-    selectPhotoUploadIsProcessing,
-    selectPhotoUploadMode,
-    selectPhotoUploadSelectedFile,
-    selectPhotoUploadShowCancelConfirm,
-    selectPhotoUploadShowDeleteConfirm,
-    selectPhotoUploadSourceImageUrl,
-    selectPhotoUploadValidationErrors,
-    selectPhotoUploadZoom,
-    usePhotoUploadModalStore,
-} from '@/stores/photo-upload-modal';
+import { usePhotoUploadModalStore } from '@/stores/photo-upload-modal';
 import {
     AlertCircle,
     Camera,
@@ -91,81 +75,37 @@ export function PhotoUploadModal({
     const getInitials = useInitials();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const mode = usePhotoUploadModalStore(selectPhotoUploadMode);
-    const selectedFile = usePhotoUploadModalStore(
-        selectPhotoUploadSelectedFile,
-    );
-    const sourceImageUrl = usePhotoUploadModalStore(
-        selectPhotoUploadSourceImageUrl,
-    );
-    const croppedPreviewUrl = usePhotoUploadModalStore(
-        selectPhotoUploadCroppedPreviewUrl,
-    );
-    const croppedImageFile = usePhotoUploadModalStore(
-        selectPhotoUploadCroppedImageFile,
-    );
-    const crop = usePhotoUploadModalStore(selectPhotoUploadCrop);
-    const zoom = usePhotoUploadModalStore(selectPhotoUploadZoom);
-    const croppedAreaPixels = usePhotoUploadModalStore(
-        selectPhotoUploadCroppedAreaPixels,
-    );
-    const validationErrors = usePhotoUploadModalStore(
-        selectPhotoUploadValidationErrors,
-    );
-    const isDragOver = usePhotoUploadModalStore(selectPhotoUploadIsDragOver);
-    const isProcessing = usePhotoUploadModalStore(
-        selectPhotoUploadIsProcessing,
-    );
-    const hasUnsavedChanges = usePhotoUploadModalStore(
-        selectPhotoUploadHasUnsavedChanges,
-    );
-    const showDeleteConfirm = usePhotoUploadModalStore(
-        selectPhotoUploadShowDeleteConfirm,
-    );
-    const showCancelConfirm = usePhotoUploadModalStore(
-        selectPhotoUploadShowCancelConfirm,
-    );
+    const mode = usePhotoUploadModalStore.use.mode();
+    const selectedFile = usePhotoUploadModalStore.use.selectedFile();
+    const sourceImageUrl = usePhotoUploadModalStore.use.sourceImageUrl();
+    const croppedPreviewUrl = usePhotoUploadModalStore.use.croppedPreviewUrl();
+    const croppedImageFile = usePhotoUploadModalStore.use.croppedImageFile();
+    const crop = usePhotoUploadModalStore.use.crop();
+    const zoom = usePhotoUploadModalStore.use.zoom();
+    const croppedAreaPixels = usePhotoUploadModalStore.use.croppedAreaPixels();
+    const validationErrors = usePhotoUploadModalStore.use.validationErrors();
+    const isDragOver = usePhotoUploadModalStore.use.isDragOver();
+    const isProcessing = usePhotoUploadModalStore.use.isProcessing();
+    const hasUnsavedChanges = usePhotoUploadModalStore.use.hasUnsavedChanges();
+    const showDeleteConfirm = usePhotoUploadModalStore.use.showDeleteConfirm();
+    const showCancelConfirm = usePhotoUploadModalStore.use.showCancelConfirm();
 
-    const setMode = usePhotoUploadModalStore((state) => state.setMode);
-    const setSelectedFile = usePhotoUploadModalStore(
-        (state) => state.setSelectedFile,
-    );
-    const setSourceImageUrl = usePhotoUploadModalStore(
-        (state) => state.setSourceImageUrl,
-    );
-    const setCroppedPreviewUrl = usePhotoUploadModalStore(
-        (state) => state.setCroppedPreviewUrl,
-    );
-    const setCroppedImageFile = usePhotoUploadModalStore(
-        (state) => state.setCroppedImageFile,
-    );
-    const setCroppedAreaPixels = usePhotoUploadModalStore(
-        (state) => state.setCroppedAreaPixels,
-    );
-    const setCrop = usePhotoUploadModalStore((state) => state.setCrop);
-    const setZoom = usePhotoUploadModalStore((state) => state.setZoom);
-    const setValidationErrors = usePhotoUploadModalStore(
-        (state) => state.setValidationErrors,
-    );
-    const clearValidationErrors = usePhotoUploadModalStore(
-        (state) => state.clearValidationErrors,
-    );
-    const setIsDragOver = usePhotoUploadModalStore(
-        (state) => state.setIsDragOver,
-    );
-    const setIsProcessing = usePhotoUploadModalStore(
-        (state) => state.setIsProcessing,
-    );
-    const setHasUnsavedChanges = usePhotoUploadModalStore(
-        (state) => state.setHasUnsavedChanges,
-    );
-    const setShowDeleteConfirm = usePhotoUploadModalStore(
-        (state) => state.setShowDeleteConfirm,
-    );
-    const setShowCancelConfirm = usePhotoUploadModalStore(
-        (state) => state.setShowCancelConfirm,
-    );
-    const resetStore = usePhotoUploadModalStore((state) => state.reset);
+    const setMode = usePhotoUploadModalStore.use.setMode();
+    const setSelectedFile = usePhotoUploadModalStore.use.setSelectedFile();
+    const setSourceImageUrl = usePhotoUploadModalStore.use.setSourceImageUrl();
+    const setCroppedPreviewUrl = usePhotoUploadModalStore.use.setCroppedPreviewUrl();
+    const setCroppedImageFile = usePhotoUploadModalStore.use.setCroppedImageFile();
+    const setCroppedAreaPixels = usePhotoUploadModalStore.use.setCroppedAreaPixels();
+    const setCrop = usePhotoUploadModalStore.use.setCrop();
+    const setZoom = usePhotoUploadModalStore.use.setZoom();
+    const setValidationErrors = usePhotoUploadModalStore.use.setValidationErrors();
+    const clearValidationErrors = usePhotoUploadModalStore.use.clearValidationErrors();
+    const setIsDragOver = usePhotoUploadModalStore.use.setIsDragOver();
+    const setIsProcessing = usePhotoUploadModalStore.use.setIsProcessing();
+    const setHasUnsavedChanges = usePhotoUploadModalStore.use.setHasUnsavedChanges();
+    const setShowDeleteConfirm = usePhotoUploadModalStore.use.setShowDeleteConfirm();
+    const setShowCancelConfirm = usePhotoUploadModalStore.use.setShowCancelConfirm();
+    const resetStore = usePhotoUploadModalStore.use.reset();
 
     const clearTransientImageState = useCallback(() => {
         revokeObjectUrl(usePhotoUploadModalStore.getState().sourceImageUrl);

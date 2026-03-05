@@ -5,21 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Paginations } from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app-layout';
 import activityLogs from '@/routes/activity-logs';
-import {
-    selectAdminUserLogAppliedUserIds,
-    selectAdminUserLogDialogOpen,
-    selectAdminUserLogFilters,
-    selectAdminUserLogLoading,
-    selectAdminUserLogSelectedUserIds,
-    selectAdminUserLogSelectedUsers,
-    selectAdminUserLogUserListLoading,
-    selectAdminUserLogUserListMeta,
-    selectAdminUserLogUserOptions,
-    selectAdminUserLogUserRoleFilter,
-    selectAdminUserLogUserSearchKeyword,
-    selectAdminUserLogUserStatusFilter,
-    useAdminUserLogStore,
-} from '@/stores/admin-user-log-store';
+import { useAdminUserLogStore } from '@/stores/admin-user-log-store';
 import type {
     AdminUserLogFilters,
     BreadcrumbItem,
@@ -48,85 +34,51 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function AdminUserLogsIndex({
     logs,
-    filters,
+    filters: initialFilters,
     schema_ready = true,
 }: Props) {
-    const storeFilters = useAdminUserLogStore(selectAdminUserLogFilters);
-    const appliedUserIds = useAdminUserLogStore(selectAdminUserLogAppliedUserIds);
-    const selectedUserIds = useAdminUserLogStore(selectAdminUserLogSelectedUserIds);
-    const selectedUsers = useAdminUserLogStore(selectAdminUserLogSelectedUsers);
-    const dialogOpen = useAdminUserLogStore(selectAdminUserLogDialogOpen);
-    const userSearchKeyword = useAdminUserLogStore(
-        selectAdminUserLogUserSearchKeyword,
-    );
-    const userRoleFilter = useAdminUserLogStore(selectAdminUserLogUserRoleFilter);
-    const userStatusFilter = useAdminUserLogStore(
-        selectAdminUserLogUserStatusFilter,
-    );
-    const userOptions = useAdminUserLogStore(selectAdminUserLogUserOptions);
-    const userListMeta = useAdminUserLogStore(selectAdminUserLogUserListMeta);
-    const isLoading = useAdminUserLogStore(selectAdminUserLogLoading);
-    const isUserListLoading = useAdminUserLogStore(
-        selectAdminUserLogUserListLoading,
-    );
+    const storeFilters = useAdminUserLogStore.use.filters();
+    const appliedUserIds = useAdminUserLogStore.use.appliedUserIds();
+    const selectedUserIds = useAdminUserLogStore.use.selectedUserIds();
+    const selectedUsers = useAdminUserLogStore.use.selectedUsers();
+    const dialogOpen = useAdminUserLogStore.use.isUserFilterDialogOpen();
+    const userSearchKeyword = useAdminUserLogStore.use.userSearchKeyword();
+    const userRoleFilter = useAdminUserLogStore.use.userRoleFilter();
+    const userStatusFilter = useAdminUserLogStore.use.userStatusFilter();
+    const userOptions = useAdminUserLogStore.use.userOptions();
+    const userListMeta = useAdminUserLogStore.use.userListMeta();
+    const isLoading = useAdminUserLogStore.use.isLoading();
+    const isUserListLoading = useAdminUserLogStore.use.isUserListLoading();
 
-    const initialize = useAdminUserLogStore((state) => state.initialize);
-    const setFilters = useAdminUserLogStore((state) => state.setFilters);
-    const setIsLoading = useAdminUserLogStore((state) => state.setIsLoading);
-    const setCurrentPage = useAdminUserLogStore((state) => state.setCurrentPage);
-    const reset = useAdminUserLogStore((state) => state.reset);
-    const getFilterParams = useAdminUserLogStore((state) => state.getFilterParams);
-    const openUserFilterDialog = useAdminUserLogStore(
-        (state) => state.openUserFilterDialog,
-    );
-    const closeUserFilterDialog = useAdminUserLogStore(
-        (state) => state.closeUserFilterDialog,
-    );
-    const applyUserSelection = useAdminUserLogStore(
-        (state) => state.applyUserSelection,
-    );
-    const clearAppliedUserFilter = useAdminUserLogStore(
-        (state) => state.clearAppliedUserFilter,
-    );
-    const clearSelectedUsers = useAdminUserLogStore(
-        (state) => state.clearSelectedUsers,
-    );
-    const setSelectedUserIds = useAdminUserLogStore(
-        (state) => state.setSelectedUserIds,
-    );
-    const toggleSelectedUserId = useAdminUserLogStore(
-        (state) => state.toggleSelectedUserId,
-    );
-    const setUserSearchKeyword = useAdminUserLogStore(
-        (state) => state.setUserSearchKeyword,
-    );
-    const setUserRoleFilter = useAdminUserLogStore(
-        (state) => state.setUserRoleFilter,
-    );
-    const setUserStatusFilter = useAdminUserLogStore(
-        (state) => state.setUserStatusFilter,
-    );
-    const setIsUserListLoading = useAdminUserLogStore(
-        (state) => state.setIsUserListLoading,
-    );
-    const replaceUserOptions = useAdminUserLogStore(
-        (state) => state.replaceUserOptions,
-    );
-    const appendUserOptions = useAdminUserLogStore(
-        (state) => state.appendUserOptions,
-    );
-    const setSelectedUsers = useAdminUserLogStore((state) => state.setSelectedUsers);
-    const setUserListMeta = useAdminUserLogStore((state) => state.setUserListMeta);
-    const getUserSearchParams = useAdminUserLogStore(
-        (state) => state.getUserSearchParams,
-    );
+    const initialize = useAdminUserLogStore.use.initialize();
+    const setFilters = useAdminUserLogStore.use.setFilters();
+    const setIsLoading = useAdminUserLogStore.use.setIsLoading();
+    const setCurrentPage = useAdminUserLogStore.use.setCurrentPage();
+    const reset = useAdminUserLogStore.use.reset();
+    const getFilterParams = useAdminUserLogStore.use.getFilterParams();
+    const openUserFilterDialog = useAdminUserLogStore.use.openUserFilterDialog();
+    const closeUserFilterDialog = useAdminUserLogStore.use.closeUserFilterDialog();
+    const applyUserSelection = useAdminUserLogStore.use.applyUserSelection();
+    const clearAppliedUserFilter = useAdminUserLogStore.use.clearAppliedUserFilter();
+    const clearSelectedUsers = useAdminUserLogStore.use.clearSelectedUsers();
+    const setSelectedUserIds = useAdminUserLogStore.use.setSelectedUserIds();
+    const toggleSelectedUserId = useAdminUserLogStore.use.toggleSelectedUserId();
+    const setUserSearchKeyword = useAdminUserLogStore.use.setUserSearchKeyword();
+    const setUserRoleFilter = useAdminUserLogStore.use.setUserRoleFilter();
+    const setUserStatusFilter = useAdminUserLogStore.use.setUserStatusFilter();
+    const setIsUserListLoading = useAdminUserLogStore.use.setIsUserListLoading();
+    const replaceUserOptions = useAdminUserLogStore.use.replaceUserOptions();
+    const appendUserOptions = useAdminUserLogStore.use.appendUserOptions();
+    const setSelectedUsers = useAdminUserLogStore.use.setSelectedUsers();
+    const setUserListMeta = useAdminUserLogStore.use.setUserListMeta();
+    const getUserSearchParams = useAdminUserLogStore.use.getUserSearchParams();
 
     const userRequestControllerRef = useRef<AbortController | null>(null);
     const userRequestSequenceRef = useRef(0);
 
     useEffect(() => {
-        initialize(filters, logs.current_page);
-    }, [filters, logs.current_page, initialize]);
+        initialize(initialFilters, logs.current_page);
+    }, [initialFilters, logs.current_page, initialize]);
 
     useEffect(() => {
         setCurrentPage(logs.current_page);

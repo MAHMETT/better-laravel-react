@@ -30,6 +30,16 @@ class UserSelfLogController extends Controller
         }
 
         $logs = UserLog::query()
+            ->select([
+                'id',
+                'user_id',
+                'event_type',
+                'ip_address',
+                'user_agent',
+                'device_info',
+                'session_id',
+                'created_at',
+            ])
             ->where('user_id', $user->id)
             ->filter($filters)
             ->orderByDesc('created_at')

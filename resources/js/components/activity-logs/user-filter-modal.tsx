@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Search, Users, Check, X, UserCheck } from 'lucide-react';
 import type { UserLogFilterUser } from '@/types';
 import { useMemo } from 'react';
 
@@ -112,70 +113,86 @@ export function UserFilterModal({
 
     return (
         <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
-            <DialogContent className="max-h-[88vh] max-w-3xl overflow-hidden p-0">
-                <DialogHeader className="border-b px-6 pt-6 pb-4">
-                    <DialogTitle>Filter by User</DialogTitle>
-                    <DialogDescription>
-                        Search and select users to filter activity logs.
-                    </DialogDescription>
+            <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden p-0">
+                <DialogHeader className="border-b bg-muted/30 px-6 py-5">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-xl">Filter by User</DialogTitle>
+                            <DialogDescription className="text-sm">
+                                Search and select users to filter activity logs
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
-                <div className="space-y-4 px-6 py-4">
-                    <div className="grid gap-3 md:grid-cols-3">
-                        <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="user-search">Search User</Label>
+                <div className="space-y-4 px-6 py-5">
+                    {/* Search and Filter Controls */}
+                    <div className="grid gap-4 rounded-lg border bg-muted/20 p-4 md:grid-cols-4">
+                        <div className="md:col-span-2">
+                            <Label htmlFor="user-search" className="mb-2 flex items-center gap-2 text-sm font-medium">
+                                <Search className="h-4 w-4 text-muted-foreground" />
+                                Search User
+                            </Label>
                             <Input
                                 id="user-search"
                                 type="text"
                                 value={searchKeyword}
                                 onChange={(event) => onSearchChange(event.target.value)}
-                                placeholder="Search by name, email, or user ID"
+                                placeholder="Search by name, email, or ID..."
+                                className="h-10"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="user-role-filter">Role</Label>
+                        <div>
+                            <Label htmlFor="user-role-filter" className="mb-2 block text-sm font-medium">
+                                Role
+                            </Label>
                             <Select value={roleFilter} onValueChange={onRoleFilterChange}>
-                                <SelectTrigger id="user-role-filter">
+                                <SelectTrigger id="user-role-filter" className="h-10">
                                     <SelectValue placeholder="All roles" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All roles</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                    <SelectItem value="user">User</SelectItem>
+                                    <SelectItem value="admin">👑 Admin</SelectItem>
+                                    <SelectItem value="user">👤 User</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="user-status-filter" className="mb-2 block text-sm font-medium">
+                                Status
+                            </Label>
+                            <Select
+                                value={statusFilter}
+                                onValueChange={onStatusFilterChange}
+                            >
+                                <SelectTrigger id="user-status-filter" className="h-10">
+                                    <SelectValue placeholder="All statuses" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All statuses</SelectItem>
+                                    <SelectItem value="enable">✅ Enabled</SelectItem>
+                                    <SelectItem value="disable">❌ Disabled</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
-                    <div className="grid gap-3 md:grid-cols-3">
-                        <div className="space-y-2">
-                            <Label htmlFor="user-status-filter">Status</Label>
-                            <Select
-                                value={statusFilter}
-                                onValueChange={onStatusFilterChange}
-                            >
-                                <SelectTrigger id="user-status-filter">
-                                    <SelectValue placeholder="All statuses" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All statuses</SelectItem>
-                                    <SelectItem value="enable">Enabled</SelectItem>
-                                    <SelectItem value="disable">Disabled</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="md:col-span-2 flex flex-wrap items-end gap-2">
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/20 p-4">
+                        <div className="flex flex-wrap gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={handleToggleSelectVisibleUsers}
                                 disabled={visibleUserIds.length === 0}
+                                className="gap-2"
                             >
-                                {areAllVisibleUsersSelected
-                                    ? 'Unselect Visible'
-                                    : 'Select Visible'}
+                                <UserCheck className="h-4 w-4" />
+                                {areAllVisibleUsersSelected ? 'Unselect Visible' : 'Select Visible'}
                             </Button>
                             <Button
                                 type="button"
@@ -183,41 +200,73 @@ export function UserFilterModal({
                                 size="sm"
                                 onClick={onClearSelection}
                                 disabled={selectedCount === 0}
+                                className="gap-2"
                             >
+                                <X className="h-4 w-4" />
                                 Clear Selection
                             </Button>
-                            <Badge variant="secondary">Selected {selectedCount}</Badge>
                         </div>
+                        <Badge
+                            variant="default"
+                            className="gap-2 bg-primary/10 text-primary hover:bg-primary/20"
+                        >
+                            <Check className="h-4 w-4" />
+                            {selectedCount} selected
+                        </Badge>
                     </div>
 
+                    {/* Selected Users Preview */}
                     {displaySelectedUsers.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                            {displaySelectedUsers.slice(0, 6).map((selectedUser) => (
-                                <Badge key={selectedUser.id} variant="outline">
-                                    {selectedUser.name}
-                                </Badge>
-                            ))}
-                            {displaySelectedUsers.length > 6 && (
-                                <Badge variant="outline">
-                                    +{displaySelectedUsers.length - 6} more
-                                </Badge>
-                            )}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">Selected Users</Label>
+                            <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto rounded-lg border bg-muted/20 p-3">
+                                {displaySelectedUsers.slice(0, 8).map((selectedUser) => (
+                                    <Badge
+                                        key={selectedUser.id}
+                                        variant="outline"
+                                        className="gap-1 bg-primary/5"
+                                    >
+                                        {selectedUser.name}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => onToggleUser(selectedUser.id)}
+                                            className="ml-1 h-4 w-4 p-0 hover:bg-transparent"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </Badge>
+                                ))}
+                                {displaySelectedUsers.length > 8 && (
+                                    <Badge variant="outline">
+                                        +{displaySelectedUsers.length - 8} more
+                                    </Badge>
+                                )}
+                            </div>
                         </div>
                     )}
 
-                    <ScrollArea className="h-[360px] rounded-md border">
-                        <div className="divide-y">
+                    {/* User List */}
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                            Available Users {users.length > 0 && `(${users.length})`}
+                        </Label>
+                        <ScrollArea className="h-[400px] rounded-md border">
                             {isLoading && users.length === 0 && (
                                 <div className="space-y-3 p-4">
-                                    <Skeleton className="h-12 w-full" />
-                                    <Skeleton className="h-12 w-full" />
-                                    <Skeleton className="h-12 w-full" />
+                                    <Skeleton className="h-16 w-full" />
+                                    <Skeleton className="h-16 w-full" />
+                                    <Skeleton className="h-16 w-full" />
+                                    <Skeleton className="h-16 w-full" />
                                 </div>
                             )}
 
                             {!isLoading && users.length === 0 && (
-                                <div className="text-muted-foreground p-6 text-center text-sm">
-                                    No users match your current search and filters.
+                                <div className="flex h-32 flex-col items-center justify-center text-center">
+                                    <Search className="mb-2 h-8 w-8 text-muted-foreground" />
+                                    <p className="text-muted-foreground text-sm">
+                                        No users match your search
+                                    </p>
                                 </div>
                             )}
 
@@ -227,64 +276,87 @@ export function UserFilterModal({
                                 return (
                                     <label
                                         key={user.id}
-                                        className="hover:bg-muted/40 flex cursor-pointer items-start gap-3 p-4"
+                                        className="hover:bg-muted/60 flex cursor-pointer items-start gap-3 border-b p-4 transition-colors last:border-b-0"
                                     >
                                         <Checkbox
                                             checked={isSelected}
                                             onCheckedChange={() => onToggleUser(user.id)}
+                                            className="mt-1"
                                         />
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="truncate font-medium">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-medium text-foreground">
                                                     {user.name}
                                                 </span>
                                                 <Badge
-                                                    variant="outline"
-                                                    className="capitalize"
+                                                    variant="secondary"
+                                                    className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                                                 >
-                                                    {user.role}
+                                                    {user.role === 'admin' && '👑'}
+                                                    {user.role === 'user' && '👤'}
+                                                    <span className="capitalize">{user.role}</span>
                                                 </Badge>
                                                 <Badge
-                                                    variant="outline"
-                                                    className="capitalize"
+                                                    variant="secondary"
+                                                    className={`gap-1 capitalize ${
+                                                        user.status === 'enable'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                                    }`}
                                                 >
-                                                    {user.status}
+                                                    {user.status === 'enable' ? '✅' : '❌'}
+                                                    {user.status === 'enable' ? 'Enabled' : 'Disabled'}
                                                 </Badge>
                                             </div>
-                                            <p className="text-muted-foreground truncate text-xs">
-                                                {user.email}
+                                            <p className="text-muted-foreground mt-1 truncate text-sm">
+                                                📧 {user.email}
                                             </p>
                                             <p className="text-muted-foreground text-xs">
-                                                User ID: {user.id}
+                                                ID: #{user.id}
                                             </p>
                                         </div>
+                                        {isSelected && (
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                                <Check className="h-4 w-4" />
+                                            </div>
+                                        )}
                                     </label>
                                 );
                             })}
-                        </div>
+                        </ScrollArea>
+                    </div>
 
-                        {hasMoreUsers && (
-                            <div className="border-t p-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={onLoadMore}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? 'Loading...' : 'Load More Users'}
-                                </Button>
-                            </div>
-                        )}
-                    </ScrollArea>
+                    {hasMoreUsers && (
+                        <div className="flex justify-center border-t pt-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onLoadMore}
+                                disabled={isLoading}
+                                className="w-full gap-2"
+                            >
+                                {isLoading && (
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                )}
+                                {isLoading ? 'Loading more users...' : 'Load More Users'}
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
-                <DialogFooter className="border-t px-6 py-4">
-                    <Button type="button" variant="ghost" onClick={onCancel}>
+                <DialogFooter className="border-t bg-muted/30 px-6 py-4">
+                    <Button type="button" variant="ghost" onClick={onCancel} className="gap-2">
+                        <X className="h-4 w-4" />
                         Cancel
                     </Button>
-                    <Button type="button" onClick={onApply}>
-                        Apply Filter
+                    <Button
+                        type="button"
+                        onClick={onApply}
+                        disabled={selectedCount === 0}
+                        className="gap-2"
+                    >
+                        <Check className="h-4 w-4" />
+                        Apply Filter {selectedCount > 0 && `(${selectedCount})`}
                     </Button>
                 </DialogFooter>
             </DialogContent>

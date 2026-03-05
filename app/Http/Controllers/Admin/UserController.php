@@ -30,17 +30,18 @@ class UserController extends Controller
         $perPage = (int) $request->input('per_page', 10);
 
         $users = User::query()
+            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at'])
             ->with('avatarMedia')
             ->filter($filters)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->paginate($perPage)
             ->withQueryString();
 
         $stats = [
             'total' => User::count(),
-            'enabled' => User::enabled()->count(),
-            'disabled' => User::disabled()->count(),
-            'admins' => User::admin()->count(),
+            'enabled' => User::where('status', 'enable')->count(),
+            'disabled' => User::where('status', 'disable')->count(),
+            'admins' => User::where('role', 'admin')->count(),
         ];
 
         return Inertia::render('admin/users/index', [
@@ -74,35 +75,12 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified user (including soft-deleted).
-     */
-    public function show(Request $request): Response|RedirectResponse
-    {
-        $userId = $this->getUserIdFromRequest($request);
-
-        $user = User::withTrashed()->with('avatarMedia')->find($userId);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
-        }
-
-        return Inertia::render('admin/users/show', [
-            'user' => $user,
-        ]);
-    }
-
-    /**
      * Get the user ID from the request route parameter.
      */
     private function getUserIdFromRequest(Request $request): int|string
     {
-        // Try 'id' parameter first (for additional routes)
-        $userParam = $request->route()->parameter('id');
-
-        // If not found, try 'user' parameter (for resource routes)
-        if ($userParam === null) {
-            $userParam = $request->route()->parameter('user');
-        }
+        $userParam = $request->route()->parameter('id')
+            ?? $request->route()->parameter('user');
 
         if ($userParam === null) {
             return 0;
@@ -124,13 +102,49 @@ class UserController extends Controller
     }
 
     /**
+     * Find a user by ID with optional soft deletes.
+     */
+    private function findUser(int|string $userId, bool $withTrashed = false): ?User
+    {
+        return $withTrashed
+            ? User::withTrashed()->find($userId)
+            : User::find($userId);
+    }
+
+    /**
+     * Find a user by ID or fail with soft deletes.
+     */
+    private function findUserOrFail(int|string $userId, bool $withTrashed = false): User
+    {
+        return $withTrashed
+            ? User::withTrashed()->findOrFail($userId)
+            : User::findOrFail($userId);
+    }
+
+    /**
+     * Display the specified user (including soft-deleted).
+     */
+    public function show(Request $request): Response|RedirectResponse
+    {
+        $userId = $this->getUserIdFromRequest($request);
+        $user = $this->findUser($userId, withTrashed: true);
+
+        if (! $user) {
+            return to_route('users.index')->with('error', 'User not found.');
+        }
+
+        return Inertia::render('admin/users/show', [
+            'user' => $user->load('avatarMedia'),
+        ]);
+    }
+
+    /**
      * Show the form for editing the specified user.
      */
     public function edit(Request $request): Response|RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-
-        $user = User::withTrashed()->find($userId);
+        $user = $this->findUser($userId, withTrashed: true);
 
         if (! $user) {
             return to_route('users.index')->with('error', 'User not found.');
@@ -147,8 +161,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-
-        $user = User::withTrashed()->find($userId);
+        $user = $this->findUser($userId, withTrashed: true);
 
         if (! $user) {
             return to_route('users.index')->with('error', 'User not found.');
@@ -175,8 +188,7 @@ class UserController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-
-        $user = User::withTrashed()->find($userId);
+        $user = $this->findUser($userId, withTrashed: true);
 
         if (! $user) {
             return to_route('users.index')->with('error', 'User not found.');
@@ -195,8 +207,7 @@ class UserController extends Controller
     public function toggleStatus(Request $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-
-        $user = User::withTrashed()->find($userId);
+        $user = $this->findUser($userId, withTrashed: true);
 
         if (! $user) {
             return to_route('users.index')->with('error', 'User not found.');
@@ -217,9 +228,8 @@ class UserController extends Controller
     public function restore(Request $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-
-        $userModel = User::withTrashed()->findOrFail($userId);
-        $userModel->restore();
+        $user = $this->findUserOrFail($userId, withTrashed: true);
+        $user->restore();
 
         return redirect()
             ->route('users.index')
@@ -232,9 +242,8 @@ class UserController extends Controller
     public function forceDelete(Request $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-
-        $userModel = User::withTrashed()->findOrFail($userId);
-        $userModel->forceDelete();
+        $user = $this->findUserOrFail($userId, withTrashed: true);
+        $user->forceDelete();
 
         return redirect()
             ->route('users.trashed')
@@ -254,8 +263,9 @@ class UserController extends Controller
         $perPage = (int) $request->input('per_page', 10);
 
         $users = User::onlyTrashed()
+            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'deleted_at', 'updated_at'])
             ->filter($filters)
-            ->orderBy('deleted_at', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -271,7 +281,7 @@ class UserController extends Controller
     public function updateAvatar(Request $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-        $user = User::withTrashed()->find($userId);
+        $user = $this->findUser($userId, withTrashed: true);
 
         if (! $user) {
             return back()->withErrors(['avatar' => 'User not found.']);
@@ -292,7 +302,7 @@ class UserController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->withErrors(['avatar' => 'Failed to upload avatar. Please try again. '.$e->getMessage()]);
+            return back()->withErrors(['avatar' => 'Failed to upload avatar. Please try again.']);
         }
 
         return back()->with('success', 'Avatar updated successfully.');
@@ -304,7 +314,7 @@ class UserController extends Controller
     public function deleteAvatar(Request $request): RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-        $user = User::withTrashed()->find($userId);
+        $user = $this->findUser($userId, withTrashed: true);
 
         if (! $user) {
             return back()->withErrors(['avatar' => 'User not found.']);

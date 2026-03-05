@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { createSelectors } from '@/lib/zustand-selectors';
 import type {
     AdminUserLogFilters,
     UserFilterSearchMeta,
@@ -34,7 +34,7 @@ const defaultUserListMeta: UserFilterSearchMeta = {
     previous_cursor: null,
 };
 
-export interface AdminUserLogState {
+interface AdminUserLogState {
     filters: AdminLogBaseFilters;
     appliedUserIds: number[];
     selectedUserIds: number[];
@@ -75,281 +75,242 @@ export interface AdminUserLogState {
 
 function mergeUsersById(users: UserLogFilterUser[]): UserLogFilterUser[] {
     const usersById = new Map<number, UserLogFilterUser>();
-
     users.forEach((user) => {
         usersById.set(user.id, user);
     });
-
     return Array.from(usersById.values());
 }
 
-export const useAdminUserLogStore = create<AdminUserLogState>()(
-    subscribeWithSelector((set, get) => ({
-        filters: { ...defaultFilters },
-        appliedUserIds: [],
-        selectedUserIds: [],
-        userSearchKeyword: '',
-        userRoleFilter: 'all',
-        userStatusFilter: 'all',
-        userOptions: [],
-        selectedUsers: [],
-        userListMeta: { ...defaultUserListMeta },
-        isUserFilterDialogOpen: false,
-        isLoading: false,
-        isUserListLoading: false,
-        currentPage: 1,
+const useAdminUserLogStoreBase = create<AdminUserLogState>()((set, get) => ({
+    filters: { ...defaultFilters },
+    appliedUserIds: [],
+    selectedUserIds: [],
+    userSearchKeyword: '',
+    userRoleFilter: 'all',
+    userStatusFilter: 'all',
+    userOptions: [],
+    selectedUsers: [],
+    userListMeta: { ...defaultUserListMeta },
+    isUserFilterDialogOpen: false,
+    isLoading: false,
+    isUserListLoading: false,
+    currentPage: 1,
 
-        initialize: (filters, currentPage) => {
-            const deduplicatedUserIds = Array.from(new Set(filters.user_ids));
+    initialize: (filters, currentPage) => {
+        const deduplicatedUserIds = Array.from(new Set(filters.user_ids));
 
-            set({
-                filters: {
-                    event_type: filters.event_type,
-                    date_from: filters.date_from,
-                    date_to: filters.date_to,
-                    per_page: filters.per_page,
-                },
-                appliedUserIds: deduplicatedUserIds,
-                selectedUserIds: deduplicatedUserIds,
-                userSearchKeyword: '',
-                userRoleFilter: 'all',
-                userStatusFilter: 'all',
-                userOptions: [],
-                selectedUsers: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserFilterDialogOpen: false,
-                isLoading: false,
-                isUserListLoading: false,
-                currentPage,
-            });
-        },
+        set({
+            filters: {
+                event_type: filters.event_type,
+                date_from: filters.date_from,
+                date_to: filters.date_to,
+                per_page: filters.per_page,
+            },
+            appliedUserIds: deduplicatedUserIds,
+            selectedUserIds: deduplicatedUserIds,
+            userSearchKeyword: '',
+            userRoleFilter: 'all',
+            userStatusFilter: 'all',
+            userOptions: [],
+            selectedUsers: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserFilterDialogOpen: false,
+            isLoading: false,
+            isUserListLoading: false,
+            currentPage,
+        });
+    },
 
-        setFilters: (newFilters) =>
-            set((state) => ({
-                filters: { ...state.filters, ...newFilters },
-            })),
+    setFilters: (newFilters) =>
+        set((state) => ({
+            filters: { ...state.filters, ...newFilters },
+        })),
 
-        setIsLoading: (isLoading) => set({ isLoading }),
-        setCurrentPage: (currentPage) => set({ currentPage }),
-        setIsUserListLoading: (isUserListLoading) => set({ isUserListLoading }),
+    setIsLoading: (isLoading) => set({ isLoading }),
 
-        openUserFilterDialog: () =>
-            set((state) => ({
-                isUserFilterDialogOpen: true,
-                selectedUserIds: [...state.appliedUserIds],
-                userSearchKeyword: '',
-                userRoleFilter: 'all',
-                userStatusFilter: 'all',
-                userOptions: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserListLoading: false,
-            })),
+    setCurrentPage: (currentPage) => set({ currentPage }),
 
-        closeUserFilterDialog: () =>
-            set((state) => ({
-                isUserFilterDialogOpen: false,
-                selectedUserIds: [...state.appliedUserIds],
-                userSearchKeyword: '',
-                userRoleFilter: 'all',
-                userStatusFilter: 'all',
-                userOptions: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserListLoading: false,
-            })),
+    setIsUserListLoading: (isUserListLoading) => set({ isUserListLoading }),
 
-        applyUserSelection: () =>
-            set((state) => ({
-                appliedUserIds: Array.from(new Set(state.selectedUserIds)),
-                isUserFilterDialogOpen: false,
-                userSearchKeyword: '',
-                userRoleFilter: 'all',
-                userStatusFilter: 'all',
-                userOptions: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserListLoading: false,
-            })),
+    openUserFilterDialog: () =>
+        set((state) => ({
+            isUserFilterDialogOpen: true,
+            selectedUserIds: [...state.appliedUserIds],
+            userSearchKeyword: '',
+            userRoleFilter: 'all',
+            userStatusFilter: 'all',
+            userOptions: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserListLoading: false,
+        })),
 
-        clearAppliedUserFilter: () =>
-            set({
-                appliedUserIds: [],
-                selectedUserIds: [],
-                selectedUsers: [],
-                userSearchKeyword: '',
-                userRoleFilter: 'all',
-                userStatusFilter: 'all',
-                userOptions: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserListLoading: false,
-            }),
+    closeUserFilterDialog: () =>
+        set((state) => ({
+            isUserFilterDialogOpen: false,
+            selectedUserIds: [...state.appliedUserIds],
+            userSearchKeyword: '',
+            userRoleFilter: 'all',
+            userStatusFilter: 'all',
+            userOptions: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserListLoading: false,
+        })),
 
-        clearSelectedUsers: () => set({ selectedUserIds: [] }),
+    applyUserSelection: () =>
+        set((state) => ({
+            appliedUserIds: Array.from(new Set(state.selectedUserIds)),
+            isUserFilterDialogOpen: false,
+            userSearchKeyword: '',
+            userRoleFilter: 'all',
+            userStatusFilter: 'all',
+            userOptions: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserListLoading: false,
+        })),
 
-        setSelectedUserIds: (selectedUserIds) =>
-            set({
-                selectedUserIds: Array.from(new Set(selectedUserIds)),
-            }),
+    clearAppliedUserFilter: () =>
+        set({
+            appliedUserIds: [],
+            selectedUserIds: [],
+            selectedUsers: [],
+            userSearchKeyword: '',
+            userRoleFilter: 'all',
+            userStatusFilter: 'all',
+            userOptions: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserListLoading: false,
+        }),
 
-        toggleSelectedUserId: (userId) =>
-            set((state) => {
-                const hasUser = state.selectedUserIds.includes(userId);
+    clearSelectedUsers: () => set({ selectedUserIds: [] }),
 
-                return {
-                    selectedUserIds: hasUser
-                        ? state.selectedUserIds.filter((id) => id !== userId)
-                        : [...state.selectedUserIds, userId],
-                };
-            }),
+    setSelectedUserIds: (selectedUserIds) =>
+        set({
+            selectedUserIds: Array.from(new Set(selectedUserIds)),
+        }),
 
-        setUserSearchKeyword: (userSearchKeyword) =>
-            set({ userSearchKeyword }),
-
-        setUserRoleFilter: (userRoleFilter) => set({ userRoleFilter }),
-
-        setUserStatusFilter: (userStatusFilter) =>
-            set({ userStatusFilter }),
-
-        replaceUserOptions: (users) =>
-            set({
-                userOptions: mergeUsersById(users),
-            }),
-
-        appendUserOptions: (users) =>
-            set((state) => ({
-                userOptions: mergeUsersById([...state.userOptions, ...users]),
-            })),
-
-        setSelectedUsers: (selectedUsers) =>
-            set({
-                selectedUsers: mergeUsersById(selectedUsers),
-            }),
-
-        setUserListMeta: (userListMeta) => set({ userListMeta }),
-
-        resetUserList: () =>
-            set({
-                userOptions: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserListLoading: false,
-            }),
-
-        reset: () =>
-            set({
-                filters: { ...defaultFilters },
-                appliedUserIds: [],
-                selectedUserIds: [],
-                userSearchKeyword: '',
-                userRoleFilter: 'all',
-                userStatusFilter: 'all',
-                userOptions: [],
-                selectedUsers: [],
-                userListMeta: { ...defaultUserListMeta },
-                isUserFilterDialogOpen: false,
-                isLoading: false,
-                isUserListLoading: false,
-                currentPage: 1,
-            }),
-
-        getFilterParams: () => {
-            const { filters, appliedUserIds } = get();
-            const params: AdminUserLogQueryParams = {};
-
-            if (appliedUserIds.length > 0) {
-                params.user_ids = appliedUserIds;
-            }
-
-            if (filters.event_type.trim() !== '') {
-                params.event_type = filters.event_type.trim();
-            }
-
-            if (filters.date_from.trim() !== '') {
-                params.date_from = filters.date_from.trim();
-            }
-
-            if (filters.date_to.trim() !== '') {
-                params.date_to = filters.date_to.trim();
-            }
-
-            if (filters.per_page !== 10) {
-                params.per_page = filters.per_page;
-            }
-
-            return params;
-        },
-
-        getUserSearchParams: (cursor) => {
-            const {
-                userSearchKeyword,
-                userRoleFilter,
-                userStatusFilter,
-                selectedUserIds,
-                userListMeta,
-            } = get();
-
-            const params: UserSearchParams = {
-                per_page: userListMeta.per_page,
+    toggleSelectedUserId: (userId) =>
+        set((state) => {
+            const hasUser = state.selectedUserIds.includes(userId);
+            return {
+                selectedUserIds: hasUser
+                    ? state.selectedUserIds.filter((id) => id !== userId)
+                    : [...state.selectedUserIds, userId],
             };
+        }),
 
-            const normalizedKeyword = userSearchKeyword.trim();
+    setUserSearchKeyword: (userSearchKeyword) =>
+        set({ userSearchKeyword }),
 
-            if (normalizedKeyword !== '') {
-                params.search = normalizedKeyword;
-            }
+    setUserRoleFilter: (userRoleFilter) => set({ userRoleFilter }),
 
-            if (userRoleFilter !== 'all') {
-                params.role = userRoleFilter;
-            }
+    setUserStatusFilter: (userStatusFilter) =>
+        set({ userStatusFilter }),
 
-            if (userStatusFilter !== 'all') {
-                params.status = userStatusFilter;
-            }
+    replaceUserOptions: (users) =>
+        set({
+            userOptions: mergeUsersById(users),
+        }),
 
-            if (typeof cursor === 'string' && cursor !== '') {
-                params.cursor = cursor;
-            }
+    appendUserOptions: (users) =>
+        set((state) => ({
+            userOptions: mergeUsersById([...state.userOptions, ...users]),
+        })),
 
-            if (selectedUserIds.length > 0) {
-                params.selected_ids = selectedUserIds;
-            }
+    setSelectedUsers: (selectedUsers) =>
+        set({
+            selectedUsers: mergeUsersById(selectedUsers),
+        }),
 
-            return params;
-        },
-    })),
-);
+    setUserListMeta: (userListMeta) => set({ userListMeta }),
 
-export const selectAdminUserLogFilters = (state: AdminUserLogState) =>
-    state.filters;
+    resetUserList: () =>
+        set({
+            userOptions: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserListLoading: false,
+        }),
 
-export const selectAdminUserLogAppliedUserIds = (state: AdminUserLogState) =>
-    state.appliedUserIds;
+    reset: () =>
+        set({
+            filters: { ...defaultFilters },
+            appliedUserIds: [],
+            selectedUserIds: [],
+            userSearchKeyword: '',
+            userRoleFilter: 'all',
+            userStatusFilter: 'all',
+            userOptions: [],
+            selectedUsers: [],
+            userListMeta: { ...defaultUserListMeta },
+            isUserFilterDialogOpen: false,
+            isLoading: false,
+            isUserListLoading: false,
+            currentPage: 1,
+        }),
 
-export const selectAdminUserLogSelectedUserIds = (state: AdminUserLogState) =>
-    state.selectedUserIds;
+    getFilterParams: () => {
+        const { filters, appliedUserIds } = get();
+        const params: AdminUserLogQueryParams = {};
 
-export const selectAdminUserLogUserSearchKeyword = (
-    state: AdminUserLogState,
-) => state.userSearchKeyword;
+        if (appliedUserIds.length > 0) {
+            params.user_ids = appliedUserIds;
+        }
 
-export const selectAdminUserLogUserRoleFilter = (state: AdminUserLogState) =>
-    state.userRoleFilter;
+        if (filters.event_type.trim() !== '') {
+            params.event_type = filters.event_type.trim();
+        }
 
-export const selectAdminUserLogUserStatusFilter = (
-    state: AdminUserLogState,
-) => state.userStatusFilter;
+        if (filters.date_from.trim() !== '') {
+            params.date_from = filters.date_from.trim();
+        }
 
-export const selectAdminUserLogUserOptions = (state: AdminUserLogState) =>
-    state.userOptions;
+        if (filters.date_to.trim() !== '') {
+            params.date_to = filters.date_to.trim();
+        }
 
-export const selectAdminUserLogSelectedUsers = (state: AdminUserLogState) =>
-    state.selectedUsers;
+        if (filters.per_page !== 10) {
+            params.per_page = filters.per_page;
+        }
 
-export const selectAdminUserLogUserListMeta = (state: AdminUserLogState) =>
-    state.userListMeta;
+        return params;
+    },
 
-export const selectAdminUserLogDialogOpen = (state: AdminUserLogState) =>
-    state.isUserFilterDialogOpen;
+    getUserSearchParams: (cursor) => {
+        const {
+            userSearchKeyword,
+            userRoleFilter,
+            userStatusFilter,
+            selectedUserIds,
+            userListMeta,
+        } = get();
 
-export const selectAdminUserLogLoading = (state: AdminUserLogState) =>
-    state.isLoading;
+        const params: UserSearchParams = {
+            per_page: userListMeta.per_page,
+        };
 
-export const selectAdminUserLogUserListLoading = (state: AdminUserLogState) =>
-    state.isUserListLoading;
+        const normalizedKeyword = userSearchKeyword.trim();
+
+        if (normalizedKeyword !== '') {
+            params.search = normalizedKeyword;
+        }
+
+        if (userRoleFilter !== 'all') {
+            params.role = userRoleFilter;
+        }
+
+        if (userStatusFilter !== 'all') {
+            params.status = userStatusFilter;
+        }
+
+        if (typeof cursor === 'string' && cursor !== '') {
+            params.cursor = cursor;
+        }
+
+        if (selectedUserIds.length > 0) {
+            params.selected_ids = selectedUserIds;
+        }
+
+        return params;
+    },
+}));
+
+export const useAdminUserLogStore = createSelectors(useAdminUserLogStoreBase);

@@ -50,7 +50,7 @@ class ProfileController extends Controller
                 ]);
 
                 return back()->withErrors([
-                    'avatar' => 'Failed to upload avatar. Please try again. '.$e->getMessage(),
+                    'avatar' => 'Failed to upload avatar. Please try again.',
                 ]);
             }
         }

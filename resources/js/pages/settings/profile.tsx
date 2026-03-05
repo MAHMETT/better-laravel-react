@@ -97,7 +97,8 @@ export default function Profile({
     const currentAvatarOriginal =
         auth.user.avatar_original ??
         auth.user.avatar_original_url ??
-        currentAvatar;
+        currentAvatar ??
+        '';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

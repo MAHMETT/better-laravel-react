@@ -14,7 +14,7 @@ import { Paginations } from '@/components/ui/pagination';
 import { UsersFilters } from '@/components/users/users-filters';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
-import type { BreadcrumbItem, User, UserPagination } from '@/types';
+import type { BreadcrumbItem, PaginatedData, User, UserFilters, UserStats } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Power, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
@@ -28,23 +28,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface Stats {
-    total: number;
-    enabled: number;
-    disabled: number;
-    admins: number;
-}
-
-interface Filters {
-    search: string;
-    status: string;
-    role: string;
-    per_page: number;
-}
-
-interface Props extends UserPagination {
-    stats: Stats;
-    filters: Filters;
+interface Props {
+    users: PaginatedData<User>;
+    stats: UserStats;
+    filters: UserFilters;
 }
 
 interface UsersIndexPageState {
@@ -52,10 +39,15 @@ interface UsersIndexPageState {
     status: string;
     role: string;
     perPage: number;
+    pendingSearch: string;
+    pendingStatus: string;
+    pendingRole: string;
+    pendingPerPage: number;
     userToDelete: User | null;
     userToToggle: User | null;
     isDeleting: boolean;
     isToggling: boolean;
+    isLoading: boolean;
     setSearch: (search: string) => void;
     setStatus: (status: string) => void;
     setRole: (role: string) => void;
@@ -64,36 +56,75 @@ interface UsersIndexPageState {
     setUserToToggle: (userToToggle: User | null) => void;
     setIsDeleting: (isDeleting: boolean) => void;
     setIsToggling: (isToggling: boolean) => void;
-    initialize: (filters: Filters) => void;
+    setIsLoading: (isLoading: boolean) => void;
+    applyPendingFilters: () => void;
+    initialize: (filters: UserFilters) => void;
+    reset: () => void;
 }
 
-const useUsersIndexPageStore = create<UsersIndexPageState>((set) => ({
+const useUsersIndexPageStore = create<UsersIndexPageState>((set, get) => ({
     search: '',
     status: '',
     role: '',
     perPage: 10,
+    pendingSearch: '',
+    pendingStatus: '',
+    pendingRole: '',
+    pendingPerPage: 10,
     userToDelete: null,
     userToToggle: null,
     isDeleting: false,
     isToggling: false,
-    setSearch: (search) => set({ search }),
-    setStatus: (status) => set({ status }),
-    setRole: (role) => set({ role }),
-    setPerPage: (perPage) => set({ perPage }),
+    isLoading: false,
+    setSearch: (search) => set({ pendingSearch: search }),
+    setStatus: (status) => set({ pendingStatus: status }),
+    setRole: (role) => set({ pendingRole: role }),
+    setPerPage: (perPage) => set({ pendingPerPage: perPage }),
     setUserToDelete: (userToDelete) => set({ userToDelete }),
     setUserToToggle: (userToToggle) => set({ userToToggle }),
     setIsDeleting: (isDeleting) => set({ isDeleting }),
     setIsToggling: (isToggling) => set({ isToggling }),
+    setIsLoading: (isLoading) => set({ isLoading }),
+    applyPendingFilters: () => {
+        const { pendingSearch, pendingStatus, pendingRole, pendingPerPage } = get();
+        set({
+            search: pendingSearch,
+            status: pendingStatus,
+            role: pendingRole,
+            perPage: pendingPerPage,
+        });
+    },
     initialize: (filters) =>
         set({
             search: filters.search,
             status: filters.status,
             role: filters.role,
             perPage: filters.per_page,
+            pendingSearch: filters.search,
+            pendingStatus: filters.status,
+            pendingRole: filters.role,
+            pendingPerPage: filters.per_page,
             userToDelete: null,
             userToToggle: null,
             isDeleting: false,
             isToggling: false,
+            isLoading: false,
+        }),
+    reset: () =>
+        set({
+            search: '',
+            status: '',
+            role: '',
+            perPage: 10,
+            pendingSearch: '',
+            pendingStatus: '',
+            pendingRole: '',
+            pendingPerPage: 10,
+            userToDelete: null,
+            userToToggle: null,
+            isDeleting: false,
+            isToggling: false,
+            isLoading: false,
         }),
 }));
 
@@ -105,11 +136,15 @@ export default function UsersIndex({
     const search = useUsersIndexPageStore((state) => state.search);
     const status = useUsersIndexPageStore((state) => state.status);
     const role = useUsersIndexPageStore((state) => state.role);
-    const perPage = useUsersIndexPageStore((state) => state.perPage);
+    const pendingSearch = useUsersIndexPageStore((state) => state.pendingSearch);
+    const pendingStatus = useUsersIndexPageStore((state) => state.pendingStatus);
+    const pendingRole = useUsersIndexPageStore((state) => state.pendingRole);
+    const pendingPerPage = useUsersIndexPageStore((state) => state.pendingPerPage);
     const userToDelete = useUsersIndexPageStore((state) => state.userToDelete);
     const userToToggle = useUsersIndexPageStore((state) => state.userToToggle);
     const isDeleting = useUsersIndexPageStore((state) => state.isDeleting);
     const isToggling = useUsersIndexPageStore((state) => state.isToggling);
+    const isLoading = useUsersIndexPageStore((state) => state.isLoading);
     const setSearch = useUsersIndexPageStore((state) => state.setSearch);
     const setStatus = useUsersIndexPageStore((state) => state.setStatus);
     const setRole = useUsersIndexPageStore((state) => state.setRole);
@@ -122,14 +157,23 @@ export default function UsersIndex({
     );
     const setIsDeleting = useUsersIndexPageStore((state) => state.setIsDeleting);
     const setIsToggling = useUsersIndexPageStore((state) => state.setIsToggling);
+    const setIsLoading = useUsersIndexPageStore((state) => state.setIsLoading);
+    const applyPendingFilters = useUsersIndexPageStore((state) => state.applyPendingFilters);
     const initialize = useUsersIndexPageStore((state) => state.initialize);
+    const reset = useUsersIndexPageStore((state) => state.reset);
 
     useEffect(() => {
         initialize(filters);
     }, [filters, initialize]);
 
+    useEffect(() => {
+        return () => {
+            reset();
+        };
+    }, [reset]);
+
     const buildFilterParams = useCallback(
-        (overrides?: Partial<Filters>): Record<string, string> => {
+        (overrides?: Partial<UserFilters>): Record<string, string> => {
             const params: Record<string, string> = {};
             const currentSearch = overrides?.search ?? search;
             const currentStatus = overrides?.status ?? status;
@@ -154,36 +198,41 @@ export default function UsersIndex({
         [search, status, role],
     );
 
-    const handleFilterChange = (newFilters: Partial<Filters>) => {
-        const params = buildFilterParams(newFilters);
+    const handleApplyFilters = () => {
+        applyPendingFilters();
+        const params = buildFilterParams({
+            search: pendingSearch,
+            status: pendingStatus,
+            role: pendingRole,
+            per_page: pendingPerPage,
+        });
 
-        if (newFilters.per_page !== undefined) {
-            params.per_page = String(newFilters.per_page);
+        if (pendingPerPage !== undefined) {
+            params.per_page = String(pendingPerPage);
         }
 
-        router.get(users.index.url(), params, { replace: true });
+        setIsLoading(true);
+        router.get(users.index.url(), params, {
+            replace: true,
+            preserveScroll: true,
+            onFinish: () => setIsLoading(false),
+        });
     };
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (search !== filters.search) {
-                const params = buildFilterParams();
-                if (search === '') {
-                    delete params.search;
-                } else {
-                    params.search = search;
-                }
-                router.get(users.index.url(), params, { replace: true });
-            }
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [buildFilterParams, filters.search, search]);
 
     const handleClearFilters = () => {
         setSearch('');
         setStatus('');
         setRole('');
         setPerPage(10);
-        router.get(users.index.url(), {}, { replace: true });
+        setIsLoading(true);
+        router.get(users.index.url(), {}, {
+            replace: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Filters cleared.');
+            },
+            onFinish: () => setIsLoading(false),
+        });
     };
 
     const handleView = (user: User) => {
@@ -324,28 +373,18 @@ export default function UsersIndex({
 
                 {/* Filters */}
                 <UsersFilters
-                    search={search}
-                    status={status}
-                    role={role}
-                    perPage={perPage}
+                    search={pendingSearch}
+                    status={pendingStatus}
+                    role={pendingRole}
+                    perPage={pendingPerPage}
                     onSearchChange={setSearch}
-                    onStatusChange={(value) => {
-                        setStatus(value);
-                        handleFilterChange({ status: value });
-                    }}
-                    onRoleChange={(value) => {
-                        setRole(value);
-                        handleFilterChange({ role: value });
-                    }}
-                    onPerPageChange={(value) => {
-                        setPerPage(value);
-                        handleFilterChange({ per_page: value });
-                    }}
+                    onStatusChange={setStatus}
+                    onRoleChange={setRole}
+                    onPerPageChange={setPerPage}
                     onClearFilters={handleClearFilters}
+                    onApply={handleApplyFilters}
+                    disabled={isLoading}
                 />
-
-                {/* Search debounce effect */}
-                <input type="hidden" name="search" value={search} readOnly />
 
                 {/* Table */}
                 <div className="rounded-md border">

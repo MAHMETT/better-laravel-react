@@ -7,7 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Search, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 
 interface UsersFiltersProps {
     search: string;
@@ -19,6 +19,8 @@ interface UsersFiltersProps {
     onRoleChange: (value: string) => void;
     onPerPageChange: (value: number) => void;
     onClearFilters: () => void;
+    onApply?: () => void;
+    disabled?: boolean;
 }
 
 export function UsersFilters({
@@ -31,6 +33,8 @@ export function UsersFilters({
     onRoleChange,
     onPerPageChange,
     onClearFilters,
+    onApply,
+    disabled = false,
 }: UsersFiltersProps) {
     const hasFilters = search || status || role;
 
@@ -43,11 +47,12 @@ export function UsersFilters({
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="pl-9"
+                    disabled={disabled}
                 />
             </div>
 
             <div className="flex flex-wrap gap-2">
-                <Select value={status} onValueChange={onStatusChange}>
+                <Select value={status} onValueChange={onStatusChange} disabled={disabled}>
                     <SelectTrigger className="w-32.5">
                         <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -58,7 +63,7 @@ export function UsersFilters({
                     </SelectContent>
                 </Select>
 
-                <Select value={role} onValueChange={onRoleChange}>
+                <Select value={role} onValueChange={onRoleChange} disabled={disabled}>
                     <SelectTrigger className="w-32.5">
                         <SelectValue placeholder="All Roles" />
                     </SelectTrigger>
@@ -72,6 +77,7 @@ export function UsersFilters({
                 <Select
                     value={perPage.toString()}
                     onValueChange={(v) => onPerPageChange(Number(v))}
+                    disabled={disabled}
                 >
                     <SelectTrigger className="w-30">
                         <SelectValue placeholder="Per page" />
@@ -84,12 +90,26 @@ export function UsersFilters({
                     </SelectContent>
                 </Select>
 
+                {onApply && (
+                    <Button
+                        variant="default"
+                        size="sm"
+                        onClick={onApply}
+                        disabled={disabled || !hasFilters}
+                        className="h-9"
+                    >
+                        <Filter className="mr-2 size-4" />
+                        Apply
+                    </Button>
+                )}
+
                 {hasFilters && (
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={onClearFilters}
                         className="h-9 w-9"
+                        disabled={disabled}
                     >
                         <X className="size-4" />
                         <span className="sr-only">Clear filters</span>

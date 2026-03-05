@@ -1,11 +1,11 @@
-import type { Area, Point } from 'react-easy-crop';
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { createSelectors } from '@/lib/zustand-selectors';
+import type { Area, Point } from 'react-easy-crop';
 import type { AvatarValidationError } from '@/schemas/avatar';
 
 export type PhotoUploadMode = 'view' | 'edit';
 
-export interface PhotoUploadModalState {
+interface PhotoUploadModalState {
     mode: PhotoUploadMode;
     selectedFile: File | null;
     sourceImageUrl: string | null;
@@ -20,7 +20,6 @@ export interface PhotoUploadModalState {
     hasUnsavedChanges: boolean;
     showDeleteConfirm: boolean;
     showCancelConfirm: boolean;
-
     setMode: (mode: PhotoUploadMode) => void;
     setSelectedFile: (file: File | null) => void;
     setSourceImageUrl: (url: string | null) => void;
@@ -74,62 +73,27 @@ const initialState: Omit<
     showCancelConfirm: false,
 };
 
-export const usePhotoUploadModalStore = create<PhotoUploadModalState>()(
-    subscribeWithSelector((set) => ({
-        ...initialState,
+const usePhotoUploadModalStoreBase = create<PhotoUploadModalState>()((set) => ({
+    ...initialState,
 
-        setMode: (mode) => set({ mode }),
-        setSelectedFile: (selectedFile) => set({ selectedFile }),
-        setSourceImageUrl: (sourceImageUrl) => set({ sourceImageUrl }),
-        setCroppedPreviewUrl: (croppedPreviewUrl) => set({ croppedPreviewUrl }),
-        setCroppedImageFile: (croppedImageFile) => set({ croppedImageFile }),
-        setCroppedAreaPixels: (croppedAreaPixels) => set({ croppedAreaPixels }),
-        setCrop: (crop) => set({ crop }),
-        setZoom: (zoom) => set({ zoom }),
-        setValidationErrors: (validationErrors) => set({ validationErrors }),
-        clearValidationErrors: () => set({ validationErrors: [] }),
-        setIsDragOver: (isDragOver) => set({ isDragOver }),
-        setIsProcessing: (isProcessing) => set({ isProcessing }),
-        setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
-        setShowDeleteConfirm: (showDeleteConfirm) => set({ showDeleteConfirm }),
-        setShowCancelConfirm: (showCancelConfirm) => set({ showCancelConfirm }),
-        reset: () => set(initialState),
-    })),
+    setMode: (mode) => set({ mode }),
+    setSelectedFile: (selectedFile) => set({ selectedFile }),
+    setSourceImageUrl: (sourceImageUrl) => set({ sourceImageUrl }),
+    setCroppedPreviewUrl: (croppedPreviewUrl) => set({ croppedPreviewUrl }),
+    setCroppedImageFile: (croppedImageFile) => set({ croppedImageFile }),
+    setCroppedAreaPixels: (croppedAreaPixels) => set({ croppedAreaPixels }),
+    setCrop: (crop) => set({ crop }),
+    setZoom: (zoom) => set({ zoom }),
+    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    clearValidationErrors: () => set({ validationErrors: [] }),
+    setIsDragOver: (isDragOver) => set({ isDragOver }),
+    setIsProcessing: (isProcessing) => set({ isProcessing }),
+    setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
+    setShowDeleteConfirm: (showDeleteConfirm) => set({ showDeleteConfirm }),
+    setShowCancelConfirm: (showCancelConfirm) => set({ showCancelConfirm }),
+    reset: () => set(initialState),
+}));
+
+export const usePhotoUploadModalStore = createSelectors(
+    usePhotoUploadModalStoreBase,
 );
-
-export const selectPhotoUploadMode = (state: PhotoUploadModalState) =>
-    state.mode;
-export const selectPhotoUploadSelectedFile = (state: PhotoUploadModalState) =>
-    state.selectedFile;
-export const selectPhotoUploadSourceImageUrl = (
-    state: PhotoUploadModalState,
-) => state.sourceImageUrl;
-export const selectPhotoUploadCroppedPreviewUrl = (
-    state: PhotoUploadModalState,
-) => state.croppedPreviewUrl;
-export const selectPhotoUploadCroppedImageFile = (
-    state: PhotoUploadModalState,
-) => state.croppedImageFile;
-export const selectPhotoUploadCrop = (state: PhotoUploadModalState) =>
-    state.crop;
-export const selectPhotoUploadZoom = (state: PhotoUploadModalState) =>
-    state.zoom;
-export const selectPhotoUploadCroppedAreaPixels = (
-    state: PhotoUploadModalState,
-) => state.croppedAreaPixels;
-export const selectPhotoUploadValidationErrors = (
-    state: PhotoUploadModalState,
-) => state.validationErrors;
-export const selectPhotoUploadIsDragOver = (state: PhotoUploadModalState) =>
-    state.isDragOver;
-export const selectPhotoUploadIsProcessing = (state: PhotoUploadModalState) =>
-    state.isProcessing;
-export const selectPhotoUploadHasUnsavedChanges = (
-    state: PhotoUploadModalState,
-) => state.hasUnsavedChanges;
-export const selectPhotoUploadShowDeleteConfirm = (
-    state: PhotoUploadModalState,
-) => state.showDeleteConfirm;
-export const selectPhotoUploadShowCancelConfirm = (
-    state: PhotoUploadModalState,
-) => state.showCancelConfirm;
