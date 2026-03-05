@@ -23,5 +23,5 @@ export type MainNavItem = {
 };
 
 export type FooterNavItem = {
-    [key: string]: NavItem[];
+    [key: string | symbol | number]: NavItem[];
 };

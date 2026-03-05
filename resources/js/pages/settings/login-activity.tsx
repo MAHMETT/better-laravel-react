@@ -21,7 +21,11 @@ import type {
     SelfUserLogFilters,
     UserLog,
 } from '@/types';
-import { useSelfUserLogStore } from '@/stores/self-user-log-store';
+import {
+    selectSelfUserLogFilters,
+    selectSelfUserLogLoading,
+    useSelfUserLogStore,
+} from '@/stores/self-user-log-store';
 import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -44,13 +48,13 @@ export default function LoginActivity({
     filters,
     schema_ready = true,
 }: Props) {
-    const storeFilters = useSelfUserLogStore.use.filters();
-    const isLoading = useSelfUserLogStore.use.isLoading();
-    const initialize = useSelfUserLogStore.use.initialize();
-    const setFilters = useSelfUserLogStore.use.setFilters();
-    const setIsLoading = useSelfUserLogStore.use.setIsLoading();
-    const reset = useSelfUserLogStore.use.reset();
-    const getFilterParams = useSelfUserLogStore.use.getFilterParams();
+    const storeFilters = useSelfUserLogStore(selectSelfUserLogFilters);
+    const isLoading = useSelfUserLogStore(selectSelfUserLogLoading);
+    const initialize = useSelfUserLogStore((state) => state.initialize);
+    const setFilters = useSelfUserLogStore((state) => state.setFilters);
+    const setIsLoading = useSelfUserLogStore((state) => state.setIsLoading);
+    const reset = useSelfUserLogStore((state) => state.reset);
+    const getFilterParams = useSelfUserLogStore((state) => state.getFilterParams);
 
     useEffect(() => {
         initialize(filters);

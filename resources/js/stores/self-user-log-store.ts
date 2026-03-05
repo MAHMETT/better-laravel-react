@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { createSelectors } from '@/lib/zustand-selectors';
 import type { SelfUserLogFilters } from '@/types';
 
 interface SelfUserLogState {
@@ -19,7 +18,7 @@ const defaultFilters: SelfUserLogFilters = {
     per_page: 10,
 };
 
-const useSelfUserLogStoreBase = create<SelfUserLogState>()((set, get) => ({
+export const useSelfUserLogStore = create<SelfUserLogState>()((set, get) => ({
     filters: { ...defaultFilters },
     isLoading: false,
 
@@ -66,4 +65,5 @@ const useSelfUserLogStoreBase = create<SelfUserLogState>()((set, get) => ({
     },
 }));
 
-export const useSelfUserLogStore = createSelectors(useSelfUserLogStoreBase);
+export const selectSelfUserLogFilters = (state: SelfUserLogState) => state.filters;
+export const selectSelfUserLogLoading = (state: SelfUserLogState) => state.isLoading;

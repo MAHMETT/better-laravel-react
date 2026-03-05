@@ -1,14 +1,8 @@
-import {
-    BookOpenIcon,
-    FolderIcon,
-    HistoryIcon,
-    LayoutGridIcon,
-    UsersIcon,
-} from 'lucide-react';
-import activityLogs from '@/routes/activity-logs';
 import { dashboard } from '@/routes';
+import activityLogs from '@/routes/activity-logs';
 import users from '@/routes/users';
 import type { FooterNavItem, MainNavItem } from '@/types';
+import { HistoryIcon, LayoutGridIcon, UsersIcon } from 'lucide-react';
 
 export const mainNavItems: MainNavItem = {
     admin: [
@@ -19,16 +13,6 @@ export const mainNavItems: MainNavItem = {
                     title: 'Dashboard',
                     href: dashboard(),
                     icon: LayoutGridIcon,
-                },
-                {
-                    title: 'Users',
-                    href: users.index.url(),
-                    icon: UsersIcon,
-                },
-                {
-                    title: 'Activity Logs',
-                    href: activityLogs.index.url(),
-                    icon: HistoryIcon,
                 },
             ],
         },
@@ -50,14 +34,14 @@ export const mainNavItems: MainNavItem = {
 export const footerNavItems: FooterNavItem = {
     admin: [
         {
-            title: 'Repository',
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: FolderIcon,
+            title: 'Users',
+            href: users.index.url(),
+            icon: UsersIcon,
         },
         {
-            title: 'Documentation',
-            href: 'https://laravel.com/docs/starter-kits#react',
-            icon: BookOpenIcon,
+            title: 'Activity Logs',
+            href: activityLogs.index.url(),
+            icon: HistoryIcon,
         },
     ],
 };

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { createSelectors } from '@/lib/zustand-selectors';
 import type {
     AdminUserLogFilters,
     UserFilterSearchMeta,
@@ -81,7 +80,7 @@ function mergeUsersById(users: UserLogFilterUser[]): UserLogFilterUser[] {
     return Array.from(usersById.values());
 }
 
-const useAdminUserLogStoreBase = create<AdminUserLogState>()((set, get) => ({
+export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
     filters: { ...defaultFilters },
     appliedUserIds: [],
     selectedUserIds: [],
@@ -313,4 +312,16 @@ const useAdminUserLogStoreBase = create<AdminUserLogState>()((set, get) => ({
     },
 }));
 
-export const useAdminUserLogStore = createSelectors(useAdminUserLogStoreBase);
+// Selectors
+export const selectAdminUserLogFilters = (state: AdminUserLogState) => state.filters;
+export const selectAdminUserLogAppliedUserIds = (state: AdminUserLogState) => state.appliedUserIds;
+export const selectAdminUserLogSelectedUserIds = (state: AdminUserLogState) => state.selectedUserIds;
+export const selectAdminUserLogSelectedUsers = (state: AdminUserLogState) => state.selectedUsers;
+export const selectAdminUserLogUserSearchKeyword = (state: AdminUserLogState) => state.userSearchKeyword;
+export const selectAdminUserLogUserRoleFilter = (state: AdminUserLogState) => state.userRoleFilter;
+export const selectAdminUserLogUserStatusFilter = (state: AdminUserLogState) => state.userStatusFilter;
+export const selectAdminUserLogUserOptions = (state: AdminUserLogState) => state.userOptions;
+export const selectAdminUserLogUserListMeta = (state: AdminUserLogState) => state.userListMeta;
+export const selectAdminUserLogDialogOpen = (state: AdminUserLogState) => state.isUserFilterDialogOpen;
+export const selectAdminUserLogLoading = (state: AdminUserLogState) => state.isLoading;
+export const selectAdminUserLogUserListLoading = (state: AdminUserLogState) => state.isUserListLoading;
