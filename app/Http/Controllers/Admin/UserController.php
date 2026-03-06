@@ -31,17 +31,17 @@ class UserController extends Controller
 
         $users = User::query()
             ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at'])
-            ->with('avatarMedia')
+            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
             ->filter($filters)
             ->orderBy('updated_at', 'desc')
             ->paginate($perPage)
             ->withQueryString();
 
         $stats = [
-            'total' => User::count(),
-            'enabled' => User::where('status', 'enable')->count(),
-            'disabled' => User::where('status', 'disable')->count(),
-            'admins' => User::where('role', 'admin')->count(),
+            'total' => User::query()->count(),
+            'enabled' => User::query()->where('status', 'enable')->count(),
+            'disabled' => User::query()->where('status', 'disable')->count(),
+            'admins' => User::query()->where('role', 'admin')->count(),
         ];
 
         return Inertia::render('admin/users/index', [
@@ -127,14 +127,13 @@ class UserController extends Controller
     public function show(Request $request): Response|RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
-        }
+        $user = User::withTrashed()
+            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at', 'deleted_at'])
+            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata', 'type', 'extension'])])
+            ->findOrFail($userId);
 
         return Inertia::render('admin/users/show', [
-            'user' => $user->load('avatarMedia'),
+            'user' => $user,
         ]);
     }
 
@@ -144,11 +143,9 @@ class UserController extends Controller
     public function edit(Request $request): Response|RedirectResponse
     {
         $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
-        }
+        $user = User::withTrashed()
+            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at', 'deleted_at'])
+            ->findOrFail($userId);
 
         return Inertia::render('admin/users/edit', [
             'user' => $user,
@@ -198,7 +195,8 @@ class UserController extends Controller
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'User deleted successfully.');
+            ->with('success', 'User deleted successfully.')
+            ->with('deleted_user_id', $user->id);
     }
 
     /**
@@ -243,6 +241,8 @@ class UserController extends Controller
     {
         $userId = $this->getUserIdFromRequest($request);
         $user = $this->findUserOrFail($userId, withTrashed: true);
+
+        // Force delete will trigger the UserObserver which handles avatar deletion
         $user->forceDelete();
 
         return redirect()
@@ -264,6 +264,7 @@ class UserController extends Controller
 
         $users = User::onlyTrashed()
             ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'deleted_at', 'updated_at'])
+            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
             ->filter($filters)
             ->orderBy('updated_at', 'desc')
             ->paginate($perPage)

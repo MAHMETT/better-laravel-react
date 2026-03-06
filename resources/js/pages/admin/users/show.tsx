@@ -9,6 +9,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -22,7 +23,20 @@ import activityLogs from '@/routes/activity-logs';
 import users from '@/routes/users';
 import type { BreadcrumbItem, User } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, History, Pencil, Power, Trash2 } from 'lucide-react';
+import {
+    ArrowLeft,
+    Calendar,
+    Clock,
+    History,
+    IdCard,
+    Mail,
+    Pencil,
+    Power,
+    Shield,
+    Trash2,
+    UserCheck,
+    XCircle,
+} from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { create } from 'zustand';
@@ -116,7 +130,14 @@ export default function ShowUser({ user }: Props) {
         router.delete(users.destroy.url({ user: user.id }), {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('User deleted successfully', { id: toastId });
+                toast.success('User deleted successfully', {
+                    id: toastId,
+                    description: 'This user will be permanently deleted after 30 days.',
+                    action: {
+                        label: 'Undo',
+                        onClick: () => handleRestore(user.id),
+                    },
+                });
                 setShowDeleteModal(false);
                 window.history.back();
             },
@@ -129,6 +150,28 @@ export default function ShowUser({ user }: Props) {
                 setIsDeleting(false);
             },
         });
+    };
+
+    const handleRestore = (userId: number) => {
+        const toastId = toast.loading('Restoring user...');
+
+        router.post(
+            users.restore.url({ id: userId }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('User restored successfully', { id: toastId });
+                    window.history.back();
+                },
+                onError: (errors: Record<string, string>) => {
+                    const message =
+                        Object.values(errors).join(', ') ||
+                        'Failed to restore user';
+                    toast.error(message, { id: toastId });
+                },
+            },
+        );
     };
 
     const handleToggleStatus = () => {
@@ -166,7 +209,7 @@ export default function ShowUser({ user }: Props) {
         );
     };
 
-    const handleBack = () => window.history.back() ?? window.history.back();
+    const handleBack = () => window.history.back();
 
     const formatDate = (date: string | null) => {
         if (!date) return 'N/A';
@@ -179,11 +222,33 @@ export default function ShowUser({ user }: Props) {
         });
     };
 
+    const getStatusBadge = () => {
+        if (user.deleted_at) {
+            return (
+                <Badge variant="destructive" className="gap-1">
+                    <XCircle className="h-3 w-3" />
+                    Deleted
+                </Badge>
+            );
+        }
+        return user.status === 'enable' ? (
+            <Badge className="bg-green-500 gap-1">
+                <UserCheck className="h-3 w-3" />
+                Enabled
+            </Badge>
+        ) : (
+            <Badge variant="secondary" className="gap-1">
+                <XCircle className="h-3 w-3" />
+                Disabled
+            </Badge>
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={user.name} />
 
-            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
+            <div className="flex flex-1 flex-col gap-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
@@ -204,7 +269,7 @@ export default function ShowUser({ user }: Props) {
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button
                             variant="outline"
                             onClick={handleViewActivityLogs}
@@ -218,115 +283,177 @@ export default function ShowUser({ user }: Props) {
                         </Button>
                         <Button
                             variant={
-                                user.status === 'enable'
+                                user.status === 'enable' && !user.deleted_at
                                     ? 'destructive'
                                     : 'default'
                             }
                             onClick={handleToggleStatus}
+                            disabled={!!user.deleted_at}
                         >
                             <Power className="mr-2 size-4" />
-                            {user.status === 'enable' ? 'Disable' : 'Enable'}
+                            {user.deleted_at
+                                ? 'Deleted'
+                                : user.status === 'enable'
+                                  ? 'Disable'
+                                  : 'Enable'}
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={!!user.deleted_at}
+                        >
                             <Trash2 className="mr-2 size-4" />
-                            Delete
+                            {user.deleted_at ? 'Already Deleted' : 'Delete'}
                         </Button>
                     </div>
                 </div>
 
-                {/* User Info Card */}
+                {/* User Summary Card */}
                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage
-                                    src={
-                                        user.avatar_original_url ??
-                                        user.avatar_url ??
-                                        undefined
-                                    }
-                                    alt={user.name}
-                                />
-                                <AvatarFallback className="text-lg">
-                                    {user.name
-                                        .split(' ')
-                                        .map((n) => n[0])
-                                        .join('')
-                                        .toUpperCase()
-                                        .slice(0, 2)}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <CardTitle>{user.name}</CardTitle>
-                                <CardDescription>{user.email}</CardDescription>
+                    <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-20 w-20">
+                                    <AvatarImage
+                                        src={
+                                            user.avatar_original_url ??
+                                            user.avatar_url ??
+                                            undefined
+                                        }
+                                        alt={user.name}
+                                    />
+                                    <AvatarFallback className="text-xl font-semibold">
+                                        {user.name
+                                            .split(' ')
+                                            .map((n) => n[0])
+                                            .join('')
+                                            .toUpperCase()
+                                            .slice(0, 2)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle className="text-xl">
+                                        {user.name}
+                                    </CardTitle>
+                                    <CardDescription className="flex items-center gap-2">
+                                        <Mail className="h-3 w-3" />
+                                        {user.email}
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Badge className="bg-purple-500 gap-1">
+                                    <Shield className="h-3 w-3" />
+                                    {user.role === 'admin' ? 'Admin' : 'User'}
+                                </Badge>
+                                {getStatusBadge()}
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 sm:grid-cols-2">
+                </Card>
+
+                {/* Information Grid */}
+                <div className="grid gap-4 md:grid-cols-2">
+                    {/* Account Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <IdCard className="h-4 w-4" />
+                                Account Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">
-                                    Role
+                                    User ID
                                 </p>
-                                <p className="mt-1">
-                                    <span
-                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                            user.role === 'admin'
-                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                                        }`}
-                                    >
-                                        {user.role}
-                                    </span>
-                                </p>
+                                <p className="mt-1 text-sm">{user.id}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">
-                                    Status
+                                    Name
                                 </p>
-                                <p className="mt-1">
-                                    <span
-                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                            user.status === 'enable'
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                        }`}
-                                    >
-                                        {user.status === 'enable'
-                                            ? 'Enabled'
-                                            : 'Disabled'}
-                                    </span>
-                                </p>
+                                <p className="mt-1 text-sm">{user.name}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">
-                                    Created At
+                                    Email
                                 </p>
-                                <p className="mt-1">
+                                <p className="mt-1 text-sm">{user.email}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Account Created
+                                </p>
+                                <div className="mt-1 flex items-center gap-2 text-sm">
+                                    <Calendar className="h-3 w-3 text-muted-foreground" />
                                     {formatDate(user.created_at)}
-                                </p>
+                                </div>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">
-                                    Updated At
+                                    Last Updated
                                 </p>
-                                <p className="mt-1">
+                                <div className="mt-1 flex items-center gap-2 text-sm">
+                                    <Clock className="h-3 w-3 text-muted-foreground" />
                                     {formatDate(user.updated_at)}
-                                </p>
+                                </div>
                             </div>
                             {user.deleted_at && (
-                                <div className="sm:col-span-2">
-                                    <p className="text-sm font-medium text-red-500">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">
                                         Deleted At
                                     </p>
-                                    <p className="mt-1 text-red-500">
+                                    <div className="mt-1 flex items-center gap-2 text-sm text-red-500">
+                                        <Trash2 className="h-3 w-3" />
                                         {formatDate(user.deleted_at)}
+                                    </div>
+                                    <p className="mt-2 text-xs text-amber-600">
+                                        Will be permanently deleted 30 days
+                                        after soft deletion
                                     </p>
                                 </div>
                             )}
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+
+                    {/* System Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Shield className="h-4 w-4" />
+                                System Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Internal ID
+                                </p>
+                                <p className="mt-1 font-mono text-sm">
+                                    #{user.id}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Account Age
+                                </p>
+                                <p className="mt-1 text-sm">
+                                    {user.created_at
+                                        ? Math.floor(
+                                              (new Date().getTime() -
+                                                  new Date(
+                                                      user.created_at,
+                                                  ).getTime()) /
+                                                  (1000 * 60 * 60 * 24),
+                                          )
+                                        : 0}{' '}
+                                    days
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 {/* Delete Confirmation Modal */}
                 <AlertDialog
@@ -337,9 +464,19 @@ export default function ShowUser({ user }: Props) {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete User</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Are you sure you want to delete {user.name}?
-                                This action can be undone by restoring the user
-                                from trash.
+                                Are you sure you want to delete{' '}
+                                <strong>{user.name}</strong>?
+                                <div className="mt-3 rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                                    <p className="text-sm">
+                                        This will soft delete the user. The user
+                                        will be retained for 30 days before
+                                        permanent deletion.
+                                    </p>
+                                    <p className="mt-2 text-xs font-medium">
+                                        You can restore the user anytime during
+                                        this period.
+                                    </p>
+                                </div>
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -349,7 +486,7 @@ export default function ShowUser({ user }: Props) {
                                 disabled={isDeleting}
                                 className="bg-red-600 hover:bg-red-700"
                             >
-                                {isDeleting ? 'Deleting...' : 'Delete'}
+                                {isDeleting ? 'Deleting...' : 'Delete User'}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -363,17 +500,17 @@ export default function ShowUser({ user }: Props) {
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
-                                {user.status === 'enable'
+                                {user.status === 'enable' && !user.deleted_at
                                     ? 'Disable'
                                     : 'Enable'}{' '}
                                 User
                             </AlertDialogTitle>
                             <AlertDialogDescription>
                                 Are you sure you want to{' '}
-                                {user.status === 'enable'
+                                {user.status === 'enable' && !user.deleted_at
                                     ? 'disable'
                                     : 'enable'}{' '}
-                                {user.name}?
+                                <strong>{user.name}</strong>?
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

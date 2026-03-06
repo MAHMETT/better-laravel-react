@@ -13,10 +13,16 @@ export type WhenCurrentUrlFn = <TIfTrue, TIfFalse = null>(
     ifFalse?: TIfFalse,
 ) => TIfTrue | TIfFalse;
 
+export type IsActiveFn = (
+    path: string,
+    currentUrl?: string,
+) => boolean;
+
 export type UseCurrentUrlReturn = {
     currentUrl: string;
     isCurrentUrl: IsCurrentUrlFn;
     whenCurrentUrl: WhenCurrentUrlFn;
+    isActive: IsActiveFn;
 };
 
 export function useCurrentUrl(): UseCurrentUrlReturn {
@@ -50,9 +56,28 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         return isCurrentUrl(urlToCheck) ? ifTrue : ifFalse;
     };
 
+    const isActive: IsActiveFn = (
+        path: string,
+        currentUrl?: string,
+    ): boolean => {
+        const urlToCompare = currentUrl ?? currentUrlPath;
+        // Normalize path to ensure it starts with /
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        // Check if current URL starts with the given path
+        // Also ensure exact match for root path or when path ends with /
+        if (normalizedPath === '/') {
+            return urlToCompare === '/';
+        }
+        return (
+            urlToCompare === normalizedPath ||
+            urlToCompare.startsWith(`${normalizedPath}/`)
+        );
+    };
+
     return {
         currentUrl: currentUrlPath,
         isCurrentUrl,
         whenCurrentUrl,
+        isActive,
     };
 }

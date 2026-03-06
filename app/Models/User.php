@@ -177,7 +177,7 @@ class User extends Authenticatable
 
     public function media()
     {
-        return $this->hasMany(Media::class);
+        return $this->hasMany(Media::class, 'uploaded_by');
     }
 
     /**
