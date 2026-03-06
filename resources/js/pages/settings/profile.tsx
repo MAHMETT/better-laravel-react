@@ -1,3 +1,6 @@
+import { Transition } from '@headlessui/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
+import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { PhotoUploadModal } from '@/components/avatar';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -11,8 +14,6 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { edit, update } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
-import { Transition } from '@headlessui/react';
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { Check, Camera } from 'lucide-react';
 import { useEffect } from 'react';
 import { create } from 'zustand';
@@ -21,7 +22,7 @@ import { toast } from 'sonner';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Profile settings',
-        href: edit().url,
+        href: edit(),
     },
 ];
 
@@ -104,7 +105,7 @@ export default function Profile({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Profile settings" />
 
-            <h1 className="sr-only">Profile Settings</h1>
+            <h1 className="sr-only">Profile settings</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">
