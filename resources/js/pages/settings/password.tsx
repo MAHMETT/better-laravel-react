@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
-import { passwordUpdateSchema  } from '@/schemas';
-import type {PasswordUpdateData} from '@/schemas';
+import { passwordUpdateSchema } from '@/schemas';
+import type { PasswordUpdateData } from '@/schemas';
 import { validateForm } from '@/schemas/validate';
 import type { BreadcrumbItem } from '@/types';
 import { create } from 'zustand';
@@ -19,7 +19,7 @@ import { create } from 'zustand';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Password settings',
-        href: edit().url,
+        href: edit(),
     },
 ];
 
@@ -76,7 +76,7 @@ export default function Password() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Password settings" />
 
-            <h1 className="sr-only">Password Settings</h1>
+            <h1 className="sr-only">Password settings</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">
