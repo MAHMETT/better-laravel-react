@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Concerns\HasUUID;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
-    use HasUUID;
+    use HasFactory, HasUUID;
 
     protected $fillable = [
         'name',
@@ -34,7 +35,7 @@ class Media extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 
     /**

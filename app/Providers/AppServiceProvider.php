@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Observers\UserObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRouteBinding();
+        $this->registerObservers();
     }
 
     /**
@@ -60,5 +62,13 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('user', function ($value) {
             return User::withTrashed()->findOrFail($value);
         });
+    }
+
+    /**
+     * Register model observers.
+     */
+    protected function registerObservers(): void
+    {
+        User::observe(UserObserver::class);
     }
 }

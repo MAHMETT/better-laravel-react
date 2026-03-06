@@ -5,6 +5,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks';
 import { isExternalUrl } from '@/lib/url';
 import { toUrl } from '@/lib/utils';
 import type { FooterNavItem } from '@/types';
@@ -29,6 +30,8 @@ export const NavFooter = memo(function NavFooter({
         return Array.isArray(data) ? data : [];
     }, [items, role]);
 
+    const { isCurrentUrl } = useCurrentUrl();
+
     if (roleItems.length === 0) return null;
 
     return (
@@ -46,6 +49,7 @@ export const NavFooter = memo(function NavFooter({
                             <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton
                                     asChild
+                                    isActive={isCurrentUrl(item.href)}
                                     className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
                                 >
                                     {external ? (

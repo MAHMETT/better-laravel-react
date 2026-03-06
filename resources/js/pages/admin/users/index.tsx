@@ -247,6 +247,27 @@ export default function UsersIndex({
         setUserToDelete(user);
     };
 
+    const handleRestore = (userId: number) => {
+        const toastId = toast.loading('Restoring user...');
+
+        router.post(
+            users.restore.url({ id: userId }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('User restored successfully', { id: toastId });
+                },
+                onError: (errors: Record<string, string>) => {
+                    const message =
+                        Object.values(errors).join(', ') ||
+                        'Failed to restore user';
+                    toast.error(message, { id: toastId });
+                },
+            },
+        );
+    };
+
     const executeDelete = () => {
         if (!userToDelete || isDeleting) return;
 
@@ -256,7 +277,14 @@ export default function UsersIndex({
         router.delete(users.destroy.url({ user: userToDelete.id }), {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('User deleted successfully', { id: toastId });
+                toast.success('User deleted successfully', {
+                    id: toastId,
+                    description: 'This user will be permanently deleted after 30 days.',
+                    action: {
+                        label: 'Undo',
+                        onClick: () => handleRestore(userToDelete.id),
+                    },
+                });
                 setUserToDelete(null);
             },
             onError: (errors: Record<string, string>) => {
