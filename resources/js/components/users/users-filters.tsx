@@ -7,7 +7,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Filter, Search, X } from 'lucide-react';
+import {
+    CheckIcon,
+    ChessKingIcon,
+    Filter,
+    Search,
+    UserIcon,
+    X,
+    XIcon,
+} from 'lucide-react';
 
 interface UsersFiltersProps {
     search: string;
@@ -64,8 +72,14 @@ export function UsersFilters({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="enable">Enabled</SelectItem>
-                        <SelectItem value="disable">Disabled</SelectItem>
+                        <SelectItem value="enable">
+                            <CheckIcon className="size-4" />
+                            Enabled
+                        </SelectItem>
+                        <SelectItem value="disable">
+                            <XIcon className="size-4" />
+                            Disabled
+                        </SelectItem>
                     </SelectContent>
                 </Select>
 
@@ -79,8 +93,14 @@ export function UsersFilters({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Roles</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">
+                            <ChessKingIcon className="size-4" />
+                            Admin
+                        </SelectItem>
+                        <SelectItem value="user">
+                            <UserIcon className="size-4" />
+                            User
+                        </SelectItem>
                     </SelectContent>
                 </Select>
 

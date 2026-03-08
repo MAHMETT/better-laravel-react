@@ -20,8 +20,19 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Users, Check, X, UserCheck } from 'lucide-react';
 import type { UserLogFilterUser } from '@/types';
+import {
+    Check,
+    CheckIcon,
+    ChessKingIcon,
+    Search,
+    User,
+    UserCheck,
+    UserIcon,
+    Users,
+    X,
+    XIcon,
+} from 'lucide-react';
 import { useMemo } from 'react';
 
 interface UserFilterModalProps {
@@ -184,10 +195,11 @@ export function UserFilterModal({
                                         All roles
                                     </SelectItem>
                                     <SelectItem value="admin">
-                                        👑 Admin
+                                        <ChessKingIcon className="size-4" />{' '}
+                                        Admin
                                     </SelectItem>
                                     <SelectItem value="user">
-                                        👤 User
+                                        <User className="size-4" /> User
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -214,10 +226,10 @@ export function UserFilterModal({
                                         All statuses
                                     </SelectItem>
                                     <SelectItem value="enable">
-                                        ✅ Enabled
+                                        <CheckIcon className="size-4" /> Enabled
                                     </SelectItem>
                                     <SelectItem value="disable">
-                                        ❌ Disabled
+                                        <X className="size-4" /> Disabled
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -306,7 +318,7 @@ export function UserFilterModal({
                             Available Users{' '}
                             {users.length > 0 && `(${users.length})`}
                         </Label>
-                        <ScrollArea className="h-[400px] rounded-md border">
+                        <ScrollArea className="h-100 rounded-md border">
                             {isLoading && users.length === 0 && (
                                 <div className="space-y-3 p-4">
                                     <Skeleton className="h-16 w-full" />
@@ -351,10 +363,12 @@ export function UserFilterModal({
                                                     variant="secondary"
                                                     className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                                                 >
-                                                    {user.role === 'admin' &&
-                                                        '👑'}
-                                                    {user.role === 'user' &&
-                                                        '👤'}
+                                                    {user.role === 'admin' && (
+                                                        <ChessKingIcon className="size-4" />
+                                                    )}
+                                                    {user.role === 'user' && (
+                                                        <UserIcon className="size-4" />
+                                                    )}
                                                     <span className="capitalize">
                                                         {user.role}
                                                     </span>
@@ -367,9 +381,12 @@ export function UserFilterModal({
                                                             : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                                                     }`}
                                                 >
-                                                    {user.status === 'enable'
-                                                        ? '✅'
-                                                        : '❌'}
+                                                    {user.status ===
+                                                    'enable' ? (
+                                                        <CheckIcon className="size-4" />
+                                                    ) : (
+                                                        <XIcon className="size-4" />
+                                                    )}
                                                     {user.status === 'enable'
                                                         ? 'Enabled'
                                                         : 'Disabled'}

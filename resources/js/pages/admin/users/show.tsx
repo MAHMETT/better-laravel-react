@@ -26,6 +26,8 @@ import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calendar,
+    CheckIcon,
+    ChessKingIcon,
     Clock,
     History,
     IdCard,
@@ -34,8 +36,9 @@ import {
     Power,
     Shield,
     Trash2,
-    UserCheck,
+    UserIcon,
     XCircle,
+    XIcon,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -242,19 +245,19 @@ export default function ShowUser({ user }: Props) {
         if (user.deleted_at) {
             return (
                 <Badge variant="destructive" className="gap-1">
-                    <XCircle className="h-3 w-3" />
+                    <XCircle className="size-4" />
                     Deleted
                 </Badge>
             );
         }
         return user.status === 'enable' ? (
             <Badge className="gap-1 bg-green-500">
-                <UserCheck className="h-3 w-3" />
+                <CheckIcon className="size-4" />
                 Enabled
             </Badge>
         ) : (
             <Badge variant="secondary" className="gap-1">
-                <XCircle className="h-3 w-3" />
+                <XIcon className="size-4" />
                 Disabled
             </Badge>
         );
@@ -352,15 +355,24 @@ export default function ShowUser({ user }: Props) {
                                         {user.name}
                                     </CardTitle>
                                     <CardDescription className="flex items-center gap-2">
-                                        <Mail className="h-3 w-3" />
+                                        <Mail className="size-4" />
                                         {user.email}
                                     </CardDescription>
                                 </div>
                             </div>
                             <div className="flex gap-2">
                                 <Badge className="gap-1 bg-purple-500">
-                                    <Shield className="h-3 w-3" />
-                                    {user.role === 'admin' ? 'Admin' : 'User'}
+                                    {user.role === 'admin' ? (
+                                        <>
+                                            <ChessKingIcon className="size-4" />
+                                            Admin
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserIcon className="size-4" />
+                                            User
+                                        </>
+                                    )}
                                 </Badge>
                                 {getStatusBadge()}
                             </div>
@@ -402,7 +414,7 @@ export default function ShowUser({ user }: Props) {
                                     Account Created
                                 </p>
                                 <div className="mt-1 flex items-center gap-2 text-sm">
-                                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                                    <Calendar className="size-4 text-muted-foreground" />
                                     {formatDate(user.created_at)}
                                 </div>
                             </div>
@@ -411,7 +423,7 @@ export default function ShowUser({ user }: Props) {
                                     Last Updated
                                 </p>
                                 <div className="mt-1 flex items-center gap-2 text-sm">
-                                    <Clock className="h-3 w-3 text-muted-foreground" />
+                                    <Clock className="size-4 text-muted-foreground" />
                                     {formatDate(user.updated_at)}
                                 </div>
                             </div>
@@ -421,7 +433,7 @@ export default function ShowUser({ user }: Props) {
                                         Deleted At
                                     </p>
                                     <div className="mt-1 flex items-center gap-2 text-sm text-red-500">
-                                        <Trash2 className="h-3 w-3" />
+                                        <Trash2 className="size-4" />
                                         {formatDate(user.deleted_at)}
                                     </div>
                                     <p className="mt-2 text-xs text-amber-600">

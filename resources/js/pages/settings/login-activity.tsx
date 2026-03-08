@@ -15,18 +15,19 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import loginActivity from '@/routes/login-activity';
+import {
+    selectSelfUserLogFilters,
+    selectSelfUserLogLoading,
+    useSelfUserLogStore,
+} from '@/stores/self-user-log-store';
 import type {
     BreadcrumbItem,
     PaginatedData,
     SelfUserLogFilters,
     UserLog,
 } from '@/types';
-import {
-    selectSelfUserLogFilters,
-    selectSelfUserLogLoading,
-    useSelfUserLogStore,
-} from '@/stores/self-user-log-store';
 import { Head, router } from '@inertiajs/react';
+import { LockIcon, LogOutIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -151,12 +152,15 @@ export default function LoginActivity({
                                             All events
                                         </SelectItem>
                                         <SelectItem value="login">
+                                            <LockIcon className="size-4" />
                                             Login
                                         </SelectItem>
                                         <SelectItem value="logout">
+                                            <LogOutIcon className="size-4" />
                                             Logout
                                         </SelectItem>
                                         <SelectItem value="forced_logout">
+                                            <LogOutIcon className="size-4" />
                                             Forced Logout
                                         </SelectItem>
                                     </SelectContent>

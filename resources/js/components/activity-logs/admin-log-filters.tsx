@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -8,9 +9,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Filter, Users, X } from 'lucide-react';
 import type { AdminUserLogFilters } from '@/types';
+import { Filter, LockIcon, LogOutIcon, Users, X } from 'lucide-react';
 
 interface AdminLogFiltersProps {
     filters: Omit<AdminUserLogFilters, 'user_ids'>;
@@ -124,10 +124,14 @@ export function AdminLogFilters({
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All events</SelectItem>
-                            <SelectItem value="login">🔐 Login</SelectItem>
-                            <SelectItem value="logout">🚪 Logout</SelectItem>
+                            <SelectItem value="login">
+                                <LockIcon className="size-4" /> Login
+                            </SelectItem>
+                            <SelectItem value="logout">
+                                <LogOutIcon className="size-4" /> Logout
+                            </SelectItem>
                             <SelectItem value="forced_logout">
-                                ⚠️ Forced Logout
+                                <LogOutIcon className="size-4" /> Forced Logout
                             </SelectItem>
                         </SelectContent>
                     </Select>

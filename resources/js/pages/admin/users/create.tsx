@@ -20,7 +20,15 @@ import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, CreateUserFormData } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, LoaderCircleIcon, UserPlus } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckIcon,
+    ChessKingIcon,
+    LoaderCircleIcon,
+    UserIcon,
+    UserPlus,
+    XIcon,
+} from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { create } from 'zustand';
@@ -329,9 +337,11 @@ export default function CreateUser() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="user">
+                                                <ChessKingIcon className="size-4" />
                                                 User
                                             </SelectItem>
                                             <SelectItem value="admin">
+                                                <UserIcon className="size-4" />
                                                 Admin
                                             </SelectItem>
                                         </SelectContent>
@@ -360,9 +370,11 @@ export default function CreateUser() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="enable">
+                                                <CheckIcon className="size-4" />
                                                 Enabled
                                             </SelectItem>
                                             <SelectItem value="disable">
+                                                <XIcon className="size-4" />
                                                 Disabled
                                             </SelectItem>
                                         </SelectContent>
