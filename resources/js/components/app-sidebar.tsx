@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { footerNavItems, mainNavItems } from '@/configs/sidebar.config';
 import { dashboard } from '@/routes';
-import AppLogo from './app-logo';
+import AppLogo from '@/components/app-logo';
 
 export function AppSidebar() {
     const { role } = usePage().props.auth.user;

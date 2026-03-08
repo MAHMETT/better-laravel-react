@@ -8,7 +8,7 @@ import { useAvatarUploadStore } from '@/stores/avatar-upload';
 import { AlertCircle, Camera, CheckCircle, Upload } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import type { Area } from 'react-easy-crop';
-import { ImageCropDialog } from './image-crop-dialog';
+import { ImageCropDialog } from '@/components/avatar/image-crop-dialog';
 
 interface AvatarUploadModalProps {
     open: boolean;
