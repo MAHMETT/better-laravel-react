@@ -3,6 +3,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { TanStackQueryProvider } from '@/providers/tanstack-query-provider';
 import '../css/app.css';
 import { initializeTheme } from '@/hooks/use-appearance';
 
@@ -20,13 +22,18 @@ createInertiaApp({
 
         root.render(
             <StrictMode>
-                <App {...props} />
-                <Toaster />
+                <ErrorBoundary>
+                    <TanStackQueryProvider>
+                        <App {...props} />
+                        <Toaster />
+                    </TanStackQueryProvider>
+                </ErrorBoundary>
             </StrictMode>,
         );
     },
     progress: {
         color: '#4B5563',
+        showSpinner: true,
     },
 });
 

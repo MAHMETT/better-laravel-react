@@ -14,7 +14,13 @@ import { Paginations } from '@/components/ui/pagination';
 import { UsersFilters } from '@/components/users/users-filters';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
-import type { BreadcrumbItem, PaginatedData, User, UserFilters, UserStats } from '@/types';
+import type {
+    BreadcrumbItem,
+    PaginatedData,
+    User,
+    UserFilters,
+    UserStats,
+} from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Power, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
@@ -76,17 +82,36 @@ const useUsersIndexPageStore = create<UsersIndexPageState>((set, get) => ({
     isDeleting: false,
     isToggling: false,
     isLoading: false,
-    setSearch: (search) => set({ pendingSearch: search }),
-    setStatus: (status) => set({ pendingStatus: status }),
-    setRole: (role) => set({ pendingRole: role }),
-    setPerPage: (perPage) => set({ pendingPerPage: perPage }),
-    setUserToDelete: (userToDelete) => set({ userToDelete }),
-    setUserToToggle: (userToToggle) => set({ userToToggle }),
-    setIsDeleting: (isDeleting) => set({ isDeleting }),
-    setIsToggling: (isToggling) => set({ isToggling }),
-    setIsLoading: (isLoading) => set({ isLoading }),
+    setSearch: (search) => {
+        set({ pendingSearch: search });
+    },
+    setStatus: (status) => {
+        set({ pendingStatus: status });
+    },
+    setRole: (role) => {
+        set({ pendingRole: role });
+    },
+    setPerPage: (perPage) => {
+        set({ pendingPerPage: perPage });
+    },
+    setUserToDelete: (userToDelete) => {
+        set({ userToDelete });
+    },
+    setUserToToggle: (userToToggle) => {
+        set({ userToToggle });
+    },
+    setIsDeleting: (isDeleting) => {
+        set({ isDeleting });
+    },
+    setIsToggling: (isToggling) => {
+        set({ isToggling });
+    },
+    setIsLoading: (isLoading) => {
+        set({ isLoading });
+    },
     applyPendingFilters: () => {
-        const { pendingSearch, pendingStatus, pendingRole, pendingPerPage } = get();
+        const { pendingSearch, pendingStatus, pendingRole, pendingPerPage } =
+            get();
         set({
             search: pendingSearch,
             status: pendingStatus,
@@ -94,7 +119,7 @@ const useUsersIndexPageStore = create<UsersIndexPageState>((set, get) => ({
             perPage: pendingPerPage,
         });
     },
-    initialize: (filters) =>
+    initialize: (filters) => {
         set({
             search: filters.search,
             status: filters.status,
@@ -109,8 +134,9 @@ const useUsersIndexPageStore = create<UsersIndexPageState>((set, get) => ({
             isDeleting: false,
             isToggling: false,
             isLoading: false,
-        }),
-    reset: () =>
+        });
+    },
+    reset: () => {
         set({
             search: '',
             status: '',
@@ -125,7 +151,8 @@ const useUsersIndexPageStore = create<UsersIndexPageState>((set, get) => ({
             isDeleting: false,
             isToggling: false,
             isLoading: false,
-        }),
+        });
+    },
 }));
 
 export default function UsersIndex({
@@ -136,10 +163,16 @@ export default function UsersIndex({
     const search = useUsersIndexPageStore((state) => state.search);
     const status = useUsersIndexPageStore((state) => state.status);
     const role = useUsersIndexPageStore((state) => state.role);
-    const pendingSearch = useUsersIndexPageStore((state) => state.pendingSearch);
-    const pendingStatus = useUsersIndexPageStore((state) => state.pendingStatus);
+    const pendingSearch = useUsersIndexPageStore(
+        (state) => state.pendingSearch,
+    );
+    const pendingStatus = useUsersIndexPageStore(
+        (state) => state.pendingStatus,
+    );
     const pendingRole = useUsersIndexPageStore((state) => state.pendingRole);
-    const pendingPerPage = useUsersIndexPageStore((state) => state.pendingPerPage);
+    const pendingPerPage = useUsersIndexPageStore(
+        (state) => state.pendingPerPage,
+    );
     const userToDelete = useUsersIndexPageStore((state) => state.userToDelete);
     const userToToggle = useUsersIndexPageStore((state) => state.userToToggle);
     const isDeleting = useUsersIndexPageStore((state) => state.isDeleting);
@@ -155,10 +188,16 @@ export default function UsersIndex({
     const setUserToToggle = useUsersIndexPageStore(
         (state) => state.setUserToToggle,
     );
-    const setIsDeleting = useUsersIndexPageStore((state) => state.setIsDeleting);
-    const setIsToggling = useUsersIndexPageStore((state) => state.setIsToggling);
+    const setIsDeleting = useUsersIndexPageStore(
+        (state) => state.setIsDeleting,
+    );
+    const setIsToggling = useUsersIndexPageStore(
+        (state) => state.setIsToggling,
+    );
     const setIsLoading = useUsersIndexPageStore((state) => state.setIsLoading);
-    const applyPendingFilters = useUsersIndexPageStore((state) => state.applyPendingFilters);
+    const applyPendingFilters = useUsersIndexPageStore(
+        (state) => state.applyPendingFilters,
+    );
     const initialize = useUsersIndexPageStore((state) => state.initialize);
     const reset = useUsersIndexPageStore((state) => state.reset);
 
@@ -215,7 +254,9 @@ export default function UsersIndex({
         router.get(users.index.url(), params, {
             replace: true,
             preserveScroll: true,
-            onFinish: () => setIsLoading(false),
+            onFinish: () => {
+                setIsLoading(false);
+            },
         });
     };
 
@@ -225,14 +266,20 @@ export default function UsersIndex({
         setRole('');
         setPerPage(10);
         setIsLoading(true);
-        router.get(users.index.url(), {}, {
-            replace: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Filters cleared.');
+        router.get(
+            users.index.url(),
+            {},
+            {
+                replace: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Filters cleared.');
+                },
+                onFinish: () => {
+                    setIsLoading(false);
+                },
             },
-            onFinish: () => setIsLoading(false),
-        });
+        );
     };
 
     const handleView = (user: User) => {
@@ -256,7 +303,9 @@ export default function UsersIndex({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success('User restored successfully', { id: toastId });
+                    toast.success('User restored successfully', {
+                        id: toastId,
+                    });
                 },
                 onError: (errors: Record<string, string>) => {
                     const message =
@@ -279,10 +328,13 @@ export default function UsersIndex({
             onSuccess: () => {
                 toast.success('User deleted successfully', {
                     id: toastId,
-                    description: 'This user will be permanently deleted after 30 days.',
+                    description:
+                        'This user will be permanently deleted after 30 days.',
                     action: {
                         label: 'Undo',
-                        onClick: () => handleRestore(userToDelete.id),
+                        onClick: () => {
+                            handleRestore(userToDelete.id);
+                        },
                     },
                 });
                 setUserToDelete(null);
@@ -355,14 +407,18 @@ export default function UsersIndex({
                     <div className="flex items-center justify-center gap-4 max-sm:w-full max-sm:flex-col sm:justify-end">
                         <Button
                             variant="outline"
-                            onClick={() => router.visit(users.trashed.url())}
+                            onClick={() => {
+                                router.visit(users.trashed.url());
+                            }}
                             className="max-sm:w-full"
                         >
                             <Trash2 className="mr-2 size-4" />
                             View Trashed Users
                         </Button>
                         <Button
-                            onClick={() => router.visit(users.create.url())}
+                            onClick={() => {
+                                router.visit(users.create.url());
+                            }}
                             className="max-sm:w-full"
                         >
                             <Plus className="mr-2 size-4" />
@@ -506,9 +562,9 @@ export default function UsersIndex({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleView(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleView(user);
+                                                    }}
                                                     className="h-8 w-8"
                                                 >
                                                     <Eye className="size-4" />
@@ -516,9 +572,9 @@ export default function UsersIndex({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleEdit(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleEdit(user);
+                                                    }}
                                                     className="h-8 w-8"
                                                 >
                                                     <Pencil className="size-4" />
@@ -526,9 +582,11 @@ export default function UsersIndex({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleToggleStatus(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleToggleStatus(
+                                                            user,
+                                                        );
+                                                    }}
                                                     className="h-8 w-8"
                                                 >
                                                     <Power className="size-4" />
@@ -536,9 +594,9 @@ export default function UsersIndex({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleDelete(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleDelete(user);
+                                                    }}
                                                     className="h-8 w-8 text-red-500 hover:text-red-600"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -569,7 +627,9 @@ export default function UsersIndex({
             {/* Delete Confirmation Modal */}
             <AlertDialog
                 open={!!userToDelete}
-                onOpenChange={() => setUserToDelete(null)}
+                onOpenChange={() => {
+                    setUserToDelete(null);
+                }}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -582,7 +642,9 @@ export default function UsersIndex({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel
-                            onClick={() => setUserToDelete(null)}
+                            onClick={() => {
+                                setUserToDelete(null);
+                            }}
                         >
                             Cancel
                         </AlertDialogCancel>
@@ -600,7 +662,9 @@ export default function UsersIndex({
             {/* Toggle Status Confirmation Modal */}
             <AlertDialog
                 open={!!userToToggle}
-                onOpenChange={() => setUserToToggle(null)}
+                onOpenChange={() => {
+                    setUserToToggle(null);
+                }}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -620,7 +684,9 @@ export default function UsersIndex({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel
-                            onClick={() => setUserToToggle(null)}
+                            onClick={() => {
+                                setUserToToggle(null);
+                            }}
                         >
                             Cancel
                         </AlertDialogCancel>

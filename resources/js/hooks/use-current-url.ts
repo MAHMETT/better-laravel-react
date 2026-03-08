@@ -19,18 +19,15 @@ export type WhenCurrentUrlFn = <TIfTrue, TIfFalse = null>(
     ifFalse?: TIfFalse,
 ) => TIfTrue | TIfFalse;
 
-export type IsActiveFn = (
-    path: string,
-    currentUrl?: string,
-) => boolean;
+export type IsActiveFn = (path: string, currentUrl?: string) => boolean;
 
-export type UseCurrentUrlReturn = {
+export interface UseCurrentUrlReturn {
     currentUrl: string;
     isCurrentUrl: IsCurrentUrlFn;
     isCurrentOrParentUrl: IsCurrentOrParentUrlFn;
     whenCurrentUrl: WhenCurrentUrlFn;
     isActive: IsActiveFn;
-};
+}
 
 export function useCurrentUrl(): UseCurrentUrlReturn {
     const page = usePage();
@@ -39,7 +36,7 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
     const isCurrentUrl: IsCurrentUrlFn = (
         urlToCheck: NonNullable<InertiaLinkProps['href']>,
         currentUrl?: string,
-        startsWith: boolean = false,
+        startsWith = false,
     ) => {
         const urlToCompare = currentUrl ?? currentUrlPath;
         const urlString = toUrl(urlToCheck);

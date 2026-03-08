@@ -1,4 +1,4 @@
-import type { UserLogFilterUser } from '../models/user-log';
+import type { UserLogFilterUser } from '@/types/models/user-log';
 
 export interface PaginationLink {
     url: string | null;

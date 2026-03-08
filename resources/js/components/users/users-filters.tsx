@@ -45,14 +45,20 @@ export function UsersFilters({
                 <Input
                     placeholder="Search users..."
                     value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
+                    onChange={(e) => {
+                        onSearchChange(e.target.value);
+                    }}
                     className="pl-9"
                     disabled={disabled}
                 />
             </div>
 
             <div className="flex flex-wrap gap-2">
-                <Select value={status} onValueChange={onStatusChange} disabled={disabled}>
+                <Select
+                    value={status}
+                    onValueChange={onStatusChange}
+                    disabled={disabled}
+                >
                     <SelectTrigger className="w-32.5">
                         <SelectValue placeholder="All Status" />
                     </SelectTrigger>
@@ -63,7 +69,11 @@ export function UsersFilters({
                     </SelectContent>
                 </Select>
 
-                <Select value={role} onValueChange={onRoleChange} disabled={disabled}>
+                <Select
+                    value={role}
+                    onValueChange={onRoleChange}
+                    disabled={disabled}
+                >
                     <SelectTrigger className="w-32.5">
                         <SelectValue placeholder="All Roles" />
                     </SelectTrigger>
@@ -76,7 +86,9 @@ export function UsersFilters({
 
                 <Select
                     value={perPage.toString()}
-                    onValueChange={(v) => onPerPageChange(Number(v))}
+                    onValueChange={(v) => {
+                        onPerPageChange(Number(v));
+                    }}
                     disabled={disabled}
                 >
                     <SelectTrigger className="w-30">

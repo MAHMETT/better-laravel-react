@@ -1,6 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useInitials } from '@/hooks/use-initials';
 import type { AvatarValidationError } from '@/schemas/avatar';
@@ -8,19 +14,27 @@ import { useAvatarUploadStore } from '@/stores/avatar-upload';
 import { AlertCircle, Camera, CheckCircle, Upload } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import type { Area } from 'react-easy-crop';
-import { ImageCropDialog } from './image-crop-dialog';
+import { ImageCropDialog } from '@/components/avatar/image-crop-dialog';
 
 interface AvatarUploadModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     currentAvatar?: string | null;
     userName: string;
-    onAvatarSelect: (file: File, croppedData?: { blob: Blob; cropData: Area }) => void;
+    onAvatarSelect: (
+        file: File,
+        croppedData?: { blob: Blob; cropData: Area },
+    ) => void;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MIN_FILE_SIZE = 10 * 1024; // 10KB
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_MIME_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+];
 const MIN_DIMENSION = 100;
 const MAX_DIMENSION = 4096;
 
@@ -39,15 +53,21 @@ export function AvatarUploadModal({
         (state) => state.validationErrors,
     );
     const isDragOver = useAvatarUploadStore((state) => state.isDragOver);
-    const showCropDialog = useAvatarUploadStore((state) => state.showCropDialog);
+    const showCropDialog = useAvatarUploadStore(
+        (state) => state.showCropDialog,
+    );
     const crop = useAvatarUploadStore((state) => state.crop);
     const zoom = useAvatarUploadStore((state) => state.zoom);
     const croppedAreaPixels = useAvatarUploadStore(
         (state) => state.croppedAreaPixels,
     );
     const isProcessing = useAvatarUploadStore((state) => state.isProcessing);
-    const setPreviewImage = useAvatarUploadStore((state) => state.setPreviewImage);
-    const setSelectedFile = useAvatarUploadStore((state) => state.setSelectedFile);
+    const setPreviewImage = useAvatarUploadStore(
+        (state) => state.setPreviewImage,
+    );
+    const setSelectedFile = useAvatarUploadStore(
+        (state) => state.setSelectedFile,
+    );
     const setValidationErrors = useAvatarUploadStore(
         (state) => state.setValidationErrors,
     );
@@ -60,7 +80,9 @@ export function AvatarUploadModal({
     const setCroppedAreaPixels = useAvatarUploadStore(
         (state) => state.setCroppedAreaPixels,
     );
-    const setIsProcessing = useAvatarUploadStore((state) => state.setIsProcessing);
+    const setIsProcessing = useAvatarUploadStore(
+        (state) => state.setIsProcessing,
+    );
     const resetState = useAvatarUploadStore((state) => state.reset);
 
     const validateFile = useCallback((file: File): AvatarValidationError[] => {
@@ -89,106 +111,135 @@ export function AvatarUploadModal({
         return errors;
     }, []);
 
-    const validateImageDimensions = useCallback((image: HTMLImageElement): AvatarValidationError | null => {
-        if (image.width < MIN_DIMENSION || image.height < MIN_DIMENSION) {
-            return {
-                field: 'dimensions',
-                message: `Image must be at least ${MIN_DIMENSION}x${MIN_DIMENSION} pixels`,
+    const validateImageDimensions = useCallback(
+        (image: HTMLImageElement): AvatarValidationError | null => {
+            if (image.width < MIN_DIMENSION || image.height < MIN_DIMENSION) {
+                return {
+                    field: 'dimensions',
+                    message: `Image must be at least ${MIN_DIMENSION}x${MIN_DIMENSION} pixels`,
+                };
+            }
+
+            if (image.width > MAX_DIMENSION || image.height > MAX_DIMENSION) {
+                return {
+                    field: 'dimensions',
+                    message: `Image must be at most ${MAX_DIMENSION}x${MAX_DIMENSION} pixels`,
+                };
+            }
+
+            return null;
+        },
+        [],
+    );
+
+    const handleFileSelect = useCallback(
+        (file: File) => {
+            setValidationErrors([]);
+            setPreviewImage(null);
+            setSelectedFile(null);
+
+            // Validate file
+            const errors = validateFile(file);
+            if (errors.length > 0) {
+                setValidationErrors(errors);
+                return;
+            }
+
+            // Create preview and validate dimensions
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const dimensionError = validateImageDimensions(img);
+                    if (dimensionError) {
+                        setValidationErrors([dimensionError]);
+                        return;
+                    }
+
+                    setPreviewImage(e.target?.result as string);
+                    setSelectedFile(file);
+                    setShowCropDialog(true);
+                };
+                img.onerror = () => {
+                    setValidationErrors([
+                        {
+                            field: 'general',
+                            message:
+                                'Failed to load image. File may be corrupted.',
+                        },
+                    ]);
+                };
+                img.src = e.target?.result as string;
             };
-        }
-
-        if (image.width > MAX_DIMENSION || image.height > MAX_DIMENSION) {
-            return {
-                field: 'dimensions',
-                message: `Image must be at most ${MAX_DIMENSION}x${MAX_DIMENSION} pixels`,
-            };
-        }
-
-        return null;
-    }, []);
-
-    const handleFileSelect = useCallback((file: File) => {
-        setValidationErrors([]);
-        setPreviewImage(null);
-        setSelectedFile(null);
-
-        // Validate file
-        const errors = validateFile(file);
-        if (errors.length > 0) {
-            setValidationErrors(errors);
-            return;
-        }
-
-        // Create preview and validate dimensions
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const dimensionError = validateImageDimensions(img);
-                if (dimensionError) {
-                    setValidationErrors([dimensionError]);
-                    return;
-                }
-
-                setPreviewImage(e.target?.result as string);
-                setSelectedFile(file);
-                setShowCropDialog(true);
-            };
-            img.onerror = () => {
+            reader.onerror = () => {
                 setValidationErrors([
                     {
                         field: 'general',
-                        message: 'Failed to load image. File may be corrupted.',
+                        message: 'Failed to read file. Please try again.',
                     },
                 ]);
             };
-            img.src = e.target?.result as string;
-        };
-        reader.onerror = () => {
-            setValidationErrors([
-                {
-                    field: 'general',
-                    message: 'Failed to read file. Please try again.',
-                },
-            ]);
-        };
-        reader.readAsDataURL(file);
-    }, [setPreviewImage, setSelectedFile, setShowCropDialog, setValidationErrors, validateFile, validateImageDimensions]);
+            reader.readAsDataURL(file);
+        },
+        [
+            setPreviewImage,
+            setSelectedFile,
+            setShowCropDialog,
+            setValidationErrors,
+            validateFile,
+            validateImageDimensions,
+        ],
+    );
 
-    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            handleFileSelect(file);
-        }
-    }, [handleFileSelect]);
+    const handleInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (file) {
+                handleFileSelect(file);
+            }
+        },
+        [handleFileSelect],
+    );
 
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    }, [setIsDragOver]);
+    const handleDragOver = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(true);
+        },
+        [setIsDragOver],
+    );
 
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    }, [setIsDragOver]);
+    const handleDragLeave = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
+        },
+        [setIsDragOver],
+    );
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragOver(false);
 
-        const file = e.dataTransfer.files?.[0];
-        if (file && file.type.startsWith('image/')) {
-            handleFileSelect(file);
-        } else {
-            setValidationErrors([
-                { field: 'fileType', message: 'Please drop an image file' },
-            ]);
-        }
-    }, [handleFileSelect, setIsDragOver, setValidationErrors]);
+            const file = e.dataTransfer.files?.[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFileSelect(file);
+            } else {
+                setValidationErrors([
+                    { field: 'fileType', message: 'Please drop an image file' },
+                ]);
+            }
+        },
+        [handleFileSelect, setIsDragOver, setValidationErrors],
+    );
 
-    const handleCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-        setCroppedAreaPixels(croppedAreaPixels);
-    }, [setCroppedAreaPixels]);
+    const handleCropComplete = useCallback(
+        (_croppedArea: Area, croppedAreaPixels: Area) => {
+            setCroppedAreaPixels(croppedAreaPixels);
+        },
+        [setCroppedAreaPixels],
+    );
 
     const createCroppedImage = useCallback(async (): Promise<Blob> => {
         if (!previewImage || !croppedAreaPixels) {
@@ -220,16 +271,20 @@ export function AvatarUploadModal({
             0,
             0,
             croppedAreaPixels.width,
-            croppedAreaPixels.height
+            croppedAreaPixels.height,
         );
 
         return new Promise((resolve) => {
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    throw new Error('Canvas to Blob failed');
-                }
-                resolve(blob);
-            }, 'image/webp', 0.9);
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        throw new Error('Canvas to Blob failed');
+                    }
+                    resolve(blob);
+                },
+                'image/webp',
+                0.9,
+            );
         });
     }, [previewImage, croppedAreaPixels]);
 
@@ -242,11 +297,18 @@ export function AvatarUploadModal({
 
         try {
             const croppedBlob = await createCroppedImage();
-            const croppedFile = new File([croppedBlob], selectedFile.name.replace(/\.[^/.]+$/, '.webp'), {
-                type: 'image/webp',
-            });
+            const croppedFile = new File(
+                [croppedBlob],
+                selectedFile.name.replace(/\.[^/.]+$/, '.webp'),
+                {
+                    type: 'image/webp',
+                },
+            );
 
-            onAvatarSelect(croppedFile, { blob: croppedBlob, cropData: croppedAreaPixels });
+            onAvatarSelect(croppedFile, {
+                blob: croppedBlob,
+                cropData: croppedAreaPixels,
+            });
             // Close modal and reset state
             setPreviewImage(null);
             setSelectedFile(null);
@@ -266,7 +328,21 @@ export function AvatarUploadModal({
         } finally {
             setIsProcessing(false);
         }
-    }, [createCroppedImage, croppedAreaPixels, onAvatarSelect, onOpenChange, selectedFile, setCroppedAreaPixels, setCrop, setIsProcessing, setPreviewImage, setSelectedFile, setShowCropDialog, setValidationErrors, setZoom]);
+    }, [
+        createCroppedImage,
+        croppedAreaPixels,
+        onAvatarSelect,
+        onOpenChange,
+        selectedFile,
+        setCroppedAreaPixels,
+        setCrop,
+        setIsProcessing,
+        setPreviewImage,
+        setSelectedFile,
+        setShowCropDialog,
+        setValidationErrors,
+        setZoom,
+    ]);
 
     const handleClose = useCallback(() => {
         resetState();
@@ -285,7 +361,8 @@ export function AvatarUploadModal({
                             Update Profile Picture
                         </DialogTitle>
                         <DialogDescription>
-                            Choose a profile picture. JPEG, PNG, GIF, or WebP. Max 5MB.
+                            Choose a profile picture. JPEG, PNG, GIF, or WebP.
+                            Max 5MB.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -294,7 +371,11 @@ export function AvatarUploadModal({
                         <div className="relative">
                             <Avatar className="h-32 w-32 overflow-hidden rounded-full border-4 border-muted">
                                 <AvatarImage
-                                    src={previewImage || currentAvatar || undefined}
+                                    src={
+                                        previewImage ||
+                                        currentAvatar ||
+                                        undefined
+                                    }
                                     alt={userName}
                                 />
                                 <AvatarFallback className="text-4xl">
@@ -319,13 +400,11 @@ export function AvatarUploadModal({
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
-                            className={`
-                                flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors duration-200
-                                ${isDragOver
+                            className={`flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors duration-200 ${
+                                isDragOver
                                     ? 'border-primary bg-primary/5'
                                     : 'border-muted-foreground/25 hover:border-primary hover:bg-muted/50'
-                                }
-                            `}
+                            } `}
                             role="button"
                             tabIndex={0}
                             aria-label="Upload image by clicking or dragging"
@@ -352,37 +431,45 @@ export function AvatarUploadModal({
                         {avatarValidationErrors.length > 0 && (
                             <div className="w-full space-y-2">
                                 {avatarValidationErrors
-                                    .filter((error) => error.field === 'fileSize')
+                                    .filter(
+                                        (error) => error.field === 'fileSize',
+                                    )
                                     .map((error) => (
-                                    <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="size-4 flex-shrink-0" />
-                                        <span>{error.message}</span>
-                                    </div>
-                                ))}
+                                        <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                                            <AlertCircle className="size-4 flex-shrink-0" />
+                                            <span>{error.message}</span>
+                                        </div>
+                                    ))}
                                 {avatarValidationErrors
-                                    .filter((error) => error.field === 'fileType')
+                                    .filter(
+                                        (error) => error.field === 'fileType',
+                                    )
                                     .map((error) => (
-                                    <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="size-4 flex-shrink-0" />
-                                        <span>{error.message}</span>
-                                    </div>
-                                ))}
+                                        <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                                            <AlertCircle className="size-4 flex-shrink-0" />
+                                            <span>{error.message}</span>
+                                        </div>
+                                    ))}
                                 {avatarValidationErrors
-                                    .filter((error) => error.field === 'dimensions')
+                                    .filter(
+                                        (error) => error.field === 'dimensions',
+                                    )
                                     .map((error) => (
-                                    <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="size-4 flex-shrink-0" />
-                                        <span>{error.message}</span>
-                                    </div>
-                                ))}
+                                        <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                                            <AlertCircle className="size-4 flex-shrink-0" />
+                                            <span>{error.message}</span>
+                                        </div>
+                                    ))}
                                 {avatarValidationErrors
-                                    .filter((error) => error.field === 'general')
+                                    .filter(
+                                        (error) => error.field === 'general',
+                                    )
                                     .map((error) => (
-                                    <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                                        <AlertCircle className="size-4 flex-shrink-0" />
-                                        <span>{error.message}</span>
-                                    </div>
-                                ))}
+                                        <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                                            <AlertCircle className="size-4 flex-shrink-0" />
+                                            <span>{error.message}</span>
+                                        </div>
+                                    ))}
                             </div>
                         )}
 
@@ -399,10 +486,15 @@ export function AvatarUploadModal({
                         <div className="flex items-start gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
                             <CheckCircle className="mt-0.5 size-4 flex-shrink-0" />
                             <div className="space-y-1">
-                                <p className="font-medium">Tips for best results:</p>
+                                <p className="font-medium">
+                                    Tips for best results:
+                                </p>
                                 <ul className="list-inside list-disc space-y-0.5 text-xs">
                                     <li>Use a square image for best results</li>
-                                    <li>Minimum size: {MIN_DIMENSION}x{MIN_DIMENSION}px</li>
+                                    <li>
+                                        Minimum size: {MIN_DIMENSION}x
+                                        {MIN_DIMENSION}px
+                                    </li>
                                     <li>Clear, well-lit photos work best</li>
                                 </ul>
                             </div>

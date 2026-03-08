@@ -15,7 +15,9 @@ interface ClipboardState {
 function createClipboardStore() {
     return createStore<ClipboardState>((set) => ({
         copiedText: null,
-        setCopiedText: (copiedText) => set({ copiedText }),
+        setCopiedText: (copiedText) => {
+            set({ copiedText });
+        },
     }));
 }
 

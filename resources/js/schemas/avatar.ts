@@ -42,7 +42,8 @@ export function validateAvatarFile(file: File): AvatarValidationError[] {
         return [
             {
                 field: 'general',
-                message: 'Invalid file payload. Please choose a different image.',
+                message:
+                    'Invalid file payload. Please choose a different image.',
             },
         ];
     }
@@ -132,7 +133,8 @@ export async function validateAvatarImageSource(
         return [
             {
                 field: 'general',
-                message: 'Failed to read image. The file may be corrupted or unsupported.',
+                message:
+                    'Failed to read image. The file may be corrupted or unsupported.',
             },
         ];
     } finally {

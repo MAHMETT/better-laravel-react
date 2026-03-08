@@ -24,7 +24,7 @@ import { Search, Users, Check, X, UserCheck } from 'lucide-react';
 import type { UserLogFilterUser } from '@/types';
 import { useMemo } from 'react';
 
-type UserFilterModalProps = {
+interface UserFilterModalProps {
     open: boolean;
     users: UserLogFilterUser[];
     selectedUsers: UserLogFilterUser[];
@@ -43,7 +43,7 @@ type UserFilterModalProps = {
     onLoadMore: () => void;
     onCancel: () => void;
     onApply: () => void;
-};
+}
 
 export function UserFilterModal({
     open,
@@ -79,7 +79,9 @@ export function UserFilterModal({
         () =>
             selectedUserIds
                 .map((userId) => selectedUsersRegistry.get(userId))
-                .filter((user): user is UserLogFilterUser => user !== undefined),
+                .filter(
+                    (user): user is UserLogFilterUser => user !== undefined,
+                ),
         [selectedUserIds, selectedUsersRegistry],
     );
 
@@ -88,7 +90,9 @@ export function UserFilterModal({
             return false;
         }
 
-        return visibleUserIds.every((userId) => selectedUserIds.includes(userId));
+        return visibleUserIds.every((userId) =>
+            selectedUserIds.includes(userId),
+        );
     }, [visibleUserIds, selectedUserIds]);
 
     const selectedCount = selectedUserIds.length;
@@ -101,18 +105,24 @@ export function UserFilterModal({
         if (areAllVisibleUsersSelected) {
             onReplaceSelectedUsers(
                 selectedUserIds.filter(
-                    (selectedUserId) => !visibleUserIds.includes(selectedUserId),
+                    (selectedUserId) =>
+                        !visibleUserIds.includes(selectedUserId),
                 ),
             );
 
             return;
         }
 
-        onReplaceSelectedUsers(Array.from(new Set([...selectedUserIds, ...visibleUserIds])));
+        onReplaceSelectedUsers(
+            Array.from(new Set([...selectedUserIds, ...visibleUserIds])),
+        );
     };
 
     return (
-        <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
+        <Dialog
+            open={open}
+            onOpenChange={(nextOpen) => !nextOpen && onCancel()}
+        >
             <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden p-0">
                 <DialogHeader className="border-b bg-muted/30 px-6 py-5">
                     <div className="flex items-center gap-3">
@@ -120,7 +130,9 @@ export function UserFilterModal({
                             <Users className="h-5 w-5" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl">Filter by User</DialogTitle>
+                            <DialogTitle className="text-xl">
+                                Filter by User
+                            </DialogTitle>
                             <DialogDescription className="text-sm">
                                 Search and select users to filter activity logs
                             </DialogDescription>
@@ -132,7 +144,10 @@ export function UserFilterModal({
                     {/* Search and Filter Controls */}
                     <div className="grid gap-4 rounded-lg border bg-muted/20 p-4 md:grid-cols-4">
                         <div className="md:col-span-2">
-                            <Label htmlFor="user-search" className="mb-2 flex items-center gap-2 text-sm font-medium">
+                            <Label
+                                htmlFor="user-search"
+                                className="mb-2 flex items-center gap-2 text-sm font-medium"
+                            >
                                 <Search className="h-4 w-4 text-muted-foreground" />
                                 Search User
                             </Label>
@@ -140,41 +155,70 @@ export function UserFilterModal({
                                 id="user-search"
                                 type="text"
                                 value={searchKeyword}
-                                onChange={(event) => onSearchChange(event.target.value)}
+                                onChange={(event) => {
+                                    onSearchChange(event.target.value);
+                                }}
                                 placeholder="Search by name, email, or ID..."
                                 className="h-10"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="user-role-filter" className="mb-2 block text-sm font-medium">
+                            <Label
+                                htmlFor="user-role-filter"
+                                className="mb-2 block text-sm font-medium"
+                            >
                                 Role
                             </Label>
-                            <Select value={roleFilter} onValueChange={onRoleFilterChange}>
-                                <SelectTrigger id="user-role-filter" className="h-10">
+                            <Select
+                                value={roleFilter}
+                                onValueChange={onRoleFilterChange}
+                            >
+                                <SelectTrigger
+                                    id="user-role-filter"
+                                    className="h-10"
+                                >
                                     <SelectValue placeholder="All roles" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All roles</SelectItem>
-                                    <SelectItem value="admin">👑 Admin</SelectItem>
-                                    <SelectItem value="user">👤 User</SelectItem>
+                                    <SelectItem value="all">
+                                        All roles
+                                    </SelectItem>
+                                    <SelectItem value="admin">
+                                        👑 Admin
+                                    </SelectItem>
+                                    <SelectItem value="user">
+                                        👤 User
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div>
-                            <Label htmlFor="user-status-filter" className="mb-2 block text-sm font-medium">
+                            <Label
+                                htmlFor="user-status-filter"
+                                className="mb-2 block text-sm font-medium"
+                            >
                                 Status
                             </Label>
                             <Select
                                 value={statusFilter}
                                 onValueChange={onStatusFilterChange}
                             >
-                                <SelectTrigger id="user-status-filter" className="h-10">
+                                <SelectTrigger
+                                    id="user-status-filter"
+                                    className="h-10"
+                                >
                                     <SelectValue placeholder="All statuses" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All statuses</SelectItem>
-                                    <SelectItem value="enable">✅ Enabled</SelectItem>
-                                    <SelectItem value="disable">❌ Disabled</SelectItem>
+                                    <SelectItem value="all">
+                                        All statuses
+                                    </SelectItem>
+                                    <SelectItem value="enable">
+                                        ✅ Enabled
+                                    </SelectItem>
+                                    <SelectItem value="disable">
+                                        ❌ Disabled
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -192,7 +236,9 @@ export function UserFilterModal({
                                 className="gap-2"
                             >
                                 <UserCheck className="h-4 w-4" />
-                                {areAllVisibleUsersSelected ? 'Unselect Visible' : 'Select Visible'}
+                                {areAllVisibleUsersSelected
+                                    ? 'Unselect Visible'
+                                    : 'Select Visible'}
                             </Button>
                             <Button
                                 type="button"
@@ -218,25 +264,33 @@ export function UserFilterModal({
                     {/* Selected Users Preview */}
                     {displaySelectedUsers.length > 0 && (
                         <div className="space-y-2">
-                            <Label className="text-sm font-medium">Selected Users</Label>
+                            <Label className="text-sm font-medium">
+                                Selected Users
+                            </Label>
                             <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto rounded-lg border bg-muted/20 p-3">
-                                {displaySelectedUsers.slice(0, 8).map((selectedUser) => (
-                                    <Badge
-                                        key={selectedUser.id}
-                                        variant="outline"
-                                        className="gap-1 bg-primary/5"
-                                    >
-                                        {selectedUser.name}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => onToggleUser(selectedUser.id)}
-                                            className="ml-1 h-4 w-4 p-0 hover:bg-transparent"
+                                {displaySelectedUsers
+                                    .slice(0, 8)
+                                    .map((selectedUser) => (
+                                        <Badge
+                                            key={selectedUser.id}
+                                            variant="outline"
+                                            className="gap-1 bg-primary/5"
                                         >
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </Badge>
-                                ))}
+                                            {selectedUser.name}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    onToggleUser(
+                                                        selectedUser.id,
+                                                    );
+                                                }}
+                                                className="ml-1 h-4 w-4 p-0 hover:bg-transparent"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
+                                    ))}
                                 {displaySelectedUsers.length > 8 && (
                                     <Badge variant="outline">
                                         +{displaySelectedUsers.length - 8} more
@@ -249,7 +303,8 @@ export function UserFilterModal({
                     {/* User List */}
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">
-                            Available Users {users.length > 0 && `(${users.length})`}
+                            Available Users{' '}
+                            {users.length > 0 && `(${users.length})`}
                         </Label>
                         <ScrollArea className="h-[400px] rounded-md border">
                             {isLoading && users.length === 0 && (
@@ -264,23 +319,27 @@ export function UserFilterModal({
                             {!isLoading && users.length === 0 && (
                                 <div className="flex h-32 flex-col items-center justify-center text-center">
                                     <Search className="mb-2 h-8 w-8 text-muted-foreground" />
-                                    <p className="text-muted-foreground text-sm">
+                                    <p className="text-sm text-muted-foreground">
                                         No users match your search
                                     </p>
                                 </div>
                             )}
 
                             {users.map((user) => {
-                                const isSelected = selectedUserIds.includes(user.id);
+                                const isSelected = selectedUserIds.includes(
+                                    user.id,
+                                );
 
                                 return (
                                     <label
                                         key={user.id}
-                                        className="hover:bg-muted/60 flex cursor-pointer items-start gap-3 border-b p-4 transition-colors last:border-b-0"
+                                        className="flex cursor-pointer items-start gap-3 border-b p-4 transition-colors last:border-b-0 hover:bg-muted/60"
                                     >
                                         <Checkbox
                                             checked={isSelected}
-                                            onCheckedChange={() => onToggleUser(user.id)}
+                                            onCheckedChange={() => {
+                                                onToggleUser(user.id);
+                                            }}
                                             className="mt-1"
                                         />
                                         <div className="min-w-0 flex-1">
@@ -292,9 +351,13 @@ export function UserFilterModal({
                                                     variant="secondary"
                                                     className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                                                 >
-                                                    {user.role === 'admin' && '👑'}
-                                                    {user.role === 'user' && '👤'}
-                                                    <span className="capitalize">{user.role}</span>
+                                                    {user.role === 'admin' &&
+                                                        '👑'}
+                                                    {user.role === 'user' &&
+                                                        '👤'}
+                                                    <span className="capitalize">
+                                                        {user.role}
+                                                    </span>
                                                 </Badge>
                                                 <Badge
                                                     variant="secondary"
@@ -304,14 +367,18 @@ export function UserFilterModal({
                                                             : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                                                     }`}
                                                 >
-                                                    {user.status === 'enable' ? '✅' : '❌'}
-                                                    {user.status === 'enable' ? 'Enabled' : 'Disabled'}
+                                                    {user.status === 'enable'
+                                                        ? '✅'
+                                                        : '❌'}
+                                                    {user.status === 'enable'
+                                                        ? 'Enabled'
+                                                        : 'Disabled'}
                                                 </Badge>
                                             </div>
-                                            <p className="text-muted-foreground mt-1 truncate text-sm">
+                                            <p className="mt-1 truncate text-sm text-muted-foreground">
                                                 📧 {user.email}
                                             </p>
-                                            <p className="text-muted-foreground text-xs">
+                                            <p className="text-xs text-muted-foreground">
                                                 ID: #{user.id}
                                             </p>
                                         </div>
@@ -338,14 +405,21 @@ export function UserFilterModal({
                                 {isLoading && (
                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                                 )}
-                                {isLoading ? 'Loading more users...' : 'Load More Users'}
+                                {isLoading
+                                    ? 'Loading more users...'
+                                    : 'Load More Users'}
                             </Button>
                         </div>
                     )}
                 </div>
 
                 <DialogFooter className="border-t bg-muted/30 px-6 py-4">
-                    <Button type="button" variant="ghost" onClick={onCancel} className="gap-2">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={onCancel}
+                        className="gap-2"
+                    >
                         <X className="h-4 w-4" />
                         Cancel
                     </Button>

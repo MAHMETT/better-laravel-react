@@ -21,14 +21,14 @@ import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-type FilterQueryParams = Record<string, string | number | Array<number>>;
+type FilterQueryParams = Record<string, string | number | number[]>;
 
-type Props = {
+interface Props {
     user: UserLogUser;
     logs: PaginatedData<UserLog>;
     filters: AdminUserLogFilters;
     schema_ready?: boolean;
-};
+}
 
 export default function AdminUserActivityLogs({
     user,
@@ -41,9 +41,13 @@ export default function AdminUserActivityLogs({
     const initialize = useAdminUserLogStore((state) => state.initialize);
     const setFilters = useAdminUserLogStore((state) => state.setFilters);
     const setIsLoading = useAdminUserLogStore((state) => state.setIsLoading);
-    const setCurrentPage = useAdminUserLogStore((state) => state.setCurrentPage);
+    const setCurrentPage = useAdminUserLogStore(
+        (state) => state.setCurrentPage,
+    );
     const reset = useAdminUserLogStore((state) => state.reset);
-    const getFilterParams = useAdminUserLogStore((state) => state.getFilterParams);
+    const getFilterParams = useAdminUserLogStore(
+        (state) => state.getFilterParams,
+    );
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -104,19 +108,23 @@ export default function AdminUserActivityLogs({
         const toastId = toast.loading('Resetting filters...');
         setIsLoading(true);
 
-        router.get(activityLogs.user.url({ user: user.id }), {}, {
-            preserveScroll: true,
-            replace: true,
-            onSuccess: () => {
-                toast.success('Filters reset.', { id: toastId });
+        router.get(
+            activityLogs.user.url({ user: user.id }),
+            {},
+            {
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    toast.success('Filters reset.', { id: toastId });
+                },
+                onError: () => {
+                    toast.error('Failed to reset filters.', { id: toastId });
+                },
+                onFinish: () => {
+                    setIsLoading(false);
+                },
             },
-            onError: () => {
-                toast.error('Failed to reset filters.', { id: toastId });
-            },
-            onFinish: () => {
-                setIsLoading(false);
-            },
-        });
+        );
     };
 
     return (
@@ -128,7 +136,7 @@ export default function AdminUserActivityLogs({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         {user.name} Activity Logs
                     </h1>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-sm text-muted-foreground">
                         Login and logout activity for {user.email}.
                     </p>
                 </div>
@@ -149,18 +157,27 @@ export default function AdminUserActivityLogs({
                     <Alert variant="destructive">
                         <AlertTitle>Activity Log Table Missing</AlertTitle>
                         <AlertDescription>
-                            Run <code>php artisan migrate --no-interaction</code>{' '}
-                            to create the <code>user_logs</code> table.
+                            Run{' '}
+                            <code>php artisan migrate --no-interaction</code> to
+                            create the <code>user_logs</code> table.
                         </AlertDescription>
                     </Alert>
                 )}
 
-                <LogTable logs={logs.data} isLoading={isLoading} showUser={false} />
+                <LogTable
+                    logs={logs.data}
+                    isLoading={isLoading}
+                    showUser={false}
+                />
 
                 <Paginations
                     pagination={logs}
-                    onNavigateStart={() => setIsLoading(true)}
-                    onNavigateFinish={() => setIsLoading(false)}
+                    onNavigateStart={() => {
+                        setIsLoading(true);
+                    }}
+                    onNavigateFinish={() => {
+                        setIsLoading(false);
+                    }}
                 />
             </div>
         </AppLayout>

@@ -59,15 +59,22 @@ const useCreateUserPageStore = create<CreateUserPageState>((set) => ({
     formData: { ...initialFormData },
     validationErrors: {},
     processing: false,
-    setFormData: (formData) => set({ formData }),
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    setProcessing: (processing) => set({ processing }),
-    reset: () =>
+    setFormData: (formData) => {
+        set({ formData });
+    },
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    setProcessing: (processing) => {
+        set({ processing });
+    },
+    reset: () => {
         set({
             formData: { ...initialFormData },
             validationErrors: {},
             processing: false,
-        }),
+        });
+    },
 }));
 
 export default function CreateUser() {
@@ -89,7 +96,7 @@ export default function CreateUser() {
         resetStore();
     }, [resetStore]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.SyntheticEvent) => {
         e.preventDefault();
         setProcessing(true);
 
@@ -214,12 +221,12 @@ export default function CreateUser() {
                                     <Input
                                         id="name"
                                         value={formData.name}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setFormData({
                                                 ...formData,
                                                 name: e.target.value,
-                                            })
-                                        }
+                                            });
+                                        }}
                                         placeholder="John Doe"
                                         autoFocus
                                     />
@@ -235,12 +242,12 @@ export default function CreateUser() {
                                         id="email"
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setFormData({
                                                 ...formData,
                                                 email: e.target.value,
-                                            })
-                                        }
+                                            });
+                                        }}
                                         placeholder="john@example.com"
                                     />
                                     <InputError
@@ -257,12 +264,12 @@ export default function CreateUser() {
                                         id="password"
                                         type="password"
                                         value={formData.password}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setFormData({
                                                 ...formData,
                                                 password: e.target.value,
-                                            })
-                                        }
+                                            });
+                                        }}
                                         placeholder="••••••••"
                                     />
                                     <InputError
@@ -285,13 +292,13 @@ export default function CreateUser() {
                                         id="password_confirmation"
                                         type="password"
                                         value={formData.password_confirmation}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setFormData({
                                                 ...formData,
                                                 password_confirmation:
                                                     e.target.value,
-                                            })
-                                        }
+                                            });
+                                        }}
                                         placeholder="••••••••"
                                     />
                                     <InputError
@@ -308,12 +315,14 @@ export default function CreateUser() {
                                     <Label htmlFor="role">Role</Label>
                                     <Select
                                         value={formData.role}
-                                        onValueChange={(v: 'admin' | 'user') =>
+                                        onValueChange={(
+                                            v: 'admin' | 'user',
+                                        ) => {
                                             setFormData({
                                                 ...formData,
                                                 role: v,
-                                            })
-                                        }
+                                            });
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select role" />
@@ -339,12 +348,12 @@ export default function CreateUser() {
                                         value={formData.status}
                                         onValueChange={(
                                             v: 'enable' | 'disable',
-                                        ) =>
+                                        ) => {
                                             setFormData({
                                                 ...formData,
                                                 status: v,
-                                            })
-                                        }
+                                            });
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select status" />

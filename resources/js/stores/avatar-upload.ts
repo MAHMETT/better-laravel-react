@@ -66,36 +66,65 @@ const initialState: Omit<
 const useAvatarUploadStoreBase = create<AvatarUploadState>()((set) => ({
     ...initialState,
 
-    open: () => set({ isOpen: true }),
-    close: () => set({ isOpen: false }),
+    open: () => {
+        set({ isOpen: true });
+    },
+    close: () => {
+        set({ isOpen: false });
+    },
 
-    setPreviewImage: (previewImage) => set({ previewImage }),
-    setSelectedFile: (selectedFile) => set({ selectedFile }),
+    setPreviewImage: (previewImage) => {
+        set({ previewImage });
+    },
+    setSelectedFile: (selectedFile) => {
+        set({ selectedFile });
+    },
 
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
 
-    addValidationError: (error) =>
+    addValidationError: (error) => {
         set((state) => ({
             validationErrors: [...state.validationErrors, error],
-        })),
+        }));
+    },
 
-    clearValidationErrors: () => set({ validationErrors: [] }),
+    clearValidationErrors: () => {
+        set({ validationErrors: [] });
+    },
 
-    setIsDragOver: (isDragOver) => set({ isDragOver }),
+    setIsDragOver: (isDragOver) => {
+        set({ isDragOver });
+    },
 
-    setShowCropDialog: (showCropDialog) => set({ showCropDialog }),
+    setShowCropDialog: (showCropDialog) => {
+        set({ showCropDialog });
+    },
 
-    setCrop: (crop) => set({ crop }),
+    setCrop: (crop) => {
+        set({ crop });
+    },
 
-    setZoom: (zoom) => set({ zoom }),
+    setZoom: (zoom) => {
+        set({ zoom });
+    },
 
-    setCroppedAreaPixels: (croppedAreaPixels) => set({ croppedAreaPixels }),
+    setCroppedAreaPixels: (croppedAreaPixels) => {
+        set({ croppedAreaPixels });
+    },
 
-    setIsProcessing: (isProcessing) => set({ isProcessing }),
+    setIsProcessing: (isProcessing) => {
+        set({ isProcessing });
+    },
 
-    setIsUploading: (isUploading) => set({ isUploading }),
+    setIsUploading: (isUploading) => {
+        set({ isUploading });
+    },
 
-    reset: () => set(initialState),
+    reset: () => {
+        set(initialState);
+    },
 }));
 
 export const useAvatarUploadStore = createSelectors(useAvatarUploadStoreBase);

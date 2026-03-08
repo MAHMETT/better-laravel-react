@@ -11,16 +11,16 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { loginSchema  } from '@/schemas';
-import type {LoginData} from '@/schemas';
+import { loginSchema } from '@/schemas';
+import type { LoginData } from '@/schemas';
 import { validateForm } from '@/schemas/validate';
 import { create } from 'zustand';
 
-type Props = {
+interface Props {
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
-};
+}
 
 interface LoginPageState {
     validationErrors: Record<string, string>;
@@ -30,8 +30,12 @@ interface LoginPageState {
 
 const useLoginPageStore = create<LoginPageState>((set) => ({
     validationErrors: {},
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    clearValidationErrors: () => set({ validationErrors: {} }),
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    clearValidationErrors: () => {
+        set({ validationErrors: {} });
+    },
 }));
 
 export default function Login({
@@ -108,7 +112,11 @@ export default function Login({
                                     autoComplete="email"
                                     placeholder="email@example.com"
                                 />
-                                <InputError message={validationErrors.email || errors.email} />
+                                <InputError
+                                    message={
+                                        validationErrors.email || errors.email
+                                    }
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -133,7 +141,12 @@ export default function Login({
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
-                                <InputError message={validationErrors.password || errors.password} />
+                                <InputError
+                                    message={
+                                        validationErrors.password ||
+                                        errors.password
+                                    }
+                                />
                             </div>
 
                             <div className="flex items-center space-x-3">

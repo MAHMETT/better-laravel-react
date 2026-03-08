@@ -1,4 +1,4 @@
-import type { Roles, UserStatus } from '../models';
+import type { Roles, UserStatus } from '@/types/models';
 
 export interface CreateUserFormData {
     name: string;

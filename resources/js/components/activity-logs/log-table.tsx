@@ -10,11 +10,11 @@ import {
 } from '@/components/ui/table';
 import type { UserLog } from '@/types';
 
-type LogTableProps = {
+interface LogTableProps {
     logs: UserLog[];
     isLoading: boolean;
     showUser: boolean;
-};
+}
 
 const formatter = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
@@ -61,7 +61,7 @@ export function LogTable({ logs, isLoading, showUser }: LogTableProps) {
                         <TableRow>
                             <TableCell
                                 colSpan={showUser ? 6 : 5}
-                                className="text-muted-foreground py-8 text-center"
+                                className="py-8 text-center text-muted-foreground"
                             >
                                 No activity logs found for the selected filters.
                             </TableCell>
@@ -70,14 +70,17 @@ export function LogTable({ logs, isLoading, showUser }: LogTableProps) {
                     {!isLoading &&
                         logs.map((log) => (
                             <TableRow key={log.id}>
-                                <TableCell>{formatTimestamp(log.created_at)}</TableCell>
+                                <TableCell>
+                                    {formatTimestamp(log.created_at)}
+                                </TableCell>
                                 {showUser && (
                                     <TableCell className="align-top">
                                         <div className="flex flex-col">
                                             <span className="font-medium">
-                                                {log.user?.name ?? `User #${log.user_id}`}
+                                                {log.user?.name ??
+                                                    `User #${log.user_id}`}
                                             </span>
-                                            <span className="text-muted-foreground text-xs">
+                                            <span className="text-xs text-muted-foreground">
                                                 {log.user?.email ?? '-'}
                                             </span>
                                         </div>
@@ -87,7 +90,9 @@ export function LogTable({ logs, isLoading, showUser }: LogTableProps) {
                                     <EventBadge eventType={log.event_type} />
                                 </TableCell>
                                 <TableCell>{log.ip_address ?? '-'}</TableCell>
-                                <TableCell>{log.device_info ?? 'Unknown'}</TableCell>
+                                <TableCell>
+                                    {log.device_info ?? 'Unknown'}
+                                </TableCell>
                                 <TableCell className="font-mono text-xs">
                                     {log.session_id ?? '-'}
                                 </TableCell>

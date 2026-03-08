@@ -49,8 +49,12 @@ function loadImage(sourceImageUrl: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
         const image = new Image();
 
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error('Unable to load source image.'));
+        image.onload = () => {
+            resolve(image);
+        };
+        image.onerror = () => {
+            reject(new Error('Unable to load source image.'));
+        };
         image.src = sourceImageUrl;
     });
 }
@@ -64,7 +68,9 @@ function canvasToBlob(
         canvas.toBlob(
             (blob) => {
                 if (!blob) {
-                    reject(new Error('Failed to convert canvas to image blob.'));
+                    reject(
+                        new Error('Failed to convert canvas to image blob.'),
+                    );
                     return;
                 }
 

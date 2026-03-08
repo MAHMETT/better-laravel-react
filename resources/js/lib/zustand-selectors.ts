@@ -6,14 +6,14 @@ type WithSelectors<S> = S extends { getState: () => infer T }
 
 /**
  * Auto-generates selectors for a Zustand store.
- * 
+ *
  * @example
  * const useBearStoreBase = create<BearState>()((set) => ({
  *     bears: 0,
  *     increase: (by) => set((state) => ({ bears: state.bears + by })),
  * }));
  * const useBearStore = createSelectors(useBearStoreBase);
- * 
+ *
  * // Usage:
  * const bears = useBearStore.use.bears();
  * const increase = useBearStore.use.increase();

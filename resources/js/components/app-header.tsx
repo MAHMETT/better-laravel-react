@@ -36,9 +36,9 @@ import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
-type Props = {
+interface Props {
     breadcrumbs?: BreadcrumbItem[];
-};
+}
 
 const mainNavItems: NavItem[] = [
     {

@@ -35,21 +35,33 @@ interface LogoutDialogState {
 const useLogoutDialogStore = create<LogoutDialogState>((set) => ({
     showLogoutDialog: false,
     isLoggingOut: false,
-    setShowLogoutDialog: (showLogoutDialog) => set({ showLogoutDialog }),
-    setIsLoggingOut: (isLoggingOut) => set({ isLoggingOut }),
-    reset: () => set({ showLogoutDialog: false, isLoggingOut: false }),
+    setShowLogoutDialog: (showLogoutDialog) => {
+        set({ showLogoutDialog });
+    },
+    setIsLoggingOut: (isLoggingOut) => {
+        set({ isLoggingOut });
+    },
+    reset: () => {
+        set({ showLogoutDialog: false, isLoggingOut: false });
+    },
 }));
 
-type Props = {
+interface Props {
     user: User;
-};
+}
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
-    const showLogoutDialog = useLogoutDialogStore((state) => state.showLogoutDialog);
+    const showLogoutDialog = useLogoutDialogStore(
+        (state) => state.showLogoutDialog,
+    );
     const isLoggingOut = useLogoutDialogStore((state) => state.isLoggingOut);
-    const setShowLogoutDialog = useLogoutDialogStore((state) => state.setShowLogoutDialog);
-    const setIsLoggingOut = useLogoutDialogStore((state) => state.setIsLoggingOut);
+    const setShowLogoutDialog = useLogoutDialogStore(
+        (state) => state.setShowLogoutDialog,
+    );
+    const setIsLoggingOut = useLogoutDialogStore(
+        (state) => state.setIsLoggingOut,
+    );
     const resetStore = useLogoutDialogStore((state) => state.reset);
 
     const handleLogoutClick = () => {
@@ -67,8 +79,12 @@ export function UserMenuContent({ user }: Props) {
             await new Promise<void>((resolve, reject) => {
                 router.visit(logout(), {
                     method: 'post',
-                    onFinish: () => resolve(),
-                    onError: (error) => reject(error),
+                    onFinish: () => {
+                        resolve();
+                    },
+                    onError: (error) => {
+                        reject(error);
+                    },
                 });
             });
 
@@ -117,16 +133,23 @@ export function UserMenuContent({ user }: Props) {
                 </button>
             </DropdownMenuItem>
 
-            <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+            <AlertDialog
+                open={showLogoutDialog}
+                onOpenChange={setShowLogoutDialog}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Logout Confirmation</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to logout? You will need to sign in again to access your account.
+                            Are you sure you want to logout? You will need to
+                            sign in again to access your account.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isLoggingOut} onClick={handleLogoutCancel}>
+                        <AlertDialogCancel
+                            disabled={isLoggingOut}
+                            onClick={handleLogoutCancel}
+                        >
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction

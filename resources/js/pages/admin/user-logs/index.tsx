@@ -31,13 +31,13 @@ import { Head, router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
-type FilterQueryParams = Record<string, string | number | Array<number>>;
+type FilterQueryParams = Record<string, string | number | number[]>;
 
-type Props = {
+interface Props {
     logs: PaginatedData<UserLog>;
     filters: AdminUserLogFilters;
     schema_ready?: boolean;
-};
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -52,40 +52,88 @@ export default function AdminUserLogsIndex({
     schema_ready = true,
 }: Props) {
     const storeFilters = useAdminUserLogStore(selectAdminUserLogFilters);
-    const appliedUserIds = useAdminUserLogStore(selectAdminUserLogAppliedUserIds);
-    const selectedUserIds = useAdminUserLogStore(selectAdminUserLogSelectedUserIds);
+    const appliedUserIds = useAdminUserLogStore(
+        selectAdminUserLogAppliedUserIds,
+    );
+    const selectedUserIds = useAdminUserLogStore(
+        selectAdminUserLogSelectedUserIds,
+    );
     const selectedUsers = useAdminUserLogStore(selectAdminUserLogSelectedUsers);
     const dialogOpen = useAdminUserLogStore(selectAdminUserLogDialogOpen);
-    const userSearchKeyword = useAdminUserLogStore(selectAdminUserLogUserSearchKeyword);
-    const userRoleFilter = useAdminUserLogStore(selectAdminUserLogUserRoleFilter);
-    const userStatusFilter = useAdminUserLogStore(selectAdminUserLogUserStatusFilter);
+    const userSearchKeyword = useAdminUserLogStore(
+        selectAdminUserLogUserSearchKeyword,
+    );
+    const userRoleFilter = useAdminUserLogStore(
+        selectAdminUserLogUserRoleFilter,
+    );
+    const userStatusFilter = useAdminUserLogStore(
+        selectAdminUserLogUserStatusFilter,
+    );
     const userOptions = useAdminUserLogStore(selectAdminUserLogUserOptions);
     const userListMeta = useAdminUserLogStore(selectAdminUserLogUserListMeta);
     const isLoading = useAdminUserLogStore(selectAdminUserLogLoading);
-    const isUserListLoading = useAdminUserLogStore(selectAdminUserLogUserListLoading);
+    const isUserListLoading = useAdminUserLogStore(
+        selectAdminUserLogUserListLoading,
+    );
 
     const initialize = useAdminUserLogStore((state) => state.initialize);
     const setFilters = useAdminUserLogStore((state) => state.setFilters);
     const setIsLoading = useAdminUserLogStore((state) => state.setIsLoading);
-    const setCurrentPage = useAdminUserLogStore((state) => state.setCurrentPage);
+    const setCurrentPage = useAdminUserLogStore(
+        (state) => state.setCurrentPage,
+    );
     const reset = useAdminUserLogStore((state) => state.reset);
-    const getFilterParams = useAdminUserLogStore((state) => state.getFilterParams);
-    const openUserFilterDialog = useAdminUserLogStore((state) => state.openUserFilterDialog);
-    const closeUserFilterDialog = useAdminUserLogStore((state) => state.closeUserFilterDialog);
-    const applyUserSelection = useAdminUserLogStore((state) => state.applyUserSelection);
-    const clearAppliedUserFilter = useAdminUserLogStore((state) => state.clearAppliedUserFilter);
-    const clearSelectedUsers = useAdminUserLogStore((state) => state.clearSelectedUsers);
-    const setSelectedUserIds = useAdminUserLogStore((state) => state.setSelectedUserIds);
-    const toggleSelectedUserId = useAdminUserLogStore((state) => state.toggleSelectedUserId);
-    const setUserSearchKeyword = useAdminUserLogStore((state) => state.setUserSearchKeyword);
-    const setUserRoleFilter = useAdminUserLogStore((state) => state.setUserRoleFilter);
-    const setUserStatusFilter = useAdminUserLogStore((state) => state.setUserStatusFilter);
-    const setIsUserListLoading = useAdminUserLogStore((state) => state.setIsUserListLoading);
-    const replaceUserOptions = useAdminUserLogStore((state) => state.replaceUserOptions);
-    const appendUserOptions = useAdminUserLogStore((state) => state.appendUserOptions);
-    const setSelectedUsers = useAdminUserLogStore((state) => state.setSelectedUsers);
-    const setUserListMeta = useAdminUserLogStore((state) => state.setUserListMeta);
-    const getUserSearchParams = useAdminUserLogStore((state) => state.getUserSearchParams);
+    const getFilterParams = useAdminUserLogStore(
+        (state) => state.getFilterParams,
+    );
+    const openUserFilterDialog = useAdminUserLogStore(
+        (state) => state.openUserFilterDialog,
+    );
+    const closeUserFilterDialog = useAdminUserLogStore(
+        (state) => state.closeUserFilterDialog,
+    );
+    const applyUserSelection = useAdminUserLogStore(
+        (state) => state.applyUserSelection,
+    );
+    const clearAppliedUserFilter = useAdminUserLogStore(
+        (state) => state.clearAppliedUserFilter,
+    );
+    const clearSelectedUsers = useAdminUserLogStore(
+        (state) => state.clearSelectedUsers,
+    );
+    const setSelectedUserIds = useAdminUserLogStore(
+        (state) => state.setSelectedUserIds,
+    );
+    const toggleSelectedUserId = useAdminUserLogStore(
+        (state) => state.toggleSelectedUserId,
+    );
+    const setUserSearchKeyword = useAdminUserLogStore(
+        (state) => state.setUserSearchKeyword,
+    );
+    const setUserRoleFilter = useAdminUserLogStore(
+        (state) => state.setUserRoleFilter,
+    );
+    const setUserStatusFilter = useAdminUserLogStore(
+        (state) => state.setUserStatusFilter,
+    );
+    const setIsUserListLoading = useAdminUserLogStore(
+        (state) => state.setIsUserListLoading,
+    );
+    const replaceUserOptions = useAdminUserLogStore(
+        (state) => state.replaceUserOptions,
+    );
+    const appendUserOptions = useAdminUserLogStore(
+        (state) => state.appendUserOptions,
+    );
+    const setSelectedUsers = useAdminUserLogStore(
+        (state) => state.setSelectedUsers,
+    );
+    const setUserListMeta = useAdminUserLogStore(
+        (state) => state.setUserListMeta,
+    );
+    const getUserSearchParams = useAdminUserLogStore(
+        (state) => state.getUserSearchParams,
+    );
 
     const userRequestControllerRef = useRef<AbortController | null>(null);
     const userRequestSequenceRef = useRef(0);
@@ -153,7 +201,9 @@ export default function AdminUserLogsIndex({
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch users for activity log filter.');
+                    throw new Error(
+                        'Failed to fetch users for activity log filter.',
+                    );
                 }
 
                 const payload =
@@ -210,7 +260,13 @@ export default function AdminUserLogsIndex({
         return () => {
             clearTimeout(timer);
         };
-    }, [dialogOpen, userSearchKeyword, userRoleFilter, userStatusFilter, fetchFilterUsers]);
+    }, [
+        dialogOpen,
+        userSearchKeyword,
+        userRoleFilter,
+        userStatusFilter,
+        fetchFilterUsers,
+    ]);
 
     const handleApply = (): void => {
         runFilterRequest(getFilterParams());
@@ -220,19 +276,23 @@ export default function AdminUserLogsIndex({
         const toastId = toast.loading('Resetting filters...');
         setIsLoading(true);
 
-        router.get(activityLogs.index.url(), {}, {
-            preserveScroll: true,
-            replace: true,
-            onSuccess: () => {
-                toast.success('Filters reset.', { id: toastId });
+        router.get(
+            activityLogs.index.url(),
+            {},
+            {
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    toast.success('Filters reset.', { id: toastId });
+                },
+                onError: () => {
+                    toast.error('Failed to reset filters.', { id: toastId });
+                },
+                onFinish: () => {
+                    setIsLoading(false);
+                },
             },
-            onError: () => {
-                toast.error('Failed to reset filters.', { id: toastId });
-            },
-            onFinish: () => {
-                setIsLoading(false);
-            },
-        });
+        );
     };
 
     const handleApplyUserFilter = (): void => {
@@ -262,9 +322,9 @@ export default function AdminUserLogsIndex({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         User Activity Logs
                     </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Monitor login, logout, and forced logout events across all
-                        users.
+                    <p className="text-sm text-muted-foreground">
+                        Monitor login, logout, and forced logout events across
+                        all users.
                     </p>
                 </div>
 
@@ -304,18 +364,27 @@ export default function AdminUserLogsIndex({
                     <Alert variant="destructive">
                         <AlertTitle>Activity Log Table Missing</AlertTitle>
                         <AlertDescription>
-                            Run <code>php artisan migrate --no-interaction</code>{' '}
-                            to create the <code>user_logs</code> table.
+                            Run{' '}
+                            <code>php artisan migrate --no-interaction</code> to
+                            create the <code>user_logs</code> table.
                         </AlertDescription>
                     </Alert>
                 )}
 
-                <LogTable logs={logs.data} isLoading={isLoading} showUser={true} />
+                <LogTable
+                    logs={logs.data}
+                    isLoading={isLoading}
+                    showUser={true}
+                />
 
                 <Paginations
                     pagination={logs}
-                    onNavigateStart={() => setIsLoading(true)}
-                    onNavigateFinish={() => setIsLoading(false)}
+                    onNavigateStart={() => {
+                        setIsLoading(true);
+                    }}
+                    onNavigateFinish={() => {
+                        setIsLoading(false);
+                    }}
                 />
             </div>
         </AppLayout>

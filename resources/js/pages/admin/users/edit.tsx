@@ -60,13 +60,25 @@ const useEditUserPageStore = create<EditUserPageState>((set) => ({
     showPasswordFields: false,
     isUploadingAvatar: false,
     showAvatarModal: false,
-    setFormData: (formData) => set({ formData }),
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    setProcessing: (processing) => set({ processing }),
-    setShowPasswordFields: (showPasswordFields) => set({ showPasswordFields }),
-    setIsUploadingAvatar: (isUploadingAvatar) => set({ isUploadingAvatar }),
-    setShowAvatarModal: (showAvatarModal) => set({ showAvatarModal }),
-    initialize: (formData) =>
+    setFormData: (formData) => {
+        set({ formData });
+    },
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    setProcessing: (processing) => {
+        set({ processing });
+    },
+    setShowPasswordFields: (showPasswordFields) => {
+        set({ showPasswordFields });
+    },
+    setIsUploadingAvatar: (isUploadingAvatar) => {
+        set({ isUploadingAvatar });
+    },
+    setShowAvatarModal: (showAvatarModal) => {
+        set({ showAvatarModal });
+    },
+    initialize: (formData) => {
         set({
             formData,
             validationErrors: {},
@@ -74,7 +86,8 @@ const useEditUserPageStore = create<EditUserPageState>((set) => ({
             showPasswordFields: false,
             isUploadingAvatar: false,
             showAvatarModal: false,
-        }),
+        });
+    },
 }));
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -190,7 +203,7 @@ export default function EditUser({ user }: Props) {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.SyntheticEvent) => {
         e.preventDefault();
         setProcessing(true);
         setValidationErrors({});
@@ -283,7 +296,9 @@ export default function EditUser({ user }: Props) {
         });
     };
 
-    const handleCancel = () => window.history.back() ?? window.history.back();
+    const handleCancel = (): void => {
+        window.history.back();
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -327,7 +342,9 @@ export default function EditUser({ user }: Props) {
                             <div className="flex items-center gap-6">
                                 <div
                                     className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full border-2 border-muted"
-                                    onClick={() => setShowAvatarModal(true)}
+                                    onClick={() => {
+                                        setShowAvatarModal(true);
+                                    }}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => {
@@ -372,12 +389,12 @@ export default function EditUser({ user }: Props) {
                                     <Input
                                         id="name"
                                         value={formData.name}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setFormData({
                                                 ...formData,
                                                 name: e.target.value,
-                                            })
-                                        }
+                                            });
+                                        }}
                                         placeholder="John Doe"
                                         autoFocus
                                     />
@@ -392,12 +409,12 @@ export default function EditUser({ user }: Props) {
                                         id="email"
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setFormData({
                                                 ...formData,
                                                 email: e.target.value,
-                                            })
-                                        }
+                                            });
+                                        }}
                                         placeholder="john@example.com"
                                     />
                                     <InputError
@@ -422,9 +439,9 @@ export default function EditUser({ user }: Props) {
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            onClick={() =>
-                                                setShowPasswordFields(true)
-                                            }
+                                            onClick={() => {
+                                                setShowPasswordFields(true);
+                                            }}
                                         >
                                             Change Password
                                         </Button>
@@ -440,12 +457,12 @@ export default function EditUser({ user }: Props) {
                                             id="password"
                                             type="password"
                                             value={formData.password}
-                                            onChange={(e) =>
+                                            onChange={(e) => {
                                                 setFormData({
                                                     ...formData,
                                                     password: e.target.value,
-                                                })
-                                            }
+                                                });
+                                            }}
                                             placeholder="Leave blank to keep current"
                                         />
                                         <InputError
@@ -470,13 +487,13 @@ export default function EditUser({ user }: Props) {
                                             value={
                                                 formData.password_confirmation
                                             }
-                                            onChange={(e) =>
+                                            onChange={(e) => {
                                                 setFormData({
                                                     ...formData,
                                                     password_confirmation:
                                                         e.target.value,
-                                                })
-                                            }
+                                                });
+                                            }}
                                             placeholder="Confirm new password"
                                         />
                                         <InputError
@@ -511,12 +528,14 @@ export default function EditUser({ user }: Props) {
                                     <Label htmlFor="role">Role</Label>
                                     <Select
                                         value={formData.role}
-                                        onValueChange={(v: 'admin' | 'user') =>
+                                        onValueChange={(
+                                            v: 'admin' | 'user',
+                                        ) => {
                                             setFormData({
                                                 ...formData,
                                                 role: v,
-                                            })
-                                        }
+                                            });
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select role" />
@@ -541,12 +560,12 @@ export default function EditUser({ user }: Props) {
                                         value={formData.status}
                                         onValueChange={(
                                             v: 'enable' | 'disable',
-                                        ) =>
+                                        ) => {
                                             setFormData({
                                                 ...formData,
                                                 status: v,
-                                            })
-                                        }
+                                            });
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select status" />

@@ -222,7 +222,10 @@ export const Paginations = ({
                     />
                 </PaginationItem>
                 {paginationTokens.map((token) => {
-                    if (token === 'ellipsis-left' || token === 'ellipsis-right') {
+                    if (
+                        token === 'ellipsis-left' ||
+                        token === 'ellipsis-right'
+                    ) {
                         return <PaginationEllipsis key={token} />;
                     }
 
@@ -247,8 +250,7 @@ export const Paginations = ({
                         onClick={(e) => {
                             e.preventDefault();
                             if (
-                                pagination.current_page <
-                                pagination.last_page
+                                pagination.current_page < pagination.last_page
                             ) {
                                 handlePageChange(pagination.current_page + 1);
                             }
