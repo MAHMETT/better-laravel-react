@@ -62,17 +62,26 @@ const useShowUserPageStore = create<ShowUserPageState>((set) => ({
     showToggleModal: false,
     isDeleting: false,
     isToggling: false,
-    setShowDeleteModal: (showDeleteModal) => set({ showDeleteModal }),
-    setShowToggleModal: (showToggleModal) => set({ showToggleModal }),
-    setIsDeleting: (isDeleting) => set({ isDeleting }),
-    setIsToggling: (isToggling) => set({ isToggling }),
-    reset: () =>
+    setShowDeleteModal: (showDeleteModal) => {
+        set({ showDeleteModal });
+    },
+    setShowToggleModal: (showToggleModal) => {
+        set({ showToggleModal });
+    },
+    setIsDeleting: (isDeleting) => {
+        set({ isDeleting });
+    },
+    setIsToggling: (isToggling) => {
+        set({ isToggling });
+    },
+    reset: () => {
         set({
             showDeleteModal: false,
             showToggleModal: false,
             isDeleting: false,
             isToggling: false,
-        }),
+        });
+    },
 }));
 
 export default function ShowUser({ user }: Props) {
@@ -132,10 +141,13 @@ export default function ShowUser({ user }: Props) {
             onSuccess: () => {
                 toast.success('User deleted successfully', {
                     id: toastId,
-                    description: 'This user will be permanently deleted after 30 days.',
+                    description:
+                        'This user will be permanently deleted after 30 days.',
                     action: {
                         label: 'Undo',
-                        onClick: () => handleRestore(user.id),
+                        onClick: () => {
+                            handleRestore(user.id);
+                        },
                     },
                 });
                 setShowDeleteModal(false);
@@ -161,7 +173,9 @@ export default function ShowUser({ user }: Props) {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success('User restored successfully', { id: toastId });
+                    toast.success('User restored successfully', {
+                        id: toastId,
+                    });
                     window.history.back();
                 },
                 onError: (errors: Record<string, string>) => {
@@ -209,7 +223,9 @@ export default function ShowUser({ user }: Props) {
         );
     };
 
-    const handleBack = () => window.history.back();
+    const handleBack = () => {
+        window.history.back();
+    };
 
     const formatDate = (date: string | null) => {
         if (!date) return 'N/A';
@@ -232,7 +248,7 @@ export default function ShowUser({ user }: Props) {
             );
         }
         return user.status === 'enable' ? (
-            <Badge className="bg-green-500 gap-1">
+            <Badge className="gap-1 bg-green-500">
                 <UserCheck className="h-3 w-3" />
                 Enabled
             </Badge>
@@ -342,7 +358,7 @@ export default function ShowUser({ user }: Props) {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Badge className="bg-purple-500 gap-1">
+                                <Badge className="gap-1 bg-purple-500">
                                     <Shield className="h-3 w-3" />
                                     {user.role === 'admin' ? 'Admin' : 'User'}
                                 </Badge>
@@ -357,7 +373,7 @@ export default function ShowUser({ user }: Props) {
                     {/* Account Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-base">
                                 <IdCard className="h-4 w-4" />
                                 Account Information
                             </CardTitle>
@@ -420,7 +436,7 @@ export default function ShowUser({ user }: Props) {
                     {/* System Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-base">
                                 <Shield className="h-4 w-4" />
                                 System Information
                             </CardTitle>

@@ -1,27 +1,23 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 
-export type BreadcrumbItem = {
+export interface BreadcrumbItem {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
-};
+}
 
-export type NavItem = {
+export interface NavItem {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
-};
+}
 
-export type SidebarNav = {
+export interface SidebarNav {
     title: string;
     items: NavItem[];
-};
+}
 
-export type MainNavItem = {
-    [key: string]: SidebarNav[];
-};
+export type MainNavItem = Record<string, SidebarNav[]>;
 
-export type FooterNavItem = {
-    [key: string | symbol | number]: NavItem[];
-};
+export type FooterNavItem = Record<string | symbol | number, NavItem[]>;

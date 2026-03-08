@@ -1,5 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import type { Area, Point } from 'react-easy-crop';
 import Cropper from 'react-easy-crop';
@@ -71,7 +76,9 @@ export function ImageCropDialog({
                             min={1}
                             max={3}
                             step={0.1}
-                            onValueChange={(value: number[]) => onZoomChange(value[0])}
+                            onValueChange={(value: number[]) => {
+                                onZoomChange(value[0]);
+                            }}
                             className="w-full"
                         />
                     </div>
@@ -81,7 +88,9 @@ export function ImageCropDialog({
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => onOpenChange(false)}
+                            onClick={() => {
+                                onOpenChange(false);
+                            }}
                             disabled={isProcessing}
                         >
                             Cancel

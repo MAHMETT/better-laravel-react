@@ -30,11 +30,11 @@ import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-type Props = {
+interface Props {
     logs: PaginatedData<UserLog>;
     filters: SelfUserLogFilters;
     schema_ready?: boolean;
-};
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -54,7 +54,9 @@ export default function LoginActivity({
     const setFilters = useSelfUserLogStore((state) => state.setFilters);
     const setIsLoading = useSelfUserLogStore((state) => state.setIsLoading);
     const reset = useSelfUserLogStore((state) => state.reset);
-    const getFilterParams = useSelfUserLogStore((state) => state.getFilterParams);
+    const getFilterParams = useSelfUserLogStore(
+        (state) => state.getFilterParams,
+    );
 
     useEffect(() => {
         initialize(filters);
@@ -96,19 +98,23 @@ export default function LoginActivity({
         const toastId = toast.loading('Resetting filters...');
         setIsLoading(true);
 
-        router.get(loginActivity.index.url(), {}, {
-            preserveScroll: true,
-            replace: true,
-            onSuccess: () => {
-                toast.success('Filters reset.', { id: toastId });
+        router.get(
+            loginActivity.index.url(),
+            {},
+            {
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    toast.success('Filters reset.', { id: toastId });
+                },
+                onError: () => {
+                    toast.error('Failed to reset filters.', { id: toastId });
+                },
+                onFinish: () => {
+                    setIsLoading(false);
+                },
             },
-            onError: () => {
-                toast.error('Failed to reset filters.', { id: toastId });
-            },
-            onFinish: () => {
-                setIsLoading(false);
-            },
-        });
+        );
     };
 
     return (
@@ -129,12 +135,12 @@ export default function LoginActivity({
                                 <Label htmlFor="event_type">Event</Label>
                                 <Select
                                     value={storeFilters.event_type || 'all'}
-                                    onValueChange={(value) =>
+                                    onValueChange={(value) => {
                                         setFilters({
                                             event_type:
                                                 value === 'all' ? '' : value,
-                                        })
-                                    }
+                                        });
+                                    }}
                                     disabled={isLoading}
                                 >
                                     <SelectTrigger id="event_type">
@@ -162,11 +168,11 @@ export default function LoginActivity({
                                     id="date_from"
                                     type="date"
                                     value={storeFilters.date_from}
-                                    onChange={(event) =>
+                                    onChange={(event) => {
                                         setFilters({
                                             date_from: event.target.value,
-                                        })
-                                    }
+                                        });
+                                    }}
                                     disabled={isLoading}
                                 />
                             </div>
@@ -176,9 +182,11 @@ export default function LoginActivity({
                                     id="date_to"
                                     type="date"
                                     value={storeFilters.date_to}
-                                    onChange={(event) =>
-                                        setFilters({ date_to: event.target.value })
-                                    }
+                                    onChange={(event) => {
+                                        setFilters({
+                                            date_to: event.target.value,
+                                        });
+                                    }}
                                     disabled={isLoading}
                                 />
                             </div>
@@ -186,11 +194,11 @@ export default function LoginActivity({
                                 <Label htmlFor="per_page">Rows</Label>
                                 <Select
                                     value={String(storeFilters.per_page)}
-                                    onValueChange={(value) =>
+                                    onValueChange={(value) => {
                                         setFilters({
                                             per_page: Number(value),
-                                        })
-                                    }
+                                        });
+                                    }}
                                     disabled={isLoading}
                                 >
                                     <SelectTrigger id="per_page">
@@ -224,18 +232,28 @@ export default function LoginActivity({
                             <AlertTitle>Activity Log Table Missing</AlertTitle>
                             <AlertDescription>
                                 Run{' '}
-                                <code>php artisan migrate --no-interaction</code>{' '}
+                                <code>
+                                    php artisan migrate --no-interaction
+                                </code>{' '}
                                 to create the <code>user_logs</code> table.
                             </AlertDescription>
                         </Alert>
                     )}
 
-                    <LogTable logs={logs.data} isLoading={isLoading} showUser={false} />
+                    <LogTable
+                        logs={logs.data}
+                        isLoading={isLoading}
+                        showUser={false}
+                    />
 
                     <Paginations
                         pagination={logs}
-                        onNavigateStart={() => setIsLoading(true)}
-                        onNavigateFinish={() => setIsLoading(false)}
+                        onNavigateStart={() => {
+                            setIsLoading(true);
+                        }}
+                        onNavigateFinish={() => {
+                            setIsLoading(false);
+                        }}
                     />
                 </div>
             </SettingsLayout>

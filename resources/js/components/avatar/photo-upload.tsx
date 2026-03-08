@@ -16,11 +16,10 @@ import {
     AVATAR_ALLOWED_TYPES,
     AVATAR_MAX_SIZE,
     AVATAR_MIN_DIMENSION,
-    
     validateAvatarDimensions,
-    validateAvatarFile
+    validateAvatarFile,
 } from '@/schemas/avatar';
-import type {AvatarValidationError} from '@/schemas/avatar';
+import type { AvatarValidationError } from '@/schemas/avatar';
 import { useAvatarUploadStore } from '@/stores/avatar-upload';
 import { AlertCircle, CheckCircle, Upload } from 'lucide-react';
 
@@ -64,8 +63,11 @@ export function PhotoUpload({
     useEffect(() => {
         if (!isOpen) {
             const timeout = setTimeout(reset, 300);
-            return () => clearTimeout(timeout);
+            return () => {
+                clearTimeout(timeout);
+            };
         }
+        return undefined;
     }, [isOpen, reset]);
 
     const handleFileSelect = useCallback(

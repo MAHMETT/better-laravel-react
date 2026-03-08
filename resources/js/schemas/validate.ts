@@ -28,7 +28,11 @@ export function validateForm(
     data: Record<string, unknown>,
     customRules?: ValidationRules,
 ): ValidationResult {
-    const result = schema(data) as { success: boolean; data?: Record<string, unknown>; summary?: { errors: Array<{ path?: string[]; message: string }> } };
+    const result = schema(data) as {
+        success: boolean;
+        data?: Record<string, unknown>;
+        summary?: { errors: { path?: string[]; message: string }[] };
+    };
 
     if (result.success) {
         // Apply custom validation rules if provided
@@ -51,17 +55,19 @@ export function validateForm(
     const errors: Record<string, string> = {};
 
     if (result.summary?.errors) {
-        result.summary.errors.forEach((error: { path?: string[]; message: string }) => {
-            const field = error.path?.[0];
-            if (field && typeof field === 'string') {
-                // If field already has an error, append the new one
-                if (errors[field]) {
-                    errors[field] += ` ${error.message}`;
-                } else {
-                    errors[field] = error.message;
+        result.summary.errors.forEach(
+            (error: { path?: string[]; message: string }) => {
+                const field = error.path?.[0];
+                if (field && typeof field === 'string') {
+                    // If field already has an error, append the new one
+                    if (errors[field]) {
+                        errors[field] += ` ${error.message}`;
+                    } else {
+                        errors[field] = error.message;
+                    }
                 }
-            }
-        });
+            },
+        );
     }
 
     return {
@@ -105,7 +111,8 @@ function applyCustomRules(
             }
             // Check for uppercase, lowercase, and number
             if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-                errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+                errors.password =
+                    'Password must contain at least one uppercase letter, one lowercase letter, and one number';
             }
 
             // Only check confirmation if password is provided

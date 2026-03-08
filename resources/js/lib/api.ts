@@ -1,4 +1,8 @@
-import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type {
+    AxiosError,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
+} from 'axios';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -50,7 +54,9 @@ api.interceptors.response.use(
             toast.error('The requested resource was not found.');
         } else if (error.response?.status === 500) {
             // Server error
-            toast.error('An unexpected error occurred. Please try again later.');
+            toast.error(
+                'An unexpected error occurred. Please try again later.',
+            );
         } else if (error.code === 'ECONNABORTED') {
             // Timeout
             toast.error('Request timeout. Please try again.');

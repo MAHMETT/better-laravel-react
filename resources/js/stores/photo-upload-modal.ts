@@ -76,22 +76,54 @@ const initialState: Omit<
 const usePhotoUploadModalStoreBase = create<PhotoUploadModalState>()((set) => ({
     ...initialState,
 
-    setMode: (mode) => set({ mode }),
-    setSelectedFile: (selectedFile) => set({ selectedFile }),
-    setSourceImageUrl: (sourceImageUrl) => set({ sourceImageUrl }),
-    setCroppedPreviewUrl: (croppedPreviewUrl) => set({ croppedPreviewUrl }),
-    setCroppedImageFile: (croppedImageFile) => set({ croppedImageFile }),
-    setCroppedAreaPixels: (croppedAreaPixels) => set({ croppedAreaPixels }),
-    setCrop: (crop) => set({ crop }),
-    setZoom: (zoom) => set({ zoom }),
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    clearValidationErrors: () => set({ validationErrors: [] }),
-    setIsDragOver: (isDragOver) => set({ isDragOver }),
-    setIsProcessing: (isProcessing) => set({ isProcessing }),
-    setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
-    setShowDeleteConfirm: (showDeleteConfirm) => set({ showDeleteConfirm }),
-    setShowCancelConfirm: (showCancelConfirm) => set({ showCancelConfirm }),
-    reset: () => set(initialState),
+    setMode: (mode) => {
+        set({ mode });
+    },
+    setSelectedFile: (selectedFile) => {
+        set({ selectedFile });
+    },
+    setSourceImageUrl: (sourceImageUrl) => {
+        set({ sourceImageUrl });
+    },
+    setCroppedPreviewUrl: (croppedPreviewUrl) => {
+        set({ croppedPreviewUrl });
+    },
+    setCroppedImageFile: (croppedImageFile) => {
+        set({ croppedImageFile });
+    },
+    setCroppedAreaPixels: (croppedAreaPixels) => {
+        set({ croppedAreaPixels });
+    },
+    setCrop: (crop) => {
+        set({ crop });
+    },
+    setZoom: (zoom) => {
+        set({ zoom });
+    },
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    clearValidationErrors: () => {
+        set({ validationErrors: [] });
+    },
+    setIsDragOver: (isDragOver) => {
+        set({ isDragOver });
+    },
+    setIsProcessing: (isProcessing) => {
+        set({ isProcessing });
+    },
+    setHasUnsavedChanges: (hasUnsavedChanges) => {
+        set({ hasUnsavedChanges });
+    },
+    setShowDeleteConfirm: (showDeleteConfirm) => {
+        set({ showDeleteConfirm });
+    },
+    setShowCancelConfirm: (showCancelConfirm) => {
+        set({ showCancelConfirm });
+    },
+    reset: () => {
+        set(initialState);
+    },
 }));
 
 export const usePhotoUploadModalStore = createSelectors(

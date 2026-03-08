@@ -25,12 +25,15 @@ const defaultFilters: UserFilters = {
 const useUserFiltersStoreBase = create<UserFiltersState>()((set, get) => ({
     filters: { ...defaultFilters },
 
-    setFilters: (newFilters) =>
+    setFilters: (newFilters) => {
         set((state) => ({
             filters: { ...state.filters, ...newFilters },
-        })),
+        }));
+    },
 
-    resetFilters: () => set({ filters: { ...defaultFilters } }),
+    resetFilters: () => {
+        set({ filters: { ...defaultFilters } });
+    },
 
     getFilterParams: () => {
         const { filters } = get();

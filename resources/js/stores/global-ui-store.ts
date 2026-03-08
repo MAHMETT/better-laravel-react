@@ -31,36 +31,47 @@ const useGlobalUIStoreBase = create<GlobalUIState>((set) => ({
     theme: 'system',
 
     // Sidebar actions
-    setSidebarOpen: (open) => set({ sidebarOpen: open }),
-    setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-    toggleSidebar: () =>
-        set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+    setSidebarOpen: (open) => {
+        set({ sidebarOpen: open });
+    },
+    setSidebarCollapsed: (collapsed) => {
+        set({ sidebarCollapsed: collapsed });
+    },
+    toggleSidebar: () => {
+        set((state) => ({ sidebarOpen: !state.sidebarOpen }));
+    },
 
     // Modal actions
-    setModal: (modalName, isOpen) =>
+    setModal: (modalName, isOpen) => {
         set((state) => ({
             modals: { ...state.modals, [modalName]: isOpen },
-        })),
-    openModal: (modalName) =>
+        }));
+    },
+    openModal: (modalName) => {
         set((state) => ({
             modals: { ...state.modals, [modalName]: true },
-        })),
-    closeModal: (modalName) =>
+        }));
+    },
+    closeModal: (modalName) => {
         set((state) => ({
             modals: { ...state.modals, [modalName]: false },
-        })),
+        }));
+    },
 
     // Theme actions
-    setTheme: (theme) => set({ theme }),
+    setTheme: (theme) => {
+        set({ theme });
+    },
 
     // Reset state
-    reset: () =>
+    reset: () => {
         set({
             sidebarOpen: true,
             sidebarCollapsed: false,
             modals: {},
             theme: 'system',
-        }),
+        });
+    },
 }));
 
 export const useGlobalUIStore = createSelectors(useGlobalUIStoreBase);

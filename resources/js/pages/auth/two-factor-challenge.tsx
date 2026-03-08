@@ -12,8 +12,8 @@ import {
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
-import { twoFactorChallengeSchema  } from '@/schemas';
-import type {TwoFactorChallengeData} from '@/schemas';
+import { twoFactorChallengeSchema } from '@/schemas';
+import type { TwoFactorChallengeData } from '@/schemas';
 import { validateForm } from '@/schemas/validate';
 import { create } from 'zustand';
 
@@ -31,10 +31,18 @@ const useTwoFactorChallengeStore = create<TwoFactorChallengeState>((set) => ({
     showRecoveryInput: false,
     code: '',
     validationErrors: {},
-    setShowRecoveryInput: (showRecoveryInput) => set({ showRecoveryInput }),
-    setCode: (code) => set({ code }),
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    clearValidationErrors: () => set({ validationErrors: {} }),
+    setShowRecoveryInput: (showRecoveryInput) => {
+        set({ showRecoveryInput });
+    },
+    setCode: (code) => {
+        set({ code });
+    },
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    clearValidationErrors: () => {
+        set({ validationErrors: {} });
+    },
 }));
 
 export default function TwoFactorChallenge() {
@@ -87,8 +95,12 @@ export default function TwoFactorChallenge() {
 
     const handleSubmit = (formData: FormData) => {
         const data: TwoFactorChallengeData = {
-            code: showRecoveryInput ? undefined : formData.get('code') as string,
-            recovery_code: showRecoveryInput ? formData.get('recovery_code') as string : undefined,
+            code: showRecoveryInput
+                ? undefined
+                : (formData.get('code') as string),
+            recovery_code: showRecoveryInput
+                ? (formData.get('recovery_code') as string)
+                : undefined,
         };
 
         const result = validateForm(twoFactorChallengeSchema, data, {
@@ -141,7 +153,10 @@ export default function TwoFactorChallenge() {
                                         className="uppercase"
                                     />
                                     <InputError
-                                        message={validationErrors.recovery_code || errors.recovery_code}
+                                        message={
+                                            validationErrors.recovery_code ||
+                                            errors.recovery_code
+                                        }
                                     />
                                 </>
                             ) : (
@@ -151,7 +166,9 @@ export default function TwoFactorChallenge() {
                                             name="code"
                                             maxLength={OTP_MAX_LENGTH}
                                             value={code}
-                                            onChange={(value) => setCode(value)}
+                                            onChange={(value) => {
+                                                setCode(value);
+                                            }}
                                             disabled={processing}
                                             pattern={REGEXP_ONLY_DIGITS}
                                         >
@@ -168,7 +185,11 @@ export default function TwoFactorChallenge() {
                                             </InputOTPGroup>
                                         </InputOTP>
                                     </div>
-                                    <InputError message={validationErrors.code || errors.code} />
+                                    <InputError
+                                        message={
+                                            validationErrors.code || errors.code
+                                        }
+                                    />
                                 </div>
                             )}
 
@@ -185,9 +206,9 @@ export default function TwoFactorChallenge() {
                                 <button
                                     type="button"
                                     className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                                    onClick={() =>
-                                        toggleRecoveryMode(clearErrors)
-                                    }
+                                    onClick={() => {
+                                        toggleRecoveryMode(clearErrors);
+                                    }}
                                 >
                                     {authConfigContent.toggleText}
                                 </button>

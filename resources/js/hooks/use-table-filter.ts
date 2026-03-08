@@ -50,7 +50,9 @@ export function useTableFilter(options: UseTableFilterOptions = {}) {
             setDebouncedSearch(value);
         }, 300);
 
-        return () => clearTimeout(timeoutId);
+        return () => {
+            clearTimeout(timeoutId);
+        };
     }, []);
 
     const handlePageChange = useCallback((page: number) => {
@@ -106,7 +108,8 @@ export function useTableFilter(options: UseTableFilterOptions = {}) {
         if (state.search) params.set('search', state.search);
         if (state.sort) params.set('sort', state.sort);
         if (state.order) params.set('order', state.order);
-        if (state.perPage !== initialPerPage) params.set('per_page', String(state.perPage));
+        if (state.perPage !== initialPerPage)
+            params.set('per_page', String(state.perPage));
 
         Object.entries(state.filters).forEach(([key, value]) => {
             if (value) params.set(key, value);

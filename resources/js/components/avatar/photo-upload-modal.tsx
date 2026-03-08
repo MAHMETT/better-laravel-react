@@ -93,18 +93,26 @@ export function PhotoUploadModal({
     const setMode = usePhotoUploadModalStore.use.setMode();
     const setSelectedFile = usePhotoUploadModalStore.use.setSelectedFile();
     const setSourceImageUrl = usePhotoUploadModalStore.use.setSourceImageUrl();
-    const setCroppedPreviewUrl = usePhotoUploadModalStore.use.setCroppedPreviewUrl();
-    const setCroppedImageFile = usePhotoUploadModalStore.use.setCroppedImageFile();
-    const setCroppedAreaPixels = usePhotoUploadModalStore.use.setCroppedAreaPixels();
+    const setCroppedPreviewUrl =
+        usePhotoUploadModalStore.use.setCroppedPreviewUrl();
+    const setCroppedImageFile =
+        usePhotoUploadModalStore.use.setCroppedImageFile();
+    const setCroppedAreaPixels =
+        usePhotoUploadModalStore.use.setCroppedAreaPixels();
     const setCrop = usePhotoUploadModalStore.use.setCrop();
     const setZoom = usePhotoUploadModalStore.use.setZoom();
-    const setValidationErrors = usePhotoUploadModalStore.use.setValidationErrors();
-    const clearValidationErrors = usePhotoUploadModalStore.use.clearValidationErrors();
+    const setValidationErrors =
+        usePhotoUploadModalStore.use.setValidationErrors();
+    const clearValidationErrors =
+        usePhotoUploadModalStore.use.clearValidationErrors();
     const setIsDragOver = usePhotoUploadModalStore.use.setIsDragOver();
     const setIsProcessing = usePhotoUploadModalStore.use.setIsProcessing();
-    const setHasUnsavedChanges = usePhotoUploadModalStore.use.setHasUnsavedChanges();
-    const setShowDeleteConfirm = usePhotoUploadModalStore.use.setShowDeleteConfirm();
-    const setShowCancelConfirm = usePhotoUploadModalStore.use.setShowCancelConfirm();
+    const setHasUnsavedChanges =
+        usePhotoUploadModalStore.use.setHasUnsavedChanges();
+    const setShowDeleteConfirm =
+        usePhotoUploadModalStore.use.setShowDeleteConfirm();
+    const setShowCancelConfirm =
+        usePhotoUploadModalStore.use.setShowCancelConfirm();
     const resetStore = usePhotoUploadModalStore.use.reset();
 
     const clearTransientImageState = useCallback(() => {

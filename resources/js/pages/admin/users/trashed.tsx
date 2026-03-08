@@ -79,17 +79,36 @@ const useUsersTrashedPageStore = create<UsersTrashedPageState>((set, get) => ({
     isRestoring: false,
     isDeleting: false,
     isLoading: false,
-    setSearch: (search) => set({ pendingSearch: search }),
-    setStatus: (status) => set({ pendingStatus: status }),
-    setRole: (role) => set({ pendingRole: role }),
-    setPerPage: (perPage) => set({ pendingPerPage: perPage }),
-    setUserToRestore: (userToRestore) => set({ userToRestore }),
-    setUserToDelete: (userToDelete) => set({ userToDelete }),
-    setIsRestoring: (isRestoring) => set({ isRestoring }),
-    setIsDeleting: (isDeleting) => set({ isDeleting }),
-    setIsLoading: (isLoading) => set({ isLoading }),
+    setSearch: (search) => {
+        set({ pendingSearch: search });
+    },
+    setStatus: (status) => {
+        set({ pendingStatus: status });
+    },
+    setRole: (role) => {
+        set({ pendingRole: role });
+    },
+    setPerPage: (perPage) => {
+        set({ pendingPerPage: perPage });
+    },
+    setUserToRestore: (userToRestore) => {
+        set({ userToRestore });
+    },
+    setUserToDelete: (userToDelete) => {
+        set({ userToDelete });
+    },
+    setIsRestoring: (isRestoring) => {
+        set({ isRestoring });
+    },
+    setIsDeleting: (isDeleting) => {
+        set({ isDeleting });
+    },
+    setIsLoading: (isLoading) => {
+        set({ isLoading });
+    },
     applyPendingFilters: () => {
-        const { pendingSearch, pendingStatus, pendingRole, pendingPerPage } = get();
+        const { pendingSearch, pendingStatus, pendingRole, pendingPerPage } =
+            get();
         set({
             search: pendingSearch,
             status: pendingStatus,
@@ -97,7 +116,7 @@ const useUsersTrashedPageStore = create<UsersTrashedPageState>((set, get) => ({
             perPage: pendingPerPage,
         });
     },
-    initialize: (filters) =>
+    initialize: (filters) => {
         set({
             search: filters.search,
             status: filters.status,
@@ -112,8 +131,9 @@ const useUsersTrashedPageStore = create<UsersTrashedPageState>((set, get) => ({
             isRestoring: false,
             isDeleting: false,
             isLoading: false,
-        }),
-    reset: () =>
+        });
+    },
+    reset: () => {
         set({
             search: '',
             status: '',
@@ -128,7 +148,8 @@ const useUsersTrashedPageStore = create<UsersTrashedPageState>((set, get) => ({
             isRestoring: false,
             isDeleting: false,
             isLoading: false,
-        }),
+        });
+    },
 }));
 
 export default function UsersTrashed({
@@ -138,10 +159,16 @@ export default function UsersTrashed({
     const search = useUsersTrashedPageStore((state) => state.search);
     const status = useUsersTrashedPageStore((state) => state.status);
     const role = useUsersTrashedPageStore((state) => state.role);
-    const pendingSearch = useUsersTrashedPageStore((state) => state.pendingSearch);
-    const pendingStatus = useUsersTrashedPageStore((state) => state.pendingStatus);
+    const pendingSearch = useUsersTrashedPageStore(
+        (state) => state.pendingSearch,
+    );
+    const pendingStatus = useUsersTrashedPageStore(
+        (state) => state.pendingStatus,
+    );
     const pendingRole = useUsersTrashedPageStore((state) => state.pendingRole);
-    const pendingPerPage = useUsersTrashedPageStore((state) => state.pendingPerPage);
+    const pendingPerPage = useUsersTrashedPageStore(
+        (state) => state.pendingPerPage,
+    );
     const userToRestore = useUsersTrashedPageStore(
         (state) => state.userToRestore,
     );
@@ -167,8 +194,12 @@ export default function UsersTrashed({
     const setIsDeleting = useUsersTrashedPageStore(
         (state) => state.setIsDeleting,
     );
-    const setIsLoading = useUsersTrashedPageStore((state) => state.setIsLoading);
-    const applyPendingFilters = useUsersTrashedPageStore((state) => state.applyPendingFilters);
+    const setIsLoading = useUsersTrashedPageStore(
+        (state) => state.setIsLoading,
+    );
+    const applyPendingFilters = useUsersTrashedPageStore(
+        (state) => state.applyPendingFilters,
+    );
     const initialize = useUsersTrashedPageStore((state) => state.initialize);
     const reset = useUsersTrashedPageStore((state) => state.reset);
 
@@ -224,7 +255,9 @@ export default function UsersTrashed({
         router.get(users.trashed.url(), params, {
             replace: true,
             preserveScroll: true,
-            onFinish: () => setIsLoading(false),
+            onFinish: () => {
+                setIsLoading(false);
+            },
         });
     };
 
@@ -234,14 +267,20 @@ export default function UsersTrashed({
         setRole('');
         setPerPage(10);
         setIsLoading(true);
-        router.get(users.trashed.url(), {}, {
-            replace: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Filters cleared.');
+        router.get(
+            users.trashed.url(),
+            {},
+            {
+                replace: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Filters cleared.');
+                },
+                onFinish: () => {
+                    setIsLoading(false);
+                },
             },
-            onFinish: () => setIsLoading(false),
-        });
+        );
     };
 
     const handleView = (user: User) => {
@@ -462,9 +501,9 @@ export default function UsersTrashed({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleView(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleView(user);
+                                                    }}
                                                     className="h-8 w-8"
                                                 >
                                                     <Eye className="size-4" />
@@ -472,9 +511,9 @@ export default function UsersTrashed({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleRestore(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleRestore(user);
+                                                    }}
                                                     className="h-8 w-8 text-green-500 hover:text-green-600"
                                                 >
                                                     <RefreshCw className="size-4" />
@@ -482,9 +521,9 @@ export default function UsersTrashed({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() =>
-                                                        handleForceDelete(user)
-                                                    }
+                                                    onClick={() => {
+                                                        handleForceDelete(user);
+                                                    }}
                                                     className="h-8 w-8 text-red-500 hover:text-red-600"
                                                 >
                                                     <Trash2 className="size-4" />
@@ -515,7 +554,9 @@ export default function UsersTrashed({
             {/* Restore Confirmation Modal */}
             <AlertDialog
                 open={!!userToRestore}
-                onOpenChange={() => setUserToRestore(null)}
+                onOpenChange={() => {
+                    setUserToRestore(null);
+                }}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -542,7 +583,9 @@ export default function UsersTrashed({
             {/* Force Delete Confirmation Modal */}
             <AlertDialog
                 open={!!userToDelete}
-                onOpenChange={() => setUserToDelete(null)}
+                onOpenChange={() => {
+                    setUserToDelete(null);
+                }}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>

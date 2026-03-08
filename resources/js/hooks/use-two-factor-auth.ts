@@ -4,7 +4,7 @@ import { createStore } from 'zustand/vanilla';
 import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
 import type { TwoFactorSecretKey, TwoFactorSetupData } from '@/types';
 
-export type UseTwoFactorAuthReturn = {
+export interface UseTwoFactorAuthReturn {
     qrCodeSvg: string | null;
     manualSetupKey: string | null;
     recoveryCodesList: string[];
@@ -16,7 +16,7 @@ export type UseTwoFactorAuthReturn = {
     fetchSetupKey: () => Promise<void>;
     fetchSetupData: () => Promise<void>;
     fetchRecoveryCodes: () => Promise<void>;
-};
+}
 
 export const OTP_MAX_LENGTH = 6;
 
@@ -57,21 +57,33 @@ const createTwoFactorAuthStore = () =>
         manualSetupKey: null,
         recoveryCodesList: [],
         errors: [],
-        setQrCodeSvg: (qrCodeSvg) => set({ qrCodeSvg }),
-        setManualSetupKey: (manualSetupKey) => set({ manualSetupKey }),
-        setRecoveryCodesList: (recoveryCodesList) => set({ recoveryCodesList }),
-        setErrors: (errors) => set({ errors }),
-        appendError: (error) =>
+        setQrCodeSvg: (qrCodeSvg) => {
+            set({ qrCodeSvg });
+        },
+        setManualSetupKey: (manualSetupKey) => {
+            set({ manualSetupKey });
+        },
+        setRecoveryCodesList: (recoveryCodesList) => {
+            set({ recoveryCodesList });
+        },
+        setErrors: (errors) => {
+            set({ errors });
+        },
+        appendError: (error) => {
             set((state) => ({
                 errors: [...state.errors, error],
-            })),
-        clearErrors: () => set({ errors: [] }),
-        clearSetupData: () =>
+            }));
+        },
+        clearErrors: () => {
+            set({ errors: [] });
+        },
+        clearSetupData: () => {
             set({
                 manualSetupKey: null,
                 qrCodeSvg: null,
                 errors: [],
-            }),
+            });
+        },
     }));
 
 export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
@@ -79,11 +91,17 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
     const qrCodeSvg = useStore(store, (state) => state.qrCodeSvg);
     const manualSetupKey = useStore(store, (state) => state.manualSetupKey);
-    const recoveryCodesList = useStore(store, (state) => state.recoveryCodesList);
+    const recoveryCodesList = useStore(
+        store,
+        (state) => state.recoveryCodesList,
+    );
     const errors = useStore(store, (state) => state.errors);
 
     const setQrCodeSvg = useStore(store, (state) => state.setQrCodeSvg);
-    const setManualSetupKey = useStore(store, (state) => state.setManualSetupKey);
+    const setManualSetupKey = useStore(
+        store,
+        (state) => state.setManualSetupKey,
+    );
     const setRecoveryCodesList = useStore(
         store,
         (state) => state.setRecoveryCodesList,

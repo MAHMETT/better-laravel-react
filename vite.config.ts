@@ -39,7 +39,7 @@ export default defineConfig({
                 // Manual chunks for better caching
                 manualChunks: {
                     // Framework vendors
-                    'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
+                    // 'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
                     // Inertia
                     'inertia-vendor': ['@inertiajs/react'],
                     // Radix UI primitives
@@ -62,7 +62,11 @@ export default defineConfig({
                         'radix-ui',
                     ],
                     // Utilities
-                    'utils-vendor': ['clsx', 'tailwind-merge', 'class-variance-authority'],
+                    'utils-vendor': [
+                        'clsx',
+                        'tailwind-merge',
+                        'class-variance-authority',
+                    ],
                     // State management
                     'state-vendor': ['zustand'],
                     // Data fetching
@@ -72,7 +76,7 @@ export default defineConfig({
                     // Icons (tree-shaken)
                     'icons-vendor': ['lucide-react'],
                     // Routing
-                    'routing-vendor': ['@laravel/vite-plugin-wayfinder'],
+                    // 'routing-vendor': ['@laravel/vite-plugin-wayfinder'],
                 },
                 // Asset naming
                 entryFileNames: 'assets/[name]-[hash].js',

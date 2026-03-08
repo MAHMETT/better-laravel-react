@@ -1,23 +1,26 @@
 import type {
     UseMutationOptions,
-    UseMutationResult} from '@tanstack/react-query';
-import {
-    useMutation,
-    useQueryClient,
+    UseMutationResult,
 } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 
 /**
  * Enhanced mutation hook with automatic query invalidation
  */
-export function useApiMutation<TData = unknown, TError = AxiosError, TVariables = void>(
+export function useApiMutation<
+    TData = unknown,
+    TError = AxiosError,
+    TVariables = void,
+    TContext = unknown,
+>(
     mutationKey: string[],
     mutationFn: (variables: TVariables) => Promise<TData>,
     options?: Omit<
-        UseMutationOptions<TData, TError, TVariables>,
+        UseMutationOptions<TData, TError, TVariables, TContext>,
         'mutationFn' | 'mutationKey'
     >,
-): UseMutationResult<TData, TError, TVariables> {
+): UseMutationResult<TData, TError, TVariables, TContext> {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -31,7 +34,14 @@ export function useApiMutation<TData = unknown, TError = AxiosError, TVariables 
             queryClient.invalidateQueries({ queryKey: [prefix] });
 
             // Call custom onSuccess if provided
-            options?.onSuccess?.(data, variables, context);
+            const customOnSuccess = options?.onSuccess;
+            if (customOnSuccess) {
+                Reflect.apply(customOnSuccess, null, [
+                    data,
+                    variables,
+                    context,
+                ]);
+            }
         },
     });
 }
@@ -52,7 +62,7 @@ export function useInvalidateQueries() {
             });
         },
         remove: (queryKey: string[]) => {
-            return queryClient.removeQueries({ queryKey });
+            queryClient.removeQueries({ queryKey });
         },
         reset: (queryKey: string[]) => {
             return queryClient.resetQueries({ queryKey });

@@ -1,7 +1,13 @@
 import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 
 interface Props {
@@ -30,21 +36,12 @@ export class ErrorBoundary extends Component<Props, State> {
         };
     }
 
-    componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         // Log to error reporting service in production
         console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
 
-    handleReset = (): void => {
-        this.setState({
-            hasError: false,
-            error: null,
-        });
-        // Reload the page to reset state
-        window.location.href = window.location.pathname;
-    };
-
-    render(): ReactNode {
+    override render(): ReactNode {
         if (this.state.hasError) {
             if (this.props.fallback) {
                 return this.props.fallback;
@@ -52,21 +49,36 @@ export class ErrorBoundary extends Component<Props, State> {
 
             return (
                 <div className="flex min-h-screen items-center justify-center bg-background p-4">
-                    <Card className="max-w-md w-full">
+                    <Card className="w-full max-w-md">
                         <CardHeader className="text-center">
                             <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
-                            <CardTitle className="mt-4">Something went wrong</CardTitle>
+                            <CardTitle className="mt-4">
+                                Something went wrong
+                            </CardTitle>
                             <CardDescription>
-                                {this.state.error?.message || 'An unexpected error occurred'}
+                                {this.state.error?.message ||
+                                    'An unexpected error occurred'}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-3">
-                            <Button onClick={this.handleReset} className="w-full">
+                            <Button
+                                onClick={() => {
+                                    this.setState({
+                                        hasError: false,
+                                        error: null,
+                                    });
+                                    window.location.href =
+                                        window.location.pathname;
+                                }}
+                                className="w-full"
+                            >
                                 Reload Page
                             </Button>
                             <Button
                                 variant="outline"
-                                onClick={() => window.history.back()}
+                                onClick={() => {
+                                    window.history.back();
+                                }}
                                 className="w-full"
                             >
                                 Go Back

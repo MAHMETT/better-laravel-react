@@ -13,11 +13,11 @@ import {
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
 import { create } from 'zustand';
 
-type Props = {
+interface Props {
     recoveryCodesList: string[];
     fetchRecoveryCodes: () => Promise<void>;
     errors: string[];
-};
+}
 
 interface TwoFactorRecoveryCodesState {
     codesAreVisible: boolean;
@@ -27,7 +27,9 @@ interface TwoFactorRecoveryCodesState {
 const useTwoFactorRecoveryCodesStore = create<TwoFactorRecoveryCodesState>(
     (set) => ({
         codesAreVisible: false,
-        setCodesAreVisible: (codesAreVisible) => set({ codesAreVisible }),
+        setCodesAreVisible: (codesAreVisible) => {
+            set({ codesAreVisible });
+        },
     }),
 );
 
@@ -60,7 +62,12 @@ export default function TwoFactorRecoveryCodes({
                 });
             });
         }
-    }, [codesAreVisible, fetchRecoveryCodes, recoveryCodesList.length, setCodesAreVisible]);
+    }, [
+        codesAreVisible,
+        fetchRecoveryCodes,
+        recoveryCodesList.length,
+        setCodesAreVisible,
+    ]);
 
     useEffect(() => {
         if (!recoveryCodesList.length) {

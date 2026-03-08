@@ -31,8 +31,12 @@ interface PasswordSettingsState {
 
 const usePasswordSettingsStore = create<PasswordSettingsState>((set) => ({
     validationErrors: {},
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    clearValidationErrors: () => set({ validationErrors: {} }),
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    clearValidationErrors: () => {
+        set({ validationErrors: {} });
+    },
 }));
 
 export default function Password() {
@@ -56,7 +60,9 @@ export default function Password() {
         const data: PasswordUpdateData = {
             current_password: formData.get('current_password') as string,
             password: formData.get('password') as string,
-            password_confirmation: formData.get('password_confirmation') as string,
+            password_confirmation: formData.get(
+                'password_confirmation',
+            ) as string,
         };
 
         const result = validateForm(passwordUpdateSchema, data, {
@@ -134,7 +140,10 @@ export default function Password() {
                                     />
 
                                     <InputError
-                                        message={validationErrors.current_password || errors.current_password}
+                                        message={
+                                            validationErrors.current_password ||
+                                            errors.current_password
+                                        }
                                     />
                                 </div>
 
@@ -153,12 +162,20 @@ export default function Password() {
                                         placeholder="New password"
                                     />
 
-                                    <InputError message={validationErrors.password || errors.password} />
-                                    {errors.password && !validationErrors.password && (
-                                        <p className="text-xs text-muted-foreground">
-                                            Must be at least 8 characters with uppercase, lowercase, and number
-                                        </p>
-                                    )}
+                                    <InputError
+                                        message={
+                                            validationErrors.password ||
+                                            errors.password
+                                        }
+                                    />
+                                    {errors.password &&
+                                        !validationErrors.password && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Must be at least 8 characters
+                                                with uppercase, lowercase, and
+                                                number
+                                            </p>
+                                        )}
                                 </div>
 
                                 <div className="grid gap-2">
@@ -176,7 +193,10 @@ export default function Password() {
                                     />
 
                                     <InputError
-                                        message={validationErrors.password_confirmation || errors.password_confirmation}
+                                        message={
+                                            validationErrors.password_confirmation ||
+                                            errors.password_confirmation
+                                        }
                                     />
                                 </div>
 

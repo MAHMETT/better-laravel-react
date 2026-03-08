@@ -9,8 +9,8 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import { registerSchema  } from '@/schemas';
-import type {RegisterData} from '@/schemas';
+import { registerSchema } from '@/schemas';
+import type { RegisterData } from '@/schemas';
 import { validateForm } from '@/schemas/validate';
 import { create } from 'zustand';
 
@@ -22,8 +22,12 @@ interface RegisterPageState {
 
 const useRegisterPageStore = create<RegisterPageState>((set) => ({
     validationErrors: {},
-    setValidationErrors: (validationErrors) => set({ validationErrors }),
-    clearValidationErrors: () => set({ validationErrors: {} }),
+    setValidationErrors: (validationErrors) => {
+        set({ validationErrors });
+    },
+    clearValidationErrors: () => {
+        set({ validationErrors: {} });
+    },
 }));
 
 export default function Register() {
@@ -46,7 +50,9 @@ export default function Register() {
             name: formData.get('name') as string,
             email: formData.get('email') as string,
             password: formData.get('password') as string,
-            password_confirmation: formData.get('password_confirmation') as string,
+            password_confirmation: formData.get(
+                'password_confirmation',
+            ) as string,
         };
 
         const result = validateForm(registerSchema, data, {
@@ -99,7 +105,9 @@ export default function Register() {
                                     placeholder="Full name"
                                 />
                                 <InputError
-                                    message={validationErrors.name || errors.name}
+                                    message={
+                                        validationErrors.name || errors.name
+                                    }
                                     className="mt-2"
                                 />
                             </div>
@@ -115,7 +123,11 @@ export default function Register() {
                                     name="email"
                                     placeholder="email@example.com"
                                 />
-                                <InputError message={validationErrors.email || errors.email} />
+                                <InputError
+                                    message={
+                                        validationErrors.email || errors.email
+                                    }
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -129,12 +141,19 @@ export default function Register() {
                                     name="password"
                                     placeholder="Password"
                                 />
-                                <InputError message={validationErrors.password || errors.password} />
-                                {errors.password && !validationErrors.password && (
-                                    <p className="text-xs text-muted-foreground">
-                                        Must be at least 8 characters with uppercase, lowercase, and number
-                                    </p>
-                                )}
+                                <InputError
+                                    message={
+                                        validationErrors.password ||
+                                        errors.password
+                                    }
+                                />
+                                {errors.password &&
+                                    !validationErrors.password && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Must be at least 8 characters with
+                                            uppercase, lowercase, and number
+                                        </p>
+                                    )}
                             </div>
 
                             <div className="grid gap-2">
@@ -151,7 +170,10 @@ export default function Register() {
                                     placeholder="Confirm password"
                                 />
                                 <InputError
-                                    message={validationErrors.password_confirmation || errors.password_confirmation}
+                                    message={
+                                        validationErrors.password_confirmation ||
+                                        errors.password_confirmation
+                                    }
                                 />
                             </div>
 

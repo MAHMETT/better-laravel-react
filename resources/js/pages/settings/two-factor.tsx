@@ -13,10 +13,10 @@ import { disable, enable, show } from '@/routes/two-factor';
 import type { BreadcrumbItem } from '@/types';
 import { create } from 'zustand';
 
-type Props = {
+interface Props {
     requiresConfirmation?: boolean;
     twoFactorEnabled?: boolean;
-};
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -33,8 +33,12 @@ interface TwoFactorSettingsState {
 
 const useTwoFactorSettingsStore = create<TwoFactorSettingsState>((set) => ({
     showSetupModal: false,
-    setShowSetupModal: (showSetupModal) => set({ showSetupModal }),
-    reset: () => set({ showSetupModal: false }),
+    setShowSetupModal: (showSetupModal) => {
+        set({ showSetupModal });
+    },
+    reset: () => {
+        set({ showSetupModal: false });
+    },
 }));
 
 export default function TwoFactor({
@@ -119,7 +123,9 @@ export default function TwoFactor({
                             <div>
                                 {hasSetupData ? (
                                     <Button
-                                        onClick={() => setShowSetupModal(true)}
+                                        onClick={() => {
+                                            setShowSetupModal(true);
+                                        }}
                                     >
                                         <ShieldCheck />
                                         Continue setup
@@ -127,9 +133,9 @@ export default function TwoFactor({
                                 ) : (
                                     <Form
                                         {...enable.form()}
-                                        onSuccess={() =>
-                                            setShowSetupModal(true)
-                                        }
+                                        onSuccess={() => {
+                                            setShowSetupModal(true);
+                                        }}
                                     >
                                         {({ processing }) => (
                                             <Button
@@ -148,7 +154,9 @@ export default function TwoFactor({
 
                     <TwoFactorSetupModal
                         isOpen={showSetupModal}
-                        onClose={() => setShowSetupModal(false)}
+                        onClose={() => {
+                            setShowSetupModal(false);
+                        }}
                         requiresConfirmation={requiresConfirmation}
                         twoFactorEnabled={twoFactorEnabled}
                         qrCodeSvg={qrCodeSvg}

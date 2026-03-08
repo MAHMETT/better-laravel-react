@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Filter, Users, X } from 'lucide-react';
 import type { AdminUserLogFilters } from '@/types';
 
-type AdminLogFiltersProps = {
+interface AdminLogFiltersProps {
     filters: Omit<AdminUserLogFilters, 'user_ids'>;
     selectedUserCount: number;
     onFiltersChange: (
@@ -24,7 +24,7 @@ type AdminLogFiltersProps = {
     onClear: () => void;
     disabled?: boolean;
     showUserFilter?: boolean;
-};
+}
 
 export function AdminLogFilters({
     filters,
@@ -38,20 +38,26 @@ export function AdminLogFilters({
     showUserFilter = true,
 }: AdminLogFiltersProps) {
     const hasActiveFilters =
-        filters.event_type || filters.date_from || filters.date_to || selectedUserCount > 0;
+        filters.event_type ||
+        filters.date_from ||
+        filters.date_to ||
+        selectedUserCount > 0;
 
     return (
         <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Filter className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold">Filter Activity Logs</h3>
+                    <h3 className="text-lg font-semibold">
+                        Filter Activity Logs
+                    </h3>
                 </div>
                 {hasActiveFilters && (
                     <Badge variant="secondary" className="gap-1">
                         <span className="h-2 w-2 rounded-full bg-primary" />
-                        {selectedUserCount > 0 && `${selectedUserCount} user(s)`}
-                        {filters.event_type && `${filters.event_type}`}
+                        {selectedUserCount > 0 &&
+                            `${selectedUserCount} user(s)`}
+                        {filters.event_type && filters.event_type}
                         {(filters.date_from || filters.date_to) && 'date range'}
                     </Badge>
                 )}
@@ -77,7 +83,8 @@ export function AdminLogFilters({
                                     variant="default"
                                     className="gap-2 bg-primary/10 text-primary hover:bg-primary/20"
                                 >
-                                    {selectedUserCount} user{selectedUserCount > 1 ? 's' : ''} selected
+                                    {selectedUserCount} user
+                                    {selectedUserCount > 1 ? 's' : ''} selected
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -105,11 +112,11 @@ export function AdminLogFilters({
                     </Label>
                     <Select
                         value={filters.event_type || 'all'}
-                        onValueChange={(value) =>
+                        onValueChange={(value) => {
                             onFiltersChange({
                                 event_type: value === 'all' ? '' : value,
-                            })
-                        }
+                            });
+                        }}
                         disabled={disabled}
                     >
                         <SelectTrigger id="event_type" className="h-10">
@@ -119,7 +126,9 @@ export function AdminLogFilters({
                             <SelectItem value="all">All events</SelectItem>
                             <SelectItem value="login">🔐 Login</SelectItem>
                             <SelectItem value="logout">🚪 Logout</SelectItem>
-                            <SelectItem value="forced_logout">⚠️ Forced Logout</SelectItem>
+                            <SelectItem value="forced_logout">
+                                ⚠️ Forced Logout
+                            </SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -132,9 +141,9 @@ export function AdminLogFilters({
                         id="date_from"
                         type="date"
                         value={filters.date_from}
-                        onChange={(event) =>
-                            onFiltersChange({ date_from: event.target.value })
-                        }
+                        onChange={(event) => {
+                            onFiltersChange({ date_from: event.target.value });
+                        }}
                         disabled={disabled}
                         className="h-10"
                     />
@@ -148,9 +157,9 @@ export function AdminLogFilters({
                         id="date_to"
                         type="date"
                         value={filters.date_to}
-                        onChange={(event) =>
-                            onFiltersChange({ date_to: event.target.value })
-                        }
+                        onChange={(event) => {
+                            onFiltersChange({ date_to: event.target.value });
+                        }}
                         disabled={disabled}
                         className="h-10"
                     />
@@ -162,11 +171,11 @@ export function AdminLogFilters({
                     </Label>
                     <Select
                         value={String(filters.per_page)}
-                        onValueChange={(value) =>
+                        onValueChange={(value) => {
                             onFiltersChange({
                                 per_page: Number(value),
-                            })
-                        }
+                            });
+                        }}
                         disabled={disabled}
                     >
                         <SelectTrigger id="per_page" className="h-10">
@@ -184,7 +193,11 @@ export function AdminLogFilters({
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                 <div className="flex gap-2">
-                    <Button onClick={onApply} disabled={disabled} className="gap-2">
+                    <Button
+                        onClick={onApply}
+                        disabled={disabled}
+                        className="gap-2"
+                    >
                         <Filter className="h-4 w-4" />
                         Apply Filters
                     </Button>

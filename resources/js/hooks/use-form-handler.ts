@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, SyntheticEvent } from 'react';
 import { useState, useCallback } from 'react';
 
 interface UseFormOptions<T> {
@@ -15,15 +15,24 @@ export function useFormHandler<T extends Record<string, unknown>>({
     const [values, setValues] = useState<T>(initialValues);
     const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({});
+    const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>(
+        {},
+    );
 
     const handleChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        (
+            e: ChangeEvent<
+                HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+            >,
+        ) => {
             const { name, value, type } = e.target;
-            
+
             setValues((prev) => ({
                 ...prev,
-                [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+                [name]:
+                    type === 'checkbox'
+                        ? (e.target as HTMLInputElement).checked
+                        : value,
             }));
 
             // Clear error when user starts typing
@@ -38,7 +47,11 @@ export function useFormHandler<T extends Record<string, unknown>>({
     );
 
     const handleBlur = useCallback(
-        (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        (
+            e: ChangeEvent<
+                HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+            >,
+        ) => {
             const { name } = e.target;
             setTouched((prev) => ({
                 ...prev,
@@ -60,7 +73,7 @@ export function useFormHandler<T extends Record<string, unknown>>({
     );
 
     const handleSubmit = useCallback(
-        async (e?: FormEvent) => {
+        async (e?: SyntheticEvent) => {
             e?.preventDefault();
 
             // Validate all fields

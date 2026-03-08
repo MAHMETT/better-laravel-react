@@ -1,5 +1,5 @@
 import { Transition } from '@headlessui/react';
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { PhotoUploadModal } from '@/components/avatar';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -36,9 +36,15 @@ interface ProfilePageState {
 const useProfilePageStore = create<ProfilePageState>((set) => ({
     showAvatarModal: false,
     isUploading: false,
-    setShowAvatarModal: (showAvatarModal) => set({ showAvatarModal }),
-    setIsUploading: (isUploading) => set({ isUploading }),
-    reset: () => set({ showAvatarModal: false, isUploading: false }),
+    setShowAvatarModal: (showAvatarModal) => {
+        set({ showAvatarModal });
+    },
+    setIsUploading: (isUploading) => {
+        set({ isUploading });
+    },
+    reset: () => {
+        set({ showAvatarModal: false, isUploading: false });
+    },
 }));
 
 export default function Profile({
@@ -49,7 +55,9 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props;
-    const showAvatarModal = useProfilePageStore((state) => state.showAvatarModal);
+    const showAvatarModal = useProfilePageStore(
+        (state) => state.showAvatarModal,
+    );
     const isUploading = useProfilePageStore((state) => state.isUploading);
     const setShowAvatarModal = useProfilePageStore(
         (state) => state.setShowAvatarModal,
@@ -133,9 +141,11 @@ export default function Profile({
                                             <div className="group relative">
                                                 <div
                                                     className="h-24 w-24 cursor-pointer overflow-hidden rounded-full border-2 border-muted transition-colors group-hover:border-primary"
-                                                    onClick={() =>
-                                                        setShowAvatarModal(true)
-                                                    }
+                                                    onClick={() => {
+                                                        setShowAvatarModal(
+                                                            true,
+                                                        );
+                                                    }}
                                                     role="button"
                                                     tabIndex={0}
                                                     onKeyDown={(e) => {
@@ -166,9 +176,11 @@ export default function Profile({
 
                                                 <button
                                                     type="button"
-                                                    onClick={() =>
-                                                        setShowAvatarModal(true)
-                                                    }
+                                                    onClick={() => {
+                                                        setShowAvatarModal(
+                                                            true,
+                                                        );
+                                                    }}
                                                     className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                                                     aria-label="Change profile picture"
                                                 >
@@ -193,11 +205,11 @@ export default function Profile({
                                                         type="button"
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() =>
+                                                        onClick={() => {
                                                             setShowAvatarModal(
                                                                 true,
-                                                            )
-                                                        }
+                                                            );
+                                                        }}
                                                     >
                                                         <Camera className="mr-2 size-4" />
                                                         {currentAvatar

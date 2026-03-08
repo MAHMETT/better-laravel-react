@@ -22,24 +22,29 @@ export const useSelfUserLogStore = create<SelfUserLogState>()((set, get) => ({
     filters: { ...defaultFilters },
     isLoading: false,
 
-    initialize: (filters) =>
+    initialize: (filters) => {
         set({
             filters: { ...defaultFilters, ...filters },
             isLoading: false,
-        }),
+        });
+    },
 
-    setFilters: (newFilters) =>
+    setFilters: (newFilters) => {
         set((state) => ({
             filters: { ...state.filters, ...newFilters },
-        })),
+        }));
+    },
 
-    setIsLoading: (isLoading) => set({ isLoading }),
+    setIsLoading: (isLoading) => {
+        set({ isLoading });
+    },
 
-    reset: () =>
+    reset: () => {
         set({
             filters: { ...defaultFilters },
             isLoading: false,
-        }),
+        });
+    },
 
     getFilterParams: () => {
         const { filters } = get();
@@ -65,5 +70,7 @@ export const useSelfUserLogStore = create<SelfUserLogState>()((set, get) => ({
     },
 }));
 
-export const selectSelfUserLogFilters = (state: SelfUserLogState) => state.filters;
-export const selectSelfUserLogLoading = (state: SelfUserLogState) => state.isLoading;
+export const selectSelfUserLogFilters = (state: SelfUserLogState) =>
+    state.filters;
+export const selectSelfUserLogLoading = (state: SelfUserLogState) =>
+    state.isLoading;

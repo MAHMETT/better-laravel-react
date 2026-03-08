@@ -159,7 +159,9 @@ function TwoFactorVerificationStep({
     return (
         <Form
             {...confirm.form()}
-            onSuccess={() => onClose()}
+            onSuccess={() => {
+                onClose();
+            }}
             resetOnError
             resetOnSuccess
         >
@@ -230,7 +232,7 @@ function TwoFactorVerificationStep({
     );
 }
 
-type Props = {
+interface Props {
     isOpen: boolean;
     onClose: () => void;
     requiresConfirmation: boolean;
@@ -240,7 +242,7 @@ type Props = {
     clearSetupData: () => void;
     fetchSetupData: () => Promise<void>;
     errors: string[];
-};
+}
 
 interface TwoFactorSetupModalState {
     showVerificationStep: boolean;
@@ -253,9 +255,15 @@ interface TwoFactorSetupModalState {
 const useTwoFactorSetupModalStore = create<TwoFactorSetupModalState>((set) => ({
     showVerificationStep: false,
     code: '',
-    setShowVerificationStep: (showVerificationStep) => set({ showVerificationStep }),
-    setCode: (code) => set({ code }),
-    reset: () => set({ showVerificationStep: false, code: '' }),
+    setShowVerificationStep: (showVerificationStep) => {
+        set({ showVerificationStep });
+    },
+    setCode: (code) => {
+        set({ code });
+    },
+    reset: () => {
+        set({ showVerificationStep: false, code: '' });
+    },
 }));
 
 export default function TwoFactorSetupModal({
@@ -317,7 +325,12 @@ export default function TwoFactorSetupModal({
 
         clearSetupData();
         onClose();
-    }, [clearSetupData, onClose, requiresConfirmation, setShowVerificationStep]);
+    }, [
+        clearSetupData,
+        onClose,
+        requiresConfirmation,
+        setShowVerificationStep,
+    ]);
 
     const resetModalState = useCallback(() => {
         resetStore();
@@ -359,7 +372,9 @@ export default function TwoFactorSetupModal({
                     {showVerificationStep ? (
                         <TwoFactorVerificationStep
                             onClose={onClose}
-                            onBack={() => setShowVerificationStep(false)}
+                            onBack={() => {
+                                setShowVerificationStep(false);
+                            }}
                         />
                     ) : (
                         <TwoFactorSetupStep

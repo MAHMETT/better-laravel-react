@@ -1,9 +1,5 @@
-import type {
-    UseQueryOptions,
-    UseQueryResult} from '@tanstack/react-query';
-import {
-    useQuery
-} from '@tanstack/react-query';
+import type { UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 
 /**
@@ -44,7 +40,12 @@ export function usePaginatedQuery<TData = unknown, TError = AxiosError>(
     params: PaginatedQueryParams,
     queryFn: (params: PaginatedQueryParams) => Promise<TData>,
     options?: Omit<
-        UseQueryOptions<TData, TError, TData, (string | PaginatedQueryParams)[]>,
+        UseQueryOptions<
+            TData,
+            TError,
+            TData,
+            (string | PaginatedQueryParams)[]
+        >,
         'queryKey' | 'queryFn'
     >,
 ): UseQueryResult<TData, TError> {

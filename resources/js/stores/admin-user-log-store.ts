@@ -5,19 +5,20 @@ import type {
     UserLogFilterUser,
 } from '@/types';
 
-type AdminUserLogQueryParams = Record<string, string | number | Array<number>>;
+type AdminUserLogQueryParams = Record<string, string | number | number[]>;
 type AdminLogBaseFilters = Omit<AdminUserLogFilters, 'user_ids'>;
 type UserRoleFilter = 'all' | 'admin' | 'user';
 type UserStatusFilter = 'all' | 'enable' | 'disable';
 
-type UserSearchParams = {
+interface UserSearchParams {
+    [key: string]: string | number | string[] | number[] | undefined;
     search?: string;
     role?: 'admin' | 'user';
     status?: 'enable' | 'disable';
     per_page: number;
     cursor?: string;
     selected_ids?: number[];
-};
+}
 
 const defaultFilters: AdminLogBaseFilters = {
     event_type: '',
@@ -120,18 +121,25 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
         });
     },
 
-    setFilters: (newFilters) =>
+    setFilters: (newFilters) => {
         set((state) => ({
             filters: { ...state.filters, ...newFilters },
-        })),
+        }));
+    },
 
-    setIsLoading: (isLoading) => set({ isLoading }),
+    setIsLoading: (isLoading) => {
+        set({ isLoading });
+    },
 
-    setCurrentPage: (currentPage) => set({ currentPage }),
+    setCurrentPage: (currentPage) => {
+        set({ currentPage });
+    },
 
-    setIsUserListLoading: (isUserListLoading) => set({ isUserListLoading }),
+    setIsUserListLoading: (isUserListLoading) => {
+        set({ isUserListLoading });
+    },
 
-    openUserFilterDialog: () =>
+    openUserFilterDialog: () => {
         set((state) => ({
             isUserFilterDialogOpen: true,
             selectedUserIds: [...state.appliedUserIds],
@@ -141,9 +149,10 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
             userOptions: [],
             userListMeta: { ...defaultUserListMeta },
             isUserListLoading: false,
-        })),
+        }));
+    },
 
-    closeUserFilterDialog: () =>
+    closeUserFilterDialog: () => {
         set((state) => ({
             isUserFilterDialogOpen: false,
             selectedUserIds: [...state.appliedUserIds],
@@ -153,9 +162,10 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
             userOptions: [],
             userListMeta: { ...defaultUserListMeta },
             isUserListLoading: false,
-        })),
+        }));
+    },
 
-    applyUserSelection: () =>
+    applyUserSelection: () => {
         set((state) => ({
             appliedUserIds: Array.from(new Set(state.selectedUserIds)),
             isUserFilterDialogOpen: false,
@@ -165,9 +175,10 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
             userOptions: [],
             userListMeta: { ...defaultUserListMeta },
             isUserListLoading: false,
-        })),
+        }));
+    },
 
-    clearAppliedUserFilter: () =>
+    clearAppliedUserFilter: () => {
         set({
             appliedUserIds: [],
             selectedUserIds: [],
@@ -178,16 +189,20 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
             userOptions: [],
             userListMeta: { ...defaultUserListMeta },
             isUserListLoading: false,
-        }),
+        });
+    },
 
-    clearSelectedUsers: () => set({ selectedUserIds: [] }),
+    clearSelectedUsers: () => {
+        set({ selectedUserIds: [] });
+    },
 
-    setSelectedUserIds: (selectedUserIds) =>
+    setSelectedUserIds: (selectedUserIds) => {
         set({
             selectedUserIds: Array.from(new Set(selectedUserIds)),
-        }),
+        });
+    },
 
-    toggleSelectedUserId: (userId) =>
+    toggleSelectedUserId: (userId) => {
         set((state) => {
             const hasUser = state.selectedUserIds.includes(userId);
             return {
@@ -195,41 +210,52 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
                     ? state.selectedUserIds.filter((id) => id !== userId)
                     : [...state.selectedUserIds, userId],
             };
-        }),
+        });
+    },
 
-    setUserSearchKeyword: (userSearchKeyword) =>
-        set({ userSearchKeyword }),
+    setUserSearchKeyword: (userSearchKeyword) => {
+        set({ userSearchKeyword });
+    },
 
-    setUserRoleFilter: (userRoleFilter) => set({ userRoleFilter }),
+    setUserRoleFilter: (userRoleFilter) => {
+        set({ userRoleFilter });
+    },
 
-    setUserStatusFilter: (userStatusFilter) =>
-        set({ userStatusFilter }),
+    setUserStatusFilter: (userStatusFilter) => {
+        set({ userStatusFilter });
+    },
 
-    replaceUserOptions: (users) =>
+    replaceUserOptions: (users) => {
         set({
             userOptions: mergeUsersById(users),
-        }),
+        });
+    },
 
-    appendUserOptions: (users) =>
+    appendUserOptions: (users) => {
         set((state) => ({
             userOptions: mergeUsersById([...state.userOptions, ...users]),
-        })),
+        }));
+    },
 
-    setSelectedUsers: (selectedUsers) =>
+    setSelectedUsers: (selectedUsers) => {
         set({
             selectedUsers: mergeUsersById(selectedUsers),
-        }),
+        });
+    },
 
-    setUserListMeta: (userListMeta) => set({ userListMeta }),
+    setUserListMeta: (userListMeta) => {
+        set({ userListMeta });
+    },
 
-    resetUserList: () =>
+    resetUserList: () => {
         set({
             userOptions: [],
             userListMeta: { ...defaultUserListMeta },
             isUserListLoading: false,
-        }),
+        });
+    },
 
-    reset: () =>
+    reset: () => {
         set({
             filters: { ...defaultFilters },
             appliedUserIds: [],
@@ -244,7 +270,8 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
             isLoading: false,
             isUserListLoading: false,
             currentPage: 1,
-        }),
+        });
+    },
 
     getFilterParams: () => {
         const { filters, appliedUserIds } = get();
@@ -313,15 +340,27 @@ export const useAdminUserLogStore = create<AdminUserLogState>()((set, get) => ({
 }));
 
 // Selectors
-export const selectAdminUserLogFilters = (state: AdminUserLogState) => state.filters;
-export const selectAdminUserLogAppliedUserIds = (state: AdminUserLogState) => state.appliedUserIds;
-export const selectAdminUserLogSelectedUserIds = (state: AdminUserLogState) => state.selectedUserIds;
-export const selectAdminUserLogSelectedUsers = (state: AdminUserLogState) => state.selectedUsers;
-export const selectAdminUserLogUserSearchKeyword = (state: AdminUserLogState) => state.userSearchKeyword;
-export const selectAdminUserLogUserRoleFilter = (state: AdminUserLogState) => state.userRoleFilter;
-export const selectAdminUserLogUserStatusFilter = (state: AdminUserLogState) => state.userStatusFilter;
-export const selectAdminUserLogUserOptions = (state: AdminUserLogState) => state.userOptions;
-export const selectAdminUserLogUserListMeta = (state: AdminUserLogState) => state.userListMeta;
-export const selectAdminUserLogDialogOpen = (state: AdminUserLogState) => state.isUserFilterDialogOpen;
-export const selectAdminUserLogLoading = (state: AdminUserLogState) => state.isLoading;
-export const selectAdminUserLogUserListLoading = (state: AdminUserLogState) => state.isUserListLoading;
+export const selectAdminUserLogFilters = (state: AdminUserLogState) =>
+    state.filters;
+export const selectAdminUserLogAppliedUserIds = (state: AdminUserLogState) =>
+    state.appliedUserIds;
+export const selectAdminUserLogSelectedUserIds = (state: AdminUserLogState) =>
+    state.selectedUserIds;
+export const selectAdminUserLogSelectedUsers = (state: AdminUserLogState) =>
+    state.selectedUsers;
+export const selectAdminUserLogUserSearchKeyword = (state: AdminUserLogState) =>
+    state.userSearchKeyword;
+export const selectAdminUserLogUserRoleFilter = (state: AdminUserLogState) =>
+    state.userRoleFilter;
+export const selectAdminUserLogUserStatusFilter = (state: AdminUserLogState) =>
+    state.userStatusFilter;
+export const selectAdminUserLogUserOptions = (state: AdminUserLogState) =>
+    state.userOptions;
+export const selectAdminUserLogUserListMeta = (state: AdminUserLogState) =>
+    state.userListMeta;
+export const selectAdminUserLogDialogOpen = (state: AdminUserLogState) =>
+    state.isUserFilterDialogOpen;
+export const selectAdminUserLogLoading = (state: AdminUserLogState) =>
+    state.isLoading;
+export const selectAdminUserLogUserListLoading = (state: AdminUserLogState) =>
+    state.isUserListLoading;
