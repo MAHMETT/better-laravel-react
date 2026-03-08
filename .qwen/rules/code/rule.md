@@ -18,15 +18,7 @@
 
 ---
 
-## 2. Axios & Networking (Shared Hosting Shield)
-
-- **Singleton Pattern:** Use a single Axios instance with interceptors to handle CSRF and Global Errors (401, 422, 500, 508).
-- **Throttling & Debouncing:** All search/filter inputs must be debounced (min. 300ms) to prevent CPU spikes on low-end hosting.
-- **Stale-While-Revalidate:** Utilize TanStack Query with a `staleTime` of at least 5 minutes for data that rarely changes.
-
----
-
-## 3. Laravel & PHP (Backend)
+## 2. Laravel & PHP (Backend)
 
 ### **Strict Typing PHP 8.2+**
 
@@ -41,7 +33,7 @@
 
 ---
 
-## 4. Error Handling & UX
+## 3. Error Handling & UX
 
 - **Graceful Failures:** Use React `ErrorBoundary` to catch component crashes so they don't break the entire application.
 - **Consistency:** Laravel error responses must follow a standard format: `{ message: string, errors: Record<string, string[]> }`.
@@ -49,7 +41,7 @@
 
 ---
 
-## 5. Folder & File Structure
+## 4. Folder & File Structure
 
 - **Feature-Based Folder:** Group logic by feature, not by file type (e.g., `Features/PPDB/Components`, `Features/PPDB/Hooks`).
 - **Single Responsibility:** One file, one primary component/function. If a file exceeds 200 lines, split it into sub-components.
@@ -65,7 +57,6 @@ Copy this into your AI Coder (Cursor/Copilot/Qwen):
 > 1. **TS:** Enable maximum strictness. Zero `any`. Use `Interface` for all props and API responses. Implement `noUncheckedIndexedAccess` logic.
 > 2. **React:** Use functional components with `Persistent Layouts`. Optimize re-renders using `useMemo` and Zustand selectors.
 > 3. **Laravel:** Use `declare(strict_types=1)`. All methods must have visibility modifiers, parameters, and return types. Use DTOs for data flow.
-> 4. **Networking:** Use TanStack Query for server state and a centralized Axios instance with global error handling for status codes 401, 422, 429, 500, and 508.
-> 5. **Performance:** Prioritize code-splitting and small bundle sizes. Every line of code must be essential and efficient.
+> 4. **Performance:** Prioritize code-splitting and small bundle sizes. Every line of code must be essential and efficient.
 >
 > If you detect any violation of these rules in my current code, point it out and refactor it immediately to meet these standards."

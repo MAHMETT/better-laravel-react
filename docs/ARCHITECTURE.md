@@ -16,29 +16,13 @@ We categorize data into three distinct layers to ensure a "Single Source of Trut
 
 ## 2. Architectural Pillars
 
-### Pillar #1: Optimized Networking (Axios Interceptors)
-
-- **Singleton Instance:** All requests must pass through a pre-configured Axios instance (`resources/js/lib/api.ts`).
-- **Global Interceptors:** Handle 401 (Unauthorized), 422 (Validation), and 500 errors globally.
-- **Auto-CSRF:** CSRF tokens are automatically attached to all requests.
-
-**Usage:**
-```typescript
-import { api } from '@/lib';
-
-// GET request
-const response = await api.get('/users');
-
-// POST request
-const user = await api.post('/users', { name: 'John' });
-```
-
-### Pillar #2: Strong Type Systems
+### Pillar #1: Strong Type Systems
 
 - **API Responses:** Every API response has a corresponding TypeScript interface in `resources/js/types/`.
 - **Inertia Shared Props:** Define global types for shared Inertia data.
 
 **Example:**
+
 ```typescript
 // resources/js/types/api/users.ts
 export interface User {
@@ -55,24 +39,6 @@ export interface UsersResponse {
 }
 ```
 
-### Pillar #3: Smart Invalidation
-
-Every `POST/PUT/DELETE` operation triggers automatic query invalidation via the `useApiMutation` hook.
-
-```typescript
-import { useApiMutation } from '@/hooks';
-
-const mutation = useApiMutation(
-    ['users', 'create'],
-    (data) => api.post('/users', data),
-    {
-        onSuccess: () => {
-            // Additional logic after invalidation
-        },
-    }
-);
-```
-
 ## 3. Technical Standards
 
 ### A. Global UI Store (Zustand)
@@ -87,6 +53,7 @@ const setSidebarOpen = useGlobalUIStore.use.setSidebarOpen();
 ```
 
 **Available stores:**
+
 - `global-ui-store` - Sidebar, modals, theme
 - `user-filters` - User list filters
 - `avatar-upload` - Avatar upload state
@@ -102,12 +69,13 @@ import { useApiQuery } from '@/hooks';
 
 const { data, isLoading, error } = useApiQuery(
     ['users', userId],
-    () => api.get(`/users/${userId}`).then(res => res.data),
-    { staleTime: 5 * 60 * 1000 }
+    () => api.get(`/users/${userId}`).then((res) => res.data),
+    { staleTime: 5 * 60 * 1000 },
 );
 ```
 
 **Query Keys:**
+
 - Use array format: `['resource', 'action', id]`
 - Example: `['users', 'list']`, `['users', 'show', 1]`
 
@@ -116,9 +84,8 @@ const { data, isLoading, error } = useApiQuery(
 ```typescript
 import { useApiMutation } from '@/hooks';
 
-const deleteUser = useApiMutation(
-    ['users', 'delete'],
-    (id) => api.delete(`/users/${id}`)
+const deleteUser = useApiMutation(['users', 'delete'], (id) =>
+    api.delete(`/users/${id}`),
 );
 ```
 
@@ -138,12 +105,9 @@ resources/js/
 ├── api/                    # API functions (optional, can use api directly)
 ├── components/             # React components
 ├── hooks/                  # Custom hooks
-│   ├── use-api-mutation.ts
-│   ├── use-api-query.ts
 │   └── ...
 ├── layouts/                # Layout components
 ├── lib/                    # Utilities
-│   ├── api.ts             # Axios instance
 │   └── ...
 ├── pages/                  # Inertia pages
 ├── providers/              # React providers
@@ -159,6 +123,7 @@ resources/js/
 ## 6. Best Practices
 
 ### DO:
+
 - Use `useApiQuery` for all data fetching
 - Use `useApiMutation` for mutations
 - Use Zustand for global UI state
@@ -166,8 +131,9 @@ resources/js/
 - Use selectors with Zustand to prevent re-renders
 
 ### DON'T:
+
 - Use `useState` for global state
-- Make direct `fetch` or `axios` calls
+- Make direct `fetch` or other calls
 - Store server state in Zustand
 - Skip error handling in mutations
 
@@ -176,11 +142,13 @@ resources/js/
 ### From useState to Zustand:
 
 **Before:**
+
 ```typescript
 const [sidebarOpen, setSidebarOpen] = useState(true);
 ```
 
 **After:**
+
 ```typescript
 const sidebarOpen = useGlobalUIStore.use.sidebarOpen();
 const setSidebarOpen = useGlobalUIStore.use.setSidebarOpen();
@@ -189,12 +157,13 @@ const setSidebarOpen = useGlobalUIStore.use.setSidebarOpen();
 ### From useEffect fetching to TanStack Query:
 
 **Before:**
+
 ```typescript
 const [users, setUsers] = useState([]);
 const [loading, setLoading] = useState(true);
 
 useEffect(() => {
-    api.get('/users').then(res => {
+    api.get('/users').then((res) => {
         setUsers(res.data);
         setLoading(false);
     });
@@ -202,9 +171,9 @@ useEffect(() => {
 ```
 
 **After:**
+
 ```typescript
-const { data: users, isLoading } = useApiQuery(
-    ['users', 'list'],
-    () => api.get('/users').then(res => res.data)
+const { data: users, isLoading } = useApiQuery(['users', 'list'], () =>
+    api.get('/users').then((res) => res.data),
 );
 ```

@@ -20,20 +20,10 @@ We categorize data into three distinct layers to ensure a "Single Source of Trut
 
 ## 🛠️ 2. Architectural Pillars
 
-### 🚨 Pillar #1: Optimized Networking (Axios Interceptors)
-
-- **Singleton Instance:** All requests must pass through a pre-configured Axios instance.
-- **Global Interceptors:** Handle 401 (Unauthorized), 422 (Validation), and 500 errors globally to reduce repetitive try-catch blocks in UI components.
-- **Auto-JSON:** Ensure all headers and CSRF tokens are handled transparently.
-
-### 🚨 Pillar #2: Strong Type Systems (Arch-Types)
+### 🚨 Pillar #1: Strong Type Systems (Arch-Types)
 
 - **Contract First:** Every API response must have a corresponding TypeScript `Interface` or `Type`.
 - **Inertia Shared Props:** Define a global `SharedProps` type to ensure the AI and IDE know exactly what data Laravel is passing to the frontend (User, Permissions, Flash Messages).
-
-### 🚨 Pillar #3: Smart Invalidation
-
-- Every `POST/PUT/DELETE` operation via Inertia must trigger a `queryClient.invalidateQueries` to ensure the "Server State" is never out of sync with the UI.
 
 ---
 

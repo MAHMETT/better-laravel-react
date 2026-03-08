@@ -17,7 +17,7 @@ resources/js/
 │   ├── hooks/          # Feature-specific hooks
 │   └── services/       # Feature-specific API/logic logic
 ├── hooks/              # Global reusable hooks (useMediaQuery, useDebounce)
-├── lib/                # Third-party configs (axios.ts, utils.ts, arktype.ts)
+├── lib/                # Third-party configs (, utils.ts, arktype.ts)
 ├── pages/              # Inertia Page entries (Keep these thin, import from features/)
 ├── stores/             # Zustand Global Stores (Refer to docs/zustand/*)
 └── types/              # Global TypeScript definitions & Inertia Props
