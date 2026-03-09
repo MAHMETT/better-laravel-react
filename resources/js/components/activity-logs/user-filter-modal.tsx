@@ -25,6 +25,7 @@ import {
     Check,
     CheckIcon,
     ChessKingIcon,
+    MailIcon,
     Search,
     User,
     UserCheck,
@@ -393,10 +394,8 @@ export function UserFilterModal({
                                                 </Badge>
                                             </div>
                                             <p className="mt-1 truncate text-sm text-muted-foreground">
-                                                📧 {user.email}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                ID: #{user.id}
+                                                <MailIcon className="mr-2 inline-block h-4 w-4" />
+                                                {user.email}
                                             </p>
                                         </div>
                                         {isSelected && (
