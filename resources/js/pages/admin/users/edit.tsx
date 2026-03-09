@@ -1,4 +1,4 @@
-import { PhotoUploadModal } from '@/components/avatar';
+import { AvatarUploader } from '@/components/avatar';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -629,17 +629,17 @@ export default function EditUser({ user }: Props) {
                     </CardContent>
                 </Card>
 
-                <PhotoUploadModal
+                <AvatarUploader
                     open={showAvatarModal}
                     onOpenChange={setShowAvatarModal}
                     currentAvatar={user.avatar_original_url ?? user.avatar_url}
                     userName={user.name}
-                    userId={user.id}
-                    onUpload={handleAvatarUpload}
-                    onDelete={handleAvatarDelete}
+                    onAvatarChange={handleAvatarUpload}
+                    onAvatarDelete={handleAvatarDelete}
                     canDelete={!!user.avatar_url}
                     isUploading={isUploadingAvatar}
                     isDeleting={isUploadingAvatar}
+                    canDownload={true}
                 />
             </div>
         </AppLayout>

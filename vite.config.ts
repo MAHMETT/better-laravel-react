@@ -70,7 +70,7 @@ export default defineConfig({
                     // State management
                     'state-vendor': ['zustand'],
                     // Data fetching
-                    'query-vendor': ['@tanstack/react-query', 'axios'],
+                    'query-vendor': ['@tanstack/react-query'],
                     // Forms and validation
                     'forms-vendor': ['arktype', 'input-otp'],
                     // Icons (tree-shaken)
@@ -92,7 +92,6 @@ export default defineConfig({
             '@inertiajs/react',
             'zustand',
             '@tanstack/react-query',
-            'axios',
             'clsx',
             'tailwind-merge',
         ],

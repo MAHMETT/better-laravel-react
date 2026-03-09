@@ -1,7 +1,6 @@
 import { type } from 'arktype';
 
-export const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
-export const AVATAR_MIN_SIZE = 10 * 1024;
+export const AVATAR_MAX_SIZE = 5 * 1024 * 1024; // 5MB
 export const AVATAR_MIN_DIMENSION = 100;
 export const AVATAR_MAX_DIMENSION = 4096;
 export const AVATAR_ALLOWED_TYPES = [
@@ -32,6 +31,7 @@ const imageDimensionsSchema = type({
 export function validateAvatarFile(file: File): AvatarValidationError[] {
     const errors: AvatarValidationError[] = [];
 
+    // Validate file basic properties
     const schemaResult = avatarFileShapeSchema({
         name: file.name,
         size: file.size,
@@ -48,24 +48,20 @@ export function validateAvatarFile(file: File): AvatarValidationError[] {
         ];
     }
 
+    // Check file size (5MB max)
     if (file.size > AVATAR_MAX_SIZE) {
         errors.push({
             field: 'fileSize',
-            message: `File size must be less than ${AVATAR_MAX_SIZE / 1024 / 1024}MB.`,
+            message: `File size must be less than ${AVATAR_MAX_SIZE / 1024 / 1024}MB. Current: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
         });
     }
 
-    if (file.size < AVATAR_MIN_SIZE) {
-        errors.push({
-            field: 'fileSize',
-            message: `File size must be at least ${AVATAR_MIN_SIZE / 1024}KB.`,
-        });
-    }
-
+    // Check file type
     if (!AVATAR_ALLOWED_TYPES.includes(file.type as AvatarAllowedType)) {
+        const allowedTypes = AVATAR_ALLOWED_TYPES.map(t => t.split('/')[1].toUpperCase()).join(', ');
         errors.push({
             field: 'fileType',
-            message: 'File type must be JPEG, PNG, GIF, or WebP.',
+            message: `File type must be ${allowedTypes}. Current: ${file.type || 'unknown'}`,
         });
     }
 
@@ -92,14 +88,14 @@ export function validateAvatarDimensions(
     if (width < AVATAR_MIN_DIMENSION || height < AVATAR_MIN_DIMENSION) {
         errors.push({
             field: 'dimensions',
-            message: `Image must be at least ${AVATAR_MIN_DIMENSION}x${AVATAR_MIN_DIMENSION} pixels.`,
+            message: `Image must be at least ${AVATAR_MIN_DIMENSION}x${AVATAR_MIN_DIMENSION} pixels. Current: ${width}x${height}px`,
         });
     }
 
     if (width > AVATAR_MAX_DIMENSION || height > AVATAR_MAX_DIMENSION) {
         errors.push({
             field: 'dimensions',
-            message: `Image must be at most ${AVATAR_MAX_DIMENSION}x${AVATAR_MAX_DIMENSION} pixels.`,
+            message: `Image must be at most ${AVATAR_MAX_DIMENSION}x${AVATAR_MAX_DIMENSION} pixels. Current: ${width}x${height}px`,
         });
     }
 
@@ -129,7 +125,7 @@ export async function validateAvatarImageSource(
         );
 
         return validateAvatarDimensions(dimensions.width, dimensions.height);
-    } catch {
+    } catch (_error) {
         return [
             {
                 field: 'general',

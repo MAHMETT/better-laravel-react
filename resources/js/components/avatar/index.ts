@@ -1,5 +1,4 @@
 // Avatar components
-export { AvatarUploadModal } from './avatar-upload-modal';
+export { AvatarUploader } from './avatar-uploader';
+export { DeleteAvatarDialog } from './delete-avatar-dialog';
 export { ImageCropDialog } from './image-crop-dialog';
-export { PhotoUpload } from './photo-upload';
-export { PhotoUploadModal } from './photo-upload-modal';

@@ -1,6 +1,4 @@
-import { Transition } from '@headlessui/react';
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
-import { PhotoUploadModal } from '@/components/avatar';
+import { AvatarUploader } from '@/components/avatar';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -12,10 +10,12 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit, update } from '@/routes/profile';
 import { send } from '@/routes/verification';
+import { useProfileSettingsStore } from '@/stores/profile-settings';
 import type { BreadcrumbItem } from '@/types';
-import { Check, Camera } from 'lucide-react';
+import { Transition } from '@headlessui/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Camera, Check } from 'lucide-react';
 import { useEffect } from 'react';
-import { create } from 'zustand';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -25,28 +25,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface ProfilePageState {
-    showAvatarModal: boolean;
-    isUploading: boolean;
-    setShowAvatarModal: (showAvatarModal: boolean) => void;
-    setIsUploading: (isUploading: boolean) => void;
-    reset: () => void;
-}
-
-const useProfilePageStore = create<ProfilePageState>((set) => ({
-    showAvatarModal: false,
-    isUploading: false,
-    setShowAvatarModal: (showAvatarModal) => {
-        set({ showAvatarModal });
-    },
-    setIsUploading: (isUploading) => {
-        set({ isUploading });
-    },
-    reset: () => {
-        set({ showAvatarModal: false, isUploading: false });
-    },
-}));
-
 export default function Profile({
     mustVerifyEmail,
     status,
@@ -55,19 +33,15 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props;
-    const showAvatarModal = useProfilePageStore(
-        (state) => state.showAvatarModal,
-    );
-    const isUploading = useProfilePageStore((state) => state.isUploading);
-    const setShowAvatarModal = useProfilePageStore(
-        (state) => state.setShowAvatarModal,
-    );
-    const setIsUploading = useProfilePageStore((state) => state.setIsUploading);
-    const resetStore = useProfilePageStore((state) => state.reset);
+    const showAvatarModal = useProfileSettingsStore.use.showAvatarModal();
+    const isUploading = useProfileSettingsStore.use.isUploading();
+    const setShowAvatarModal =
+        useProfileSettingsStore.getState().setShowAvatarModal;
+    const setIsUploading = useProfileSettingsStore.getState().setIsUploading;
 
     useEffect(() => {
-        resetStore();
-    }, [resetStore]);
+        useProfileSettingsStore.getState().reset();
+    }, []);
 
     const handleAvatarUpload = (file: File) => {
         setIsUploading(true);
@@ -99,9 +73,7 @@ export default function Profile({
     };
 
     const currentAvatar =
-        auth.user.avatar ??
-        auth.user.avatar_thumbnail ??
-        auth.user.avatar_thumbnail_url;
+        auth.user.avatar ?? auth.user.avatar_thumbnail_url ?? null;
     const currentAvatarOriginal =
         auth.user.avatar_original ??
         auth.user.avatar_original_url ??
@@ -213,30 +185,9 @@ export default function Profile({
                                                     >
                                                         <Camera className="mr-2 size-4" />
                                                         {currentAvatar
-                                                            ? 'Change Picture'
+                                                            ? 'Edit Picture'
                                                             : 'Upload Picture'}
                                                     </Button>
-
-                                                    {currentAvatar && (
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                const link =
-                                                                    document.createElement(
-                                                                        'a',
-                                                                    );
-                                                                link.href =
-                                                                    currentAvatarOriginal;
-                                                                link.download =
-                                                                    'profile-picture';
-                                                                link.click();
-                                                            }}
-                                                        >
-                                                            Download
-                                                        </Button>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -354,13 +305,15 @@ export default function Profile({
 
                 <DeleteUser />
 
-                <PhotoUploadModal
+                <AvatarUploader
                     open={showAvatarModal}
                     onOpenChange={setShowAvatarModal}
                     currentAvatar={currentAvatarOriginal}
                     userName={auth.user.name}
-                    onUpload={handleAvatarUpload}
+                    onAvatarChange={handleAvatarUpload}
                     isUploading={isUploading}
+                    canDownload={true}
+                    canDelete={false}
                 />
             </SettingsLayout>
         </AppLayout>
