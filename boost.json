@@ -1,17 +1,10 @@
 {
-    "agents": [
-        "opencode",
-        "codex",
-        "copilot",
-        "claude_code"
-    ],
+    "agents": ["opencode", "codex", "copilot", "claude_code", "qwen"],
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
     "nightwatch_mcp": false,
-    "packages": [
-        "laravel/fortify"
-    ],
+    "packages": ["laravel/fortify"],
     "sail": false,
     "skills": [
         "wayfinder-development",
