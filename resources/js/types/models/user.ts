@@ -8,11 +8,11 @@ export interface User {
     role: Roles;
     status: UserStatus;
     avatar?: string | null;
-    avatar_url?: string | null;
-    avatar_thumbnail?: string | null;
-    avatar_original?: string | null;
-    avatar_thumbnail_url?: string | null;
-    avatar_original_url?: string | null;
+    avatar_url?: string | undefined;
+    avatar_thumbnail?: string | undefined;
+    avatar_original?: string | undefined;
+    avatar_thumbnail_url?: string | undefined;
+    avatar_original_url?: string | undefined;
     avatarMedia?: AvatarMedia | null;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

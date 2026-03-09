@@ -20,7 +20,7 @@ import {
     validateAvatarImageSource,
 } from '@/schemas/avatar';
 import { useAvatarUploaderStore } from '@/stores/avatar-uploader';
-import { DeleteAvatarDialog } from './delete-avatar-dialog';
+import { saveAs } from 'file-saver';
 import {
     AlertCircle,
     Camera,
@@ -33,7 +33,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Area } from 'react-easy-crop';
 import Cropper from 'react-easy-crop';
 import { toast } from 'sonner';
-
+import { DeleteAvatarDialog } from './delete-avatar-dialog';
 export interface AvatarUploaderProps {
     /** Current avatar URL */
     currentAvatar?: string | null;
@@ -90,12 +90,15 @@ export function AvatarUploader({
     const setOpen = useAvatarUploaderStore.use.setOpen();
     const setSelectedFile = useAvatarUploaderStore.use.setSelectedFile();
     const setSourceImageUrl = useAvatarUploaderStore.use.setSourceImageUrl();
-    const setCroppedPreviewUrl = useAvatarUploaderStore.use.setCroppedPreviewUrl();
+    const setCroppedPreviewUrl =
+        useAvatarUploaderStore.use.setCroppedPreviewUrl();
     const setStep = useAvatarUploaderStore.use.setStep();
     const setCrop = useAvatarUploaderStore.use.setCrop();
     const setZoom = useAvatarUploaderStore.use.setZoom();
-    const setCroppedAreaPixels = useAvatarUploaderStore.use.setCroppedAreaPixels();
-    const setValidationErrors = useAvatarUploaderStore.use.setValidationErrors();
+    const setCroppedAreaPixels =
+        useAvatarUploaderStore.use.setCroppedAreaPixels();
+    const setValidationErrors =
+        useAvatarUploaderStore.use.setValidationErrors();
     const setIsDragOver = useAvatarUploaderStore.use.setIsDragOver();
     const setIsProcessing = useAvatarUploaderStore.use.setIsProcessing();
     const reset = useAvatarUploaderStore.use.reset();
@@ -133,28 +136,29 @@ export function AvatarUploader({
         };
     }, [sourceImageUrl, croppedPreviewUrl]);
 
-    const validateFile = useCallback(
-        (file: File): AvatarValidationError[] => {
-            const errors: AvatarValidationError[] = [];
+    const validateFile = useCallback((file: File): AvatarValidationError[] => {
+        const errors: AvatarValidationError[] = [];
 
-            if (file.size > AVATAR_MAX_SIZE) {
-                errors.push({
-                    field: 'fileSize',
-                    message: `File size must be less than ${AVATAR_MAX_SIZE / 1024 / 1024}MB`,
-                });
-            }
+        if (file.size > AVATAR_MAX_SIZE) {
+            errors.push({
+                field: 'fileSize',
+                message: `File size must be less than ${AVATAR_MAX_SIZE / 1024 / 1024}MB`,
+            });
+        }
 
-            if (!AVATAR_ALLOWED_TYPES.includes(file.type as (typeof AVATAR_ALLOWED_TYPES)[number])) {
-                errors.push({
-                    field: 'fileType',
-                    message: `File type must be ${AVATAR_ALLOWED_TYPES.map((t) => t.split('/')[1].toUpperCase()).join(', ')}`,
-                });
-            }
+        if (
+            !AVATAR_ALLOWED_TYPES.includes(
+                file.type as (typeof AVATAR_ALLOWED_TYPES)[number],
+            )
+        ) {
+            errors.push({
+                field: 'fileType',
+                message: `File type must be ${AVATAR_ALLOWED_TYPES.map((t) => t.split('/')[1].toUpperCase()).join(', ')}`,
+            });
+        }
 
-            return errors;
-        },
-        [],
-    );
+        return errors;
+    }, []);
 
     const validateImageDimensions = useCallback(
         (image: HTMLImageElement): AvatarValidationError | null => {
@@ -225,7 +229,14 @@ export function AvatarUploader({
             };
             img.src = objectUrl;
         },
-        [validateFile, validateImageDimensions, setSelectedFile, setSourceImageUrl, setStep, setValidationErrors],
+        [
+            validateFile,
+            validateImageDimensions,
+            setSelectedFile,
+            setSourceImageUrl,
+            setStep,
+            setValidationErrors,
+        ],
     );
 
     const handleInputChange = useCallback(
@@ -335,7 +346,13 @@ export function AvatarUploader({
         } finally {
             setIsProcessing(false);
         }
-    }, [sourceImageUrl, croppedAreaPixels, setIsProcessing, setStep, setCroppedPreviewUrl]);
+    }, [
+        sourceImageUrl,
+        croppedAreaPixels,
+        setIsProcessing,
+        setStep,
+        setCroppedPreviewUrl,
+    ]);
 
     const handleSave = useCallback(async () => {
         if (!croppedPreviewUrl) {
@@ -349,7 +366,9 @@ export function AvatarUploader({
             // Fetch the cropped preview and convert to File
             const response = await fetch(croppedPreviewUrl);
             const blob = await response.blob();
-            const file = new File([blob], 'avatar.webp', { type: 'image/webp' });
+            const file = new File([blob], 'avatar.webp', {
+                type: 'image/webp',
+            });
 
             await onAvatarChange(file);
             onOpenChange(false);
@@ -363,6 +382,7 @@ export function AvatarUploader({
 
     const handleDownload = useCallback(async () => {
         const avatarUrl = currentAvatar;
+
         if (!avatarUrl) {
             toast.error('No avatar available to download');
             return;
@@ -373,60 +393,56 @@ export function AvatarUploader({
         });
 
         try {
-            // Fetch the image
+            /**
+             * Fetch image
+             */
             const response = await fetch(avatarUrl);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw new Error(
+                    `Download failed (${response.status} ${response.statusText})`,
+                );
             }
 
+            /**
+             * Convert to blob
+             */
             const blob = await response.blob();
 
+            /**
+             * Validate MIME type
+             */
             if (!blob.type.startsWith('image/')) {
-                throw new Error(`Invalid image type: ${blob.type || 'unknown'}`);
+                throw new Error(`Invalid file type: ${blob.type || 'unknown'}`);
             }
 
-            toast.success('Image fetched', {
-                id: toastId,
-                description: `${formatBytes(blob.size)} • ${blob.type}`,
-            });
+            /**
+             * Generate filename
+             */
+            const extension = blob.type.split('/')[1]?.toLowerCase() ?? 'jpg';
 
-            // Create download link and trigger download
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            const fileName = `profile-picture-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
-            link.download = fileName;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            
-            // Try programmatic click first
-            try {
-                link.click();
-            } catch (clickError) {
-                console.warn('Click failed, using fallback:', clickError);
-                // Fallback: use window.location
-                window.location.href = url;
-            }
-            
-            // Cleanup
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 100);
+            const fileName = `profile-picture-${Date.now()}.${extension}`;
 
-            toast.success('Download complete!', {
+            /**
+             * Trigger download
+             */
+            saveAs(blob, fileName);
+
+            toast.success('Download complete', {
                 id: toastId,
                 duration: 3000,
                 description: 'Check your downloads folder',
             });
         } catch (error) {
-            console.error('Download error:', error);
+            console.error('Avatar download failed:', error);
+
             toast.error('Download failed', {
                 id: toastId,
                 duration: 5000,
                 description:
-                    error instanceof Error ? error.message : 'Unknown error',
+                    error instanceof Error
+                        ? error.message
+                        : 'Unknown error occurred',
                 action: {
                     label: 'Retry',
                     onClick: () => handleDownload(),
@@ -436,7 +452,8 @@ export function AvatarUploader({
     }, [currentAvatar]);
 
     const showDeleteDialog = useAvatarUploaderStore.use.showDeleteDialog();
-    const setShowDeleteDialog = useAvatarUploaderStore.use.setShowDeleteDialog();
+    const setShowDeleteDialog =
+        useAvatarUploaderStore.use.setShowDeleteDialog();
 
     const handleDelete = useCallback(() => {
         setShowDeleteDialog(true);
@@ -506,7 +523,9 @@ export function AvatarUploader({
                             {step === 'select' && currentAvatar && (
                                 <button
                                     type="button"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
                                     className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-200 hover:opacity-100"
                                     aria-label="Change profile picture"
                                 >
@@ -592,8 +611,7 @@ export function AvatarUploader({
                                                 px)
                                             </li>
                                             <li>
-                                                Clear, well-lit photos work
-                                                best
+                                                Clear, well-lit photos work best
                                             </li>
                                         </ul>
                                     </div>

@@ -1,5 +1,6 @@
 import { AvatarUploader } from '@/components/avatar';
 import InputError from '@/components/input-error';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -17,12 +18,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useInitials } from '@/hooks';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, EditUserFormData, User } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    CameraIcon,
     CheckIcon,
     ChessKingIcon,
     LoaderCircleIcon,
@@ -308,6 +311,8 @@ export default function EditUser({ user }: Props) {
         window.history.back();
     };
 
+    const getInitials = useInitials();
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit User" />
@@ -348,46 +353,30 @@ export default function EditUser({ user }: Props) {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="flex items-center gap-6">
-                                <div
-                                    className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full border-2 border-muted"
-                                    onClick={() => {
-                                        setShowAvatarModal(true);
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (
-                                            e.key === 'Enter' ||
-                                            e.key === ' '
-                                        ) {
-                                            setShowAvatarModal(true);
-                                        }
-                                    }}
-                                >
-                                    {user.avatar_url ? (
-                                        <img
-                                            src={user.avatar_url}
-                                            alt={user.name}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center bg-muted text-xl font-semibold">
-                                            {user.name.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <span className="text-xs text-white">
-                                            Change
-                                        </span>
-                                    </div>
-                                </div>
+                                <Avatar className="size-24 overflow-hidden rounded-full">
+                                    <AvatarImage
+                                        src={user.avatar_url}
+                                        alt={user.name}
+                                    />
+                                    <AvatarFallback className="rounded-lg bg-neutral-200 text-3xl text-black dark:bg-neutral-700 dark:text-white">
+                                        {getInitials(user.name)}
+                                    </AvatarFallback>
+                                </Avatar>
                                 <div>
                                     <p className="font-medium">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowAvatarModal(true);
+                                        }}
+                                    >
+                                        <CameraIcon className="mr-2 size-4" />
                                         {user.avatar_url
-                                            ? 'Click to change profile photo'
-                                            : 'No profile photo'}
-                                    </p>
+                                            ? 'Edit Picture'
+                                            : 'Upload Picture'}
+                                    </Button>
                                 </div>
                             </div>
 

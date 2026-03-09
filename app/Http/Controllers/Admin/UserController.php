@@ -10,6 +10,7 @@ use App\Services\Media\MediaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,32 +23,16 @@ class UserController extends Controller
      */
     public function index(Request $request): Response
     {
-        $filters = [
-            'search' => $request->input('search', ''),
-            'status' => $request->input('status', ''),
-            'role' => $request->input('role', ''),
-        ];
+        $filters = $this->getFilters($request);
         $perPage = (int) $request->input('per_page', 10);
 
-        $users = User::query()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at'])
-            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
-            ->filter($filters)
-            ->orderBy('updated_at', 'desc')
-            ->paginate($perPage)
-            ->withQueryString();
-
-        $stats = [
-            'total' => User::query()->count(),
-            'enabled' => User::query()->where('status', 'enable')->count(),
-            'disabled' => User::query()->where('status', 'disable')->count(),
-            'admins' => User::query()->where('role', 'admin')->count(),
-        ];
+        $users = $this->getUsersQuery($filters, $perPage);
+        $stats = $this->calculateStats();
 
         return Inertia::render('admin/users/index', [
             'users' => $users,
             'stats' => $stats,
-            'filters' => array_merge($filters, ['per_page' => $perPage]),
+            'filters' => [...$filters, 'per_page' => $perPage],
         ]);
     }
 
@@ -65,9 +50,27 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $validated['password'] = Hash::make($validated['password']);
 
-        User::create($validated);
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'] ?? 'user',
+            'status' => $validated['status'] ?? 'enable',
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            try {
+                $this->handleAvatarUpload($user, $request->file('avatar'));
+            } catch (\Exception $e) {
+                Log::error('Avatar upload failed: '.$e->getMessage(), [
+                    'user_id' => $user->id,
+                    'exception' => $e,
+                ]);
+
+                return back()->withErrors(['avatar' => 'Failed to upload avatar. Please try again.']);
+            }
+        }
 
         return redirect()
             ->route('users.index')
@@ -75,62 +78,11 @@ class UserController extends Controller
     }
 
     /**
-     * Get the user ID from the request route parameter.
-     */
-    private function getUserIdFromRequest(Request $request): int|string
-    {
-        $userParam = $request->route()->parameter('id')
-            ?? $request->route()->parameter('user');
-
-        if ($userParam === null) {
-            return 0;
-        }
-
-        if (is_numeric($userParam)) {
-            return (int) $userParam;
-        }
-
-        if (is_array($userParam) && isset($userParam['id'])) {
-            return $userParam['id'];
-        }
-
-        if ($userParam instanceof User) {
-            return $userParam->id;
-        }
-
-        return $userParam;
-    }
-
-    /**
-     * Find a user by ID with optional soft deletes.
-     */
-    private function findUser(int|string $userId, bool $withTrashed = false): ?User
-    {
-        return $withTrashed
-            ? User::withTrashed()->find($userId)
-            : User::find($userId);
-    }
-
-    /**
-     * Find a user by ID or fail with soft deletes.
-     */
-    private function findUserOrFail(int|string $userId, bool $withTrashed = false): User
-    {
-        return $withTrashed
-            ? User::withTrashed()->findOrFail($userId)
-            : User::findOrFail($userId);
-    }
-
-    /**
      * Display the specified user (including soft-deleted).
      */
-    public function show(Request $request): Response|RedirectResponse
+    public function show(Request $request): Response
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = User::withTrashed()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at', 'deleted_at'])
-            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata', 'type', 'extension'])])
-            ->findOrFail($userId);
+        $user = $this->loadUserWithAvatar($request, withTrashed: true);
 
         return Inertia::render('admin/users/show', [
             'user' => $user,
@@ -140,12 +92,9 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified user.
      */
-    public function edit(Request $request): Response|RedirectResponse
+    public function edit(Request $request): Response
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = User::withTrashed()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at', 'deleted_at'])
-            ->findOrFail($userId);
+        $user = $this->loadUserWithAvatar($request, withTrashed: true);
 
         return Inertia::render('admin/users/edit', [
             'user' => $user,
@@ -157,12 +106,7 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
-        }
+        $user = $this->loadUserWithAvatar($request, withTrashed: true);
 
         $validated = $request->validated();
 
@@ -184,11 +128,11 @@ class UserController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
+        $user = $this->loadUser($request, withTrashed: true);
 
         if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
+            return to_route('users.index')
+                ->with('error', 'User not found.');
         }
 
         $user->delete();
@@ -204,11 +148,11 @@ class UserController extends Controller
      */
     public function toggleStatus(Request $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
+        $user = $this->loadUser($request, withTrashed: true);
 
         if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
+            return to_route('users.index')
+                ->with('error', 'User not found.');
         }
 
         $user->update([
@@ -225,8 +169,7 @@ class UserController extends Controller
      */
     public function restore(Request $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUserOrFail($userId, withTrashed: true);
+        $user = $this->loadUserOrFail($request, withTrashed: true);
         $user->restore();
 
         return redirect()
@@ -239,8 +182,7 @@ class UserController extends Controller
      */
     public function forceDelete(Request $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUserOrFail($userId, withTrashed: true);
+        $user = $this->loadUserOrFail($request, withTrashed: true);
 
         // Force delete will trigger the UserObserver which handles avatar deletion
         $user->forceDelete();
@@ -255,24 +197,14 @@ class UserController extends Controller
      */
     public function trashed(Request $request): Response
     {
-        $filters = [
-            'search' => $request->input('search', ''),
-            'status' => $request->input('status', ''),
-            'role' => $request->input('role', ''),
-        ];
+        $filters = $this->getFilters($request);
         $perPage = (int) $request->input('per_page', 10);
 
-        $users = User::onlyTrashed()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'deleted_at', 'updated_at'])
-            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
-            ->filter($filters)
-            ->orderBy('updated_at', 'desc')
-            ->paginate($perPage)
-            ->withQueryString();
+        $users = $this->getTrashedUsersQuery($filters, $perPage);
 
         return Inertia::render('admin/users/trashed', [
             'users' => $users,
-            'filters' => array_merge($filters, ['per_page' => $perPage]),
+            'filters' => [...$filters, 'per_page' => $perPage],
         ]);
     }
 
@@ -281,8 +213,7 @@ class UserController extends Controller
      */
     public function updateAvatar(Request $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
+        $user = $this->loadUser($request, withTrashed: true);
 
         if (! $user) {
             return back()->withErrors(['avatar' => 'User not found.']);
@@ -293,12 +224,9 @@ class UserController extends Controller
         ]);
 
         try {
-            $this->mediaService->replaceUserAvatar(
-                user: $user,
-                file: $request->file('avatar'),
-            );
+            $this->handleAvatarUpload($user, $request->file('avatar'));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Avatar upload failed: '.$e->getMessage(), [
+            Log::error('Avatar upload failed: '.$e->getMessage(), [
                 'user_id' => $user->id,
                 'exception' => $e,
             ]);
@@ -314,8 +242,7 @@ class UserController extends Controller
      */
     public function deleteAvatar(Request $request): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
+        $user = $this->loadUser($request, withTrashed: true);
 
         if (! $user) {
             return back()->withErrors(['avatar' => 'User not found.']);
@@ -324,5 +251,139 @@ class UserController extends Controller
         $this->mediaService->deleteUserAvatar($user);
 
         return back()->with('success', 'Avatar deleted successfully.');
+    }
+
+    /**
+     * Get filters from request.
+     *
+     * @return array{search: string, status: string, role: string}
+     */
+    protected function getFilters(Request $request): array
+    {
+        return [
+            'search' => $request->input('search', ''),
+            'status' => $request->input('status', ''),
+            'role' => $request->input('role', ''),
+        ];
+    }
+
+    /**
+     * Get paginated users query with filters.
+     */
+    protected function getUsersQuery(array $filters, int $perPage): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return User::query()
+            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at'])
+            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
+            ->filter($filters)
+            ->orderBy('updated_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    /**
+     * Get paginated trashed users query with filters.
+     */
+    protected function getTrashedUsersQuery(array $filters, int $perPage): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return User::onlyTrashed()
+            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'deleted_at', 'updated_at'])
+            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
+            ->filter($filters)
+            ->orderBy('updated_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    /**
+     * Calculate user statistics.
+     *
+     * @return array{total: int, enabled: int, disabled: int, admins: int}
+     */
+    protected function calculateStats(): array
+    {
+        return [
+            'total' => User::query()->count(),
+            'enabled' => User::query()->where('status', 'enable')->count(),
+            'disabled' => User::query()->where('status', 'disable')->count(),
+            'admins' => User::query()->where('role', 'admin')->count(),
+        ];
+    }
+
+    /**
+     * Load user with avatar media relationship.
+     */
+    protected function loadUserWithAvatar(Request $request, bool $withTrashed = false): User
+    {
+        $query = $withTrashed ? User::withTrashed() : User::query();
+
+        return $query->select([
+            'id',
+            'name',
+            'email',
+            'role',
+            'status',
+            'avatar',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+        ])
+            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata', 'type', 'extension'])])
+            ->findOrFail($this->getUserIdFromRequest($request));
+    }
+
+    /**
+     * Load user without avatar media relationship.
+     */
+    protected function loadUser(Request $request, bool $withTrashed = false): ?User
+    {
+        $query = $withTrashed ? User::withTrashed() : User::query();
+
+        return $query->find($this->getUserIdFromRequest($request));
+    }
+
+    /**
+     * Load user or fail without avatar media relationship.
+     */
+    protected function loadUserOrFail(Request $request, bool $withTrashed = false): User
+    {
+        $query = $withTrashed ? User::withTrashed() : User::query();
+
+        return $query->findOrFail($this->getUserIdFromRequest($request));
+    }
+
+    /**
+     * Get the user ID from the request route parameter.
+     */
+    protected function getUserIdFromRequest(Request $request): int
+    {
+        $userParam = $request->route()->parameter('id')
+            ?? $request->route()->parameter('user');
+
+        return match (true) {
+            $userParam instanceof User => $userParam->id,
+            is_numeric($userParam) => (int) $userParam,
+            default => 0,
+        };
+    }
+
+    /**
+     * Handle avatar upload for a user.
+     */
+    protected function handleAvatarUpload(User $user, \Illuminate\Http\UploadedFile $file): void
+    {
+        try {
+            $this->mediaService->replaceUserAvatar(
+                user: $user,
+                file: $file,
+            );
+        } catch (\Exception $e) {
+            Log::error('Avatar upload failed: '.$e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+
+            throw $e;
+        }
     }
 }

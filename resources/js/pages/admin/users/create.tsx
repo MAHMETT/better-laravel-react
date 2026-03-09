@@ -1,4 +1,6 @@
+import { AvatarUploader } from '@/components/avatar';
 import InputError from '@/components/input-error';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -16,12 +18,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useInitials } from '@/hooks';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, CreateUserFormData } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    CameraIcon,
     CheckIcon,
     ChessKingIcon,
     LoaderCircleIcon,
@@ -48,9 +52,15 @@ interface CreateUserPageState {
     formData: CreateUserFormData;
     validationErrors: Record<string, string>;
     processing: boolean;
+    showAvatarModal: boolean;
+    selectedAvatarFile: File | null;
+    selectedAvatarPreview: string | null;
     setFormData: (formData: CreateUserFormData) => void;
     setValidationErrors: (validationErrors: Record<string, string>) => void;
     setProcessing: (processing: boolean) => void;
+    setShowAvatarModal: (showAvatarModal: boolean) => void;
+    setSelectedAvatarFile: (file: File | null) => void;
+    setSelectedAvatarPreview: (url: string | null) => void;
     reset: () => void;
 }
 
@@ -67,6 +77,9 @@ const useCreateUserPageStore = create<CreateUserPageState>((set) => ({
     formData: { ...initialFormData },
     validationErrors: {},
     processing: false,
+    showAvatarModal: false,
+    selectedAvatarFile: null,
+    selectedAvatarPreview: null,
     setFormData: (formData) => {
         set({ formData });
     },
@@ -76,11 +89,23 @@ const useCreateUserPageStore = create<CreateUserPageState>((set) => ({
     setProcessing: (processing) => {
         set({ processing });
     },
+    setShowAvatarModal: (showAvatarModal) => {
+        set({ showAvatarModal });
+    },
+    setSelectedAvatarFile: (selectedAvatarFile) => {
+        set({ selectedAvatarFile });
+    },
+    setSelectedAvatarPreview: (selectedAvatarPreview) => {
+        set({ selectedAvatarPreview });
+    },
     reset: () => {
         set({
             formData: { ...initialFormData },
             validationErrors: {},
             processing: false,
+            showAvatarModal: false,
+            selectedAvatarFile: null,
+            selectedAvatarPreview: null,
         });
     },
 }));
@@ -91,6 +116,15 @@ export default function CreateUser() {
         (state) => state.validationErrors,
     );
     const processing = useCreateUserPageStore((state) => state.processing);
+    const showAvatarModal = useCreateUserPageStore(
+        (state) => state.showAvatarModal,
+    );
+    const selectedAvatarFile = useCreateUserPageStore(
+        (state) => state.selectedAvatarFile,
+    );
+    const selectedAvatarPreview = useCreateUserPageStore(
+        (state) => state.selectedAvatarPreview,
+    );
     const setFormData = useCreateUserPageStore((state) => state.setFormData);
     const setValidationErrors = useCreateUserPageStore(
         (state) => state.setValidationErrors,
@@ -98,11 +132,45 @@ export default function CreateUser() {
     const setProcessing = useCreateUserPageStore(
         (state) => state.setProcessing,
     );
+    const setShowAvatarModal = useCreateUserPageStore(
+        (state) => state.setShowAvatarModal,
+    );
+    const setSelectedAvatarFile = useCreateUserPageStore(
+        (state) => state.setSelectedAvatarFile,
+    );
+    const setSelectedAvatarPreview = useCreateUserPageStore(
+        (state) => state.setSelectedAvatarPreview,
+    );
     const resetStore = useCreateUserPageStore((state) => state.reset);
+
+    const getInitials = useInitials();
 
     useEffect(() => {
         resetStore();
     }, [resetStore]);
+
+    // Cleanup preview URL on unmount
+    useEffect(() => {
+        return () => {
+            if (selectedAvatarPreview) {
+                URL.revokeObjectURL(selectedAvatarPreview);
+            }
+        };
+    }, [selectedAvatarPreview]);
+
+    const handleAvatarChange = (file: File) => {
+        // Revoke old URL if exists
+        if (selectedAvatarPreview) {
+            URL.revokeObjectURL(selectedAvatarPreview);
+        }
+
+        // Create preview URL and store file
+        const previewUrl = URL.createObjectURL(file);
+        setSelectedAvatarFile(file);
+        setSelectedAvatarPreview(previewUrl);
+        setShowAvatarModal(false);
+        toast.success('Avatar selected. Click "Create User" to complete.');
+    };
 
     const handleSubmit = (e: React.SyntheticEvent) => {
         e.preventDefault();
@@ -111,42 +179,30 @@ export default function CreateUser() {
         // Clear previous errors
         setValidationErrors({});
 
-        // Prepare data for submission
-        const dataToSubmit = {
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            password: formData.password,
-            password_confirmation: formData.password_confirmation,
-            role: formData.role || 'user',
-            status: formData.status || 'enable',
-        };
-
         // Simple client-side validation
         const errors: Record<string, string> = {};
 
         // Name validation
-        if (!dataToSubmit.name || dataToSubmit.name.length < 2) {
+        if (!formData.name || formData.name.length < 2) {
             errors.name = 'Name must be at least 2 characters';
         }
 
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!dataToSubmit.email || !emailRegex.test(dataToSubmit.email)) {
+        if (!formData.email || !emailRegex.test(formData.email)) {
             errors.email = 'Please enter a valid email address';
         }
 
-        // Password validation (only if provided)
-        if (dataToSubmit.password && dataToSubmit.password.length > 0) {
-            if (dataToSubmit.password.length < 8) {
-                errors.password = 'Password must be at least 8 characters';
-            }
-            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(dataToSubmit.password)) {
-                errors.password =
-                    'Password must contain uppercase, lowercase, and number';
-            }
-            if (dataToSubmit.password !== dataToSubmit.password_confirmation) {
-                errors.password_confirmation = 'Passwords must match';
-            }
+        // Password validation
+        if (!formData.password || formData.password.length < 8) {
+            errors.password = 'Password must be at least 8 characters';
+        }
+        if (formData.password && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+            errors.password =
+                'Password must contain uppercase, lowercase, and number';
+        }
+        if (formData.password !== formData.password_confirmation) {
+            errors.password_confirmation = 'Passwords must match';
         }
 
         // If there are errors, show them
@@ -160,12 +216,31 @@ export default function CreateUser() {
 
         const id = toast.loading('Creating user...');
 
-        router.post(users.store.url(), dataToSubmit, {
+        // Use FormData to support file upload
+        const formDataObj = new FormData();
+        formDataObj.append('name', formData.name.trim());
+        formDataObj.append('email', formData.email.trim());
+        formDataObj.append('password', formData.password);
+        formDataObj.append('password_confirmation', formData.password_confirmation);
+        formDataObj.append('role', formData.role || 'user');
+        formDataObj.append('status', formData.status || 'enable');
+
+        // Append avatar if selected
+        if (selectedAvatarFile) {
+            formDataObj.append('avatar', selectedAvatarFile);
+        }
+
+        router.post(users.store.url(), formDataObj, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('User created successfully', { id });
                 setFormData({ ...initialFormData });
                 setValidationErrors({});
+                setSelectedAvatarFile(null);
+                if (selectedAvatarPreview) {
+                    URL.revokeObjectURL(selectedAvatarPreview);
+                }
+                setSelectedAvatarPreview(null);
             },
             onError: (errors) => {
                 setValidationErrors(errors);
@@ -222,6 +297,39 @@ export default function CreateUser() {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="flex items-center gap-6">
+                                <Avatar className="size-24 overflow-hidden rounded-full">
+                                    <AvatarImage
+                                        src={selectedAvatarPreview || undefined}
+                                        alt={formData.name || 'New User'}
+                                    />
+                                    <AvatarFallback className="rounded-lg bg-neutral-200 text-3xl text-black dark:bg-neutral-700 dark:text-white">
+                                        {getInitials(formData.name || 'New User')}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">
+                                        {formData.name || 'New User'}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowAvatarModal(true);
+                                        }}
+                                    >
+                                        <CameraIcon className="mr-2 size-4" />
+                                        {selectedAvatarFile ? 'Change Picture' : 'Upload Picture'}
+                                    </Button>
+                                    {selectedAvatarFile && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {selectedAvatarFile.name}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {/* Name */}
                                 <div className="space-y-2">
@@ -413,6 +521,15 @@ export default function CreateUser() {
                     </CardContent>
                 </Card>
             </div>
+
+            <AvatarUploader
+                open={showAvatarModal}
+                onOpenChange={setShowAvatarModal}
+                userName={formData.name || 'New User'}
+                currentAvatar={selectedAvatarPreview}
+                onAvatarChange={handleAvatarChange}
+                canDelete={false}
+            />
         </AppLayout>
     );
 }
