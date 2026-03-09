@@ -50,8 +50,8 @@ export function DeleteAvatarDialog({
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent className="sm:max-w-md">
                 <AlertDialogHeader className="text-center">
-                    <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-                        <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+                        <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
                     </div>
                     <AlertDialogTitle className="text-lg font-semibold">
                         Delete Profile Picture?
@@ -66,7 +66,7 @@ export function DeleteAvatarDialog({
                 {currentAvatar && (
                     <div className="flex items-center justify-center py-4">
                         <div className="relative">
-                            <Avatar className="h-20 w-20 overflow-hidden rounded-full border-2 border-muted">
+                            <Avatar className="size-20 overflow-hidden rounded-full border-2 border-muted">
                                 <AvatarImage
                                     src={currentAvatar}
                                     alt={userName}
@@ -77,7 +77,7 @@ export function DeleteAvatarDialog({
                                 </AvatarFallback>
                             </Avatar>
                             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200">
-                                <Trash2 className="h-8 w-8 text-white" />
+                                <Trash2 className="size-8 text-white" />
                             </div>
                         </div>
                     </div>
@@ -108,7 +108,7 @@ export function DeleteAvatarDialog({
                         {isDeleting || isConfirming ? (
                             <>
                                 <svg
-                                    className="h-4 w-4 animate-spin"
+                                    className="size-4 animate-spin"
                                     xmlns="http://www.w3.org/2000/svg"
                                     fill="none"
                                     viewBox="0 0 24 24"
@@ -131,7 +131,7 @@ export function DeleteAvatarDialog({
                             </>
                         ) : (
                             <>
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="size-4" />
                                 Delete
                             </>
                         )}

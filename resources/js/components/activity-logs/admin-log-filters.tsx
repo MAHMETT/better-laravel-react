@@ -47,7 +47,7 @@ export function AdminLogFilters({
         <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Filter className="h-5 w-5 text-muted-foreground" />
+                    <Filter className="size-5 text-muted-foreground" />
                     <h3 className="text-lg font-semibold">
                         Filter Activity Logs
                     </h3>
@@ -75,7 +75,7 @@ export function AdminLogFilters({
                                 disabled={disabled}
                                 className="gap-2"
                             >
-                                <Users className="h-4 w-4" />
+                                <Users className="size-4" />
                                 Select Users
                             </Button>
                             {selectedUserCount > 0 && (
@@ -91,9 +91,9 @@ export function AdminLogFilters({
                                         size="sm"
                                         onClick={onClearUserFilter}
                                         disabled={disabled}
-                                        className="h-5 w-5 p-0 hover:bg-transparent"
+                                        className="size-5 p-0 hover:bg-transparent"
                                     >
-                                        <X className="h-3 w-3" />
+                                        <X className="size-3" />
                                     </Button>
                                 </Badge>
                             )}
@@ -202,7 +202,7 @@ export function AdminLogFilters({
                         disabled={disabled}
                         className="gap-2"
                     >
-                        <Filter className="h-4 w-4" />
+                        <Filter className="size-4" />
                         Apply Filters
                     </Button>
                     <Button
@@ -211,7 +211,7 @@ export function AdminLogFilters({
                         disabled={disabled || !hasActiveFilters}
                         className="gap-2"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="size-4" />
                         Clear All
                     </Button>
                 </div>

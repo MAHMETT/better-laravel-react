@@ -529,7 +529,7 @@ export function AvatarUploader({
                                     className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-200 hover:opacity-100"
                                     aria-label="Change profile picture"
                                 >
-                                    <Camera className="h-8 w-8 text-white" />
+                                    <Camera className="size-8 text-white" />
                                 </button>
                             )}
                         </div>
@@ -572,7 +572,7 @@ export function AvatarUploader({
                                     }}
                                 >
                                     <div className="rounded-full bg-muted p-3">
-                                        <Upload className="h-6 w-6 text-muted-foreground" />
+                                        <Upload className="size-6 text-muted-foreground" />
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium">

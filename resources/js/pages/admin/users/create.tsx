@@ -197,7 +197,10 @@ export default function CreateUser() {
         if (!formData.password || formData.password.length < 8) {
             errors.password = 'Password must be at least 8 characters';
         }
-        if (formData.password && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+        if (
+            formData.password &&
+            !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)
+        ) {
             errors.password =
                 'Password must contain uppercase, lowercase, and number';
         }
@@ -221,7 +224,10 @@ export default function CreateUser() {
         formDataObj.append('name', formData.name.trim());
         formDataObj.append('email', formData.email.trim());
         formDataObj.append('password', formData.password);
-        formDataObj.append('password_confirmation', formData.password_confirmation);
+        formDataObj.append(
+            'password_confirmation',
+            formData.password_confirmation,
+        );
         formDataObj.append('role', formData.role || 'user');
         formDataObj.append('status', formData.status || 'enable');
 
@@ -268,9 +274,9 @@ export default function CreateUser() {
                             variant="ghost"
                             size="icon"
                             onClick={handleCancel}
-                            className="h-10 w-10"
+                            className="size-10"
                         >
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="size-5" />
                         </Button>
                         <div>
                             <h1 className="text-2xl font-semibold">
@@ -287,7 +293,7 @@ export default function CreateUser() {
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <UserPlus className="h-5 w-5 text-muted-foreground" />
+                            <UserPlus className="size-5 text-muted-foreground" />
                             <CardTitle>User Information</CardTitle>
                         </div>
                         <CardDescription>
@@ -304,7 +310,9 @@ export default function CreateUser() {
                                         alt={formData.name || 'New User'}
                                     />
                                     <AvatarFallback className="rounded-lg bg-neutral-200 text-3xl text-black dark:bg-neutral-700 dark:text-white">
-                                        {getInitials(formData.name || 'New User')}
+                                        {getInitials(
+                                            formData.name || 'New User',
+                                        )}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -320,10 +328,12 @@ export default function CreateUser() {
                                         }}
                                     >
                                         <CameraIcon className="mr-2 size-4" />
-                                        {selectedAvatarFile ? 'Change Picture' : 'Upload Picture'}
+                                        {selectedAvatarFile
+                                            ? 'Change Picture'
+                                            : 'Upload Picture'}
                                     </Button>
                                     {selectedAvatarFile && (
-                                        <p className="text-xs text-muted-foreground mt-1">
+                                        <p className="mt-1 text-xs text-muted-foreground">
                                             {selectedAvatarFile.name}
                                         </p>
                                     )}

@@ -24,8 +24,8 @@ import type {
 import { Head, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Power, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
-import { create } from 'zustand';
 import { toast } from 'sonner';
+import { create } from 'zustand';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -393,7 +393,7 @@ export default function UsersIndex({
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-primary p-2">
-                            <Users className="h-6 w-6 text-primary-foreground" />
+                            <Users className="size-6 text-primary-foreground" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold">
@@ -501,7 +501,7 @@ export default function UsersIndex({
                                     >
                                         <td className="p-4 align-middle">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-9 w-9">
+                                                <Avatar className="size-9">
                                                     <AvatarImage
                                                         src={
                                                             user.avatar_url ??
@@ -565,7 +565,7 @@ export default function UsersIndex({
                                                     onClick={() => {
                                                         handleView(user);
                                                     }}
-                                                    className="h-8 w-8"
+                                                    className="size-8"
                                                 >
                                                     <Eye className="size-4" />
                                                 </Button>
@@ -575,7 +575,7 @@ export default function UsersIndex({
                                                     onClick={() => {
                                                         handleEdit(user);
                                                     }}
-                                                    className="h-8 w-8"
+                                                    className="size-8"
                                                 >
                                                     <Pencil className="size-4" />
                                                 </Button>
@@ -587,7 +587,7 @@ export default function UsersIndex({
                                                             user,
                                                         );
                                                     }}
-                                                    className="h-8 w-8"
+                                                    className="size-8"
                                                 >
                                                     <Power className="size-4" />
                                                 </Button>
@@ -597,7 +597,7 @@ export default function UsersIndex({
                                                     onClick={() => {
                                                         handleDelete(user);
                                                     }}
-                                                    className="h-8 w-8 text-red-500 hover:text-red-600"
+                                                    className="size-8 text-red-500 hover:text-red-600"
                                                 >
                                                     <Trash2 className="size-4" />
                                                 </Button>

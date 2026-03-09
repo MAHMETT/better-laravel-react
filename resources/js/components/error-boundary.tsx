@@ -1,5 +1,3 @@
-import type { ErrorInfo, ReactNode } from 'react';
-import { Component } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -9,6 +7,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import type { ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
 
 interface Props {
     children: ReactNode;
@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <div className="flex min-h-screen items-center justify-center bg-background p-4">
                     <Card className="w-full max-w-md">
                         <CardHeader className="text-center">
-                            <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
+                            <AlertCircle className="mx-auto size-12 text-destructive" />
                             <CardTitle className="mt-4">
                                 Something went wrong
                             </CardTitle>

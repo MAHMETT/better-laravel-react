@@ -59,14 +59,14 @@ export const NavFooter = memo(function NavFooter({
                                             rel="noopener noreferrer"
                                         >
                                             {item.icon && (
-                                                <item.icon className="h-5 w-5" />
+                                                <item.icon className="size-5" />
                                             )}
                                             <span>{item.title}</span>
                                         </a>
                                     ) : (
                                         <Link href={href} prefetch>
                                             {item.icon && (
-                                                <item.icon className="h-5 w-5" />
+                                                <item.icon className="size-5" />
                                             )}
                                             <span>{item.title}</span>
                                         </Link>

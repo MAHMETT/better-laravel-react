@@ -138,8 +138,8 @@ export function UserFilterModal({
             <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden p-0">
                 <DialogHeader className="border-b bg-muted/30 px-6 py-5">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                            <Users className="h-5 w-5" />
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                            <Users className="size-5" />
                         </div>
                         <div>
                             <DialogTitle className="text-xl">
@@ -160,7 +160,7 @@ export function UserFilterModal({
                                 htmlFor="user-search"
                                 className="mb-2 flex items-center gap-2 text-sm font-medium"
                             >
-                                <Search className="h-4 w-4 text-muted-foreground" />
+                                <Search className="size-4 text-muted-foreground" />
                                 Search User
                             </Label>
                             <Input
@@ -248,7 +248,7 @@ export function UserFilterModal({
                                 disabled={visibleUserIds.length === 0}
                                 className="gap-2"
                             >
-                                <UserCheck className="h-4 w-4" />
+                                <UserCheck className="size-4" />
                                 {areAllVisibleUsersSelected
                                     ? 'Unselect Visible'
                                     : 'Select Visible'}
@@ -261,7 +261,7 @@ export function UserFilterModal({
                                 disabled={selectedCount === 0}
                                 className="gap-2"
                             >
-                                <X className="h-4 w-4" />
+                                <X className="size-4" />
                                 Clear Selection
                             </Button>
                         </div>
@@ -269,7 +269,7 @@ export function UserFilterModal({
                             variant="default"
                             className="gap-2 bg-primary/10 text-primary hover:bg-primary/20"
                         >
-                            <Check className="h-4 w-4" />
+                            <Check className="size-4" />
                             {selectedCount} selected
                         </Badge>
                     </div>
@@ -298,9 +298,9 @@ export function UserFilterModal({
                                                         selectedUser.id,
                                                     );
                                                 }}
-                                                className="ml-1 h-4 w-4 p-0 hover:bg-transparent"
+                                                className="ml-1 size-4 p-0 hover:bg-transparent"
                                             >
-                                                <X className="h-3 w-3" />
+                                                <X className="size-3" />
                                             </Button>
                                         </Badge>
                                     ))}
@@ -331,7 +331,7 @@ export function UserFilterModal({
 
                             {!isLoading && users.length === 0 && (
                                 <div className="flex h-32 flex-col items-center justify-center text-center">
-                                    <Search className="mb-2 h-8 w-8 text-muted-foreground" />
+                                    <Search className="mb-2 size-8 text-muted-foreground" />
                                     <p className="text-sm text-muted-foreground">
                                         No users match your search
                                     </p>
@@ -394,13 +394,13 @@ export function UserFilterModal({
                                                 </Badge>
                                             </div>
                                             <p className="mt-1 truncate text-sm text-muted-foreground">
-                                                <MailIcon className="mr-2 inline-block h-4 w-4" />
+                                                <MailIcon className="mr-2 inline-block size-4" />
                                                 {user.email}
                                             </p>
                                         </div>
                                         {isSelected && (
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                                <Check className="h-4 w-4" />
+                                            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                                <Check className="size-4" />
                                             </div>
                                         )}
                                     </label>
@@ -419,7 +419,7 @@ export function UserFilterModal({
                                 className="w-full gap-2"
                             >
                                 {isLoading && (
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                                 )}
                                 {isLoading
                                     ? 'Loading more users...'
@@ -436,7 +436,7 @@ export function UserFilterModal({
                         onClick={onCancel}
                         className="gap-2"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="size-4" />
                         Cancel
                     </Button>
                     <Button
@@ -445,7 +445,7 @@ export function UserFilterModal({
                         disabled={selectedCount === 0}
                         className="gap-2"
                     >
-                        <Check className="h-4 w-4" />
+                        <Check className="size-4" />
                         Apply Filter {selectedCount > 0 && `(${selectedCount})`}
                     </Button>
                 </DialogFooter>

@@ -275,9 +275,9 @@ export default function ShowUser({ user }: Props) {
                             variant="ghost"
                             size="icon"
                             onClick={handleBack}
-                            className="h-10 w-10"
+                            className="size-10"
                         >
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="size-5" />
                         </Button>
                         <div>
                             <h1 className="text-2xl font-semibold">
@@ -332,7 +332,7 @@ export default function ShowUser({ user }: Props) {
                     <CardHeader className="pb-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <Avatar className="h-20 w-20">
+                                <Avatar className="size-20">
                                     <AvatarImage
                                         src={
                                             user.avatar_original_url ??
@@ -386,7 +386,7 @@ export default function ShowUser({ user }: Props) {
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-base">
-                                <IdCard className="h-4 w-4" />
+                                <IdCard className="size-4" />
                                 Account Information
                             </CardTitle>
                         </CardHeader>
@@ -449,7 +449,7 @@ export default function ShowUser({ user }: Props) {
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-base">
-                                <Shield className="h-4 w-4" />
+                                <Shield className="size-4" />
                                 System Information
                             </CardTitle>
                         </CardHeader>

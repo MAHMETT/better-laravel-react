@@ -364,12 +364,12 @@ export default function UsersTrashed({
                             variant="ghost"
                             size="icon"
                             onClick={handleBack}
-                            className="h-10 w-10"
+                            className="size-10"
                         >
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="size-5" />
                         </Button>
                         <div className="rounded-lg bg-red-100 p-2 dark:bg-red-900">
-                            <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
+                            <Trash2 className="size-6 text-red-600 dark:text-red-400" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold">
@@ -438,7 +438,7 @@ export default function UsersTrashed({
                                     >
                                         <td className="p-4 align-middle">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-9 w-9">
+                                                <Avatar className="size-9">
                                                     <AvatarImage
                                                         src={
                                                             user.avatar_url ??
@@ -504,7 +504,7 @@ export default function UsersTrashed({
                                                     onClick={() => {
                                                         handleView(user);
                                                     }}
-                                                    className="h-8 w-8"
+                                                    className="size-8"
                                                 >
                                                     <Eye className="size-4" />
                                                 </Button>
@@ -514,7 +514,7 @@ export default function UsersTrashed({
                                                     onClick={() => {
                                                         handleRestore(user);
                                                     }}
-                                                    className="h-8 w-8 text-green-500 hover:text-green-600"
+                                                    className="size-8 text-green-500 hover:text-green-600"
                                                 >
                                                     <RefreshCw className="size-4" />
                                                 </Button>
@@ -524,7 +524,7 @@ export default function UsersTrashed({
                                                     onClick={() => {
                                                         handleForceDelete(user);
                                                     }}
-                                                    className="h-8 w-8 text-red-500 hover:text-red-600"
+                                                    className="size-8 text-red-500 hover:text-red-600"
                                                 >
                                                     <Trash2 className="size-4" />
                                                 </Button>

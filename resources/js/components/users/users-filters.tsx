@@ -140,7 +140,7 @@ export function UsersFilters({
                         variant="ghost"
                         size="icon"
                         onClick={onClearFilters}
-                        className="h-9 w-9"
+                        className="size-9"
                         disabled={disabled}
                     >
                         <X className="size-4" />
