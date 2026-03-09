@@ -110,7 +110,8 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            if ($user->status !== 'enable') {
+            $status = $user->status instanceof \App\Enums\UserStatus ? $user->status->value : $user->status;
+            if ($status !== 'enable') {
                 return null;
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserStatus;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +35,8 @@ class EnsureUserRoleIs
         }
 
         // Check if user is disabled
-        if ($user->status === 'disable') {
+        $status = $user->status instanceof UserStatus ? $user->status->value : $user->status;
+        if ($status === 'disable') {
             $request->attributes->set('auth_forced_logout', true);
             Auth::logout();
             $request->session()->invalidate();

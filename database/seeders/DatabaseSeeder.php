@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user
+        // Create admin user (always created for testing)
         User::factory()->admin()->enabled()->create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
@@ -25,5 +25,10 @@ class DatabaseSeeder extends Seeder
 
         // Create some disabled users for testing
         User::factory(3)->disabled()->create();
+
+        $this->command->info('✅ Database seeded!');
+        $this->command->info('Admin credentials:');
+        $this->command->info('  Email: admin@example.com');
+        $this->command->info('  Password: password');
     }
 }

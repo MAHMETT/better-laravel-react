@@ -48,14 +48,23 @@ interface EditUserPageState {
     showPasswordFields: boolean;
     isUploadingAvatar: boolean;
     showAvatarModal: boolean;
-    setFormData: (formData: EditUserFormData) => void;
+    setField: <K extends keyof EditUserFormData>(key: K, value: EditUserFormData[K]) => void;
     setValidationErrors: (validationErrors: Record<string, string>) => void;
     setProcessing: (processing: boolean) => void;
     setShowPasswordFields: (showPasswordFields: boolean) => void;
     setIsUploadingAvatar: (isUploadingAvatar: boolean) => void;
     setShowAvatarModal: (showAvatarModal: boolean) => void;
-    initialize: (formData: EditUserFormData) => void;
+    reset: (user: User) => void;
 }
+
+const getDefaultFormData = (user: User): EditUserFormData => ({
+    name: user.name,
+    email: user.email,
+    password: '',
+    password_confirmation: '',
+    role: user.role ?? 'user',
+    status: user.status ?? 'enable',
+});
 
 const useEditUserPageStore = create<EditUserPageState>((set) => ({
     formData: {
@@ -71,9 +80,10 @@ const useEditUserPageStore = create<EditUserPageState>((set) => ({
     showPasswordFields: false,
     isUploadingAvatar: false,
     showAvatarModal: false,
-    setFormData: (formData) => {
-        set({ formData });
-    },
+    setField: (key, value) =>
+        set((state) => ({
+            formData: { ...state.formData, [key]: value },
+        })),
     setValidationErrors: (validationErrors) => {
         set({ validationErrors });
     },
@@ -89,9 +99,9 @@ const useEditUserPageStore = create<EditUserPageState>((set) => ({
     setShowAvatarModal: (showAvatarModal) => {
         set({ showAvatarModal });
     },
-    initialize: (formData) => {
+    reset: (user) => {
         set({
-            formData,
+            formData: getDefaultFormData(user),
             validationErrors: {},
             processing: false,
             showPasswordFields: false,
@@ -131,7 +141,7 @@ export default function EditUser({ user }: Props) {
     const showAvatarModal = useEditUserPageStore(
         (state) => state.showAvatarModal,
     );
-    const setFormData = useEditUserPageStore((state) => state.setFormData);
+    const setField = useEditUserPageStore((state) => state.setField);
     const setValidationErrors = useEditUserPageStore(
         (state) => state.setValidationErrors,
     );
@@ -145,18 +155,12 @@ export default function EditUser({ user }: Props) {
     const setShowAvatarModal = useEditUserPageStore(
         (state) => state.setShowAvatarModal,
     );
-    const initialize = useEditUserPageStore((state) => state.initialize);
+    const reset = useEditUserPageStore((state) => state.reset);
 
+    // Reset form when user changes (handles Inertia navigation)
     useEffect(() => {
-        initialize({
-            name: user.name,
-            email: user.email,
-            password: '',
-            password_confirmation: '',
-            role: user.role,
-            status: user.status,
-        });
-    }, [initialize, user.email, user.name, user.role, user.status]);
+        reset(user);
+    }, [user.id, reset, user]);
 
     useEffect(() => {
         if (flash?.success) {
@@ -289,11 +293,8 @@ export default function EditUser({ user }: Props) {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('User updated successfully', { id: toastId });
-                setFormData({
-                    ...formData,
-                    password: '',
-                    password_confirmation: '',
-                });
+                setField('password', '');
+                setField('password_confirmation', '');
                 setValidationErrors({});
                 setShowPasswordFields(false);
             },
@@ -387,10 +388,7 @@ export default function EditUser({ user }: Props) {
                                         id="name"
                                         value={formData.name}
                                         onChange={(e) => {
-                                            setFormData({
-                                                ...formData,
-                                                name: e.target.value,
-                                            });
+                                            setField('name', e.target.value);
                                         }}
                                         placeholder="John Doe"
                                         autoFocus
@@ -407,10 +405,7 @@ export default function EditUser({ user }: Props) {
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => {
-                                            setFormData({
-                                                ...formData,
-                                                email: e.target.value,
-                                            });
+                                            setField('email', e.target.value);
                                         }}
                                         placeholder="john@example.com"
                                     />
@@ -455,10 +450,7 @@ export default function EditUser({ user }: Props) {
                                             type="password"
                                             value={formData.password}
                                             onChange={(e) => {
-                                                setFormData({
-                                                    ...formData,
-                                                    password: e.target.value,
-                                                });
+                                                setField('password', e.target.value);
                                             }}
                                             placeholder="Leave blank to keep current"
                                         />
@@ -485,11 +477,7 @@ export default function EditUser({ user }: Props) {
                                                 formData.password_confirmation
                                             }
                                             onChange={(e) => {
-                                                setFormData({
-                                                    ...formData,
-                                                    password_confirmation:
-                                                        e.target.value,
-                                                });
+                                                setField('password_confirmation', e.target.value);
                                             }}
                                             placeholder="Confirm new password"
                                         />
@@ -507,11 +495,8 @@ export default function EditUser({ user }: Props) {
                                             size="sm"
                                             onClick={() => {
                                                 setShowPasswordFields(false);
-                                                setFormData({
-                                                    ...formData,
-                                                    password: '',
-                                                    password_confirmation: '',
-                                                });
+                                                setField('password', '');
+                                                setField('password_confirmation', '');
                                             }}
                                         >
                                             Cancel Password Change
@@ -525,13 +510,8 @@ export default function EditUser({ user }: Props) {
                                     <Label htmlFor="role">Role</Label>
                                     <Select
                                         value={formData.role}
-                                        onValueChange={(
-                                            v: 'admin' | 'user',
-                                        ) => {
-                                            setFormData({
-                                                ...formData,
-                                                role: v,
-                                            });
+                                        onValueChange={(v: 'admin' | 'user') => {
+                                            setField('role', v);
                                         }}
                                     >
                                         <SelectTrigger>
@@ -557,13 +537,8 @@ export default function EditUser({ user }: Props) {
                                     <Label htmlFor="status">Status</Label>
                                     <Select
                                         value={formData.status}
-                                        onValueChange={(
-                                            v: 'enable' | 'disable',
-                                        ) => {
-                                            setFormData({
-                                                ...formData,
-                                                status: v,
-                                            });
+                                        onValueChange={(v: 'enable' | 'disable') => {
+                                            setField('status', v);
                                         }}
                                     >
                                         <SelectTrigger>

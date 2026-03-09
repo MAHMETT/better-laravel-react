@@ -180,10 +180,14 @@ class MediaService
     {
         DB::transaction(function () use ($user) {
             /** @var User $lockedUser */
-            $lockedUser = User::query()
+            $lockedUser = User::withTrashed()
                 ->whereKey($user->id)
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
+
+            if (! $lockedUser) {
+                return;
+            }
 
             $avatarMedia = Media::query()
                 ->where('uploaded_by', $lockedUser->id)
@@ -197,7 +201,7 @@ class MediaService
 
             if ($lockedUser->avatar !== null) {
                 $lockedUser->avatar = null;
-                $lockedUser->save();
+                $lockedUser->saveQuietly();
             }
         });
     }
@@ -277,7 +281,7 @@ class MediaService
         // For avatar uploads, validate image dimensions
         if ($options->collection === 'avatars' && str_starts_with($file->getMimeType(), 'image/')) {
             $imageSize = getimagesize($file->getRealPath());
-            
+
             if ($imageSize === false) {
                 throw new \InvalidArgumentException('Unable to read image dimensions. File may be corrupted.');
             }
