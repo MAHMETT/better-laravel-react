@@ -4,12 +4,11 @@ namespace App\Concerns;
 
 use App\Models\User;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\ImageFile;
 
 trait ProfileValidationRules
 {
     /**
-     * Get the validation rules used to validate user profiles.
+     * Get the validation rules that apply to the user's profile.
      *
      * @return array<string, array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>>
      */
@@ -23,7 +22,7 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user names.
+     * Get the validation rules that apply to the user's name.
      *
      * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
      */
@@ -33,7 +32,7 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user emails.
+     * Get the validation rules that apply to the user's email.
      *
      * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
      */
@@ -50,14 +49,19 @@ trait ProfileValidationRules
         ];
     }
 
+    /**
+     * Get the validation rules that apply to the user's avatar.
+     *
+     * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
+     */
     protected function avatarRules(): array
     {
         return [
             'nullable',
-            ImageFile::defaults()
-                ->types('jpeg,png,gif,webp')
-                ->max(5120) // 5MB
-                ->min(10), // 10KB
+            'image',
+            'mimes:jpeg,png,gif,webp',
+            'max:5120', // 5MB in KB
+            Rule::dimensions()->minWidth(100)->minHeight(100)->maxWidth(4096)->maxHeight(4096),
         ];
     }
 }

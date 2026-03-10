@@ -1,4 +1,3 @@
-// Credit: https://usehooks-ts.com/
 import { useCallback, useMemo } from 'react';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';

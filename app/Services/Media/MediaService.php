@@ -180,10 +180,14 @@ class MediaService
     {
         DB::transaction(function () use ($user) {
             /** @var User $lockedUser */
-            $lockedUser = User::query()
+            $lockedUser = User::withTrashed()
                 ->whereKey($user->id)
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
+
+            if (! $lockedUser) {
+                return;
+            }
 
             $avatarMedia = Media::query()
                 ->where('uploaded_by', $lockedUser->id)
@@ -197,7 +201,7 @@ class MediaService
 
             if ($lockedUser->avatar !== null) {
                 $lockedUser->avatar = null;
-                $lockedUser->save();
+                $lockedUser->saveQuietly();
             }
         });
     }
@@ -263,12 +267,38 @@ class MediaService
     {
         $allowed = $options->allowedMimes ?: $this->globalAllowedMimes;
         if (! in_array($file->getMimeType(), $allowed)) {
-            throw new \InvalidArgumentException("File type not allowed: {$file->getMimeType()}");
+            $allowedTypes = implode(', ', array_map(fn ($type) => strtoupper(str_replace('image/', '', $type)), $allowed));
+            throw new \InvalidArgumentException("File type not allowed: {$file->getMimeType()}. Allowed types: {$allowedTypes}");
         }
 
         $maxSize = $options->maxSize ?? $this->globalMaxSize;
         if ($file->getSize() > $maxSize) {
-            throw new \InvalidArgumentException('File size exceeds maximum allowed ('.($maxSize / 1024 / 1024).'MB)');
+            $maxSizeMB = $maxSize / 1024 / 1024;
+            $currentSizeMB = $file->getSize() / 1024 / 1024;
+            throw new \InvalidArgumentException("File size exceeds maximum allowed ({$maxSizeMB}MB). Current: {$currentSizeMB}MB");
+        }
+
+        // For avatar uploads, validate image dimensions
+        if ($options->collection === 'avatars' && str_starts_with($file->getMimeType(), 'image/')) {
+            $imageSize = getimagesize($file->getRealPath());
+
+            if ($imageSize === false) {
+                throw new \InvalidArgumentException('Unable to read image dimensions. File may be corrupted.');
+            }
+
+            $width = $imageSize[0];
+            $height = $imageSize[1];
+
+            $minDimension = 100;
+            $maxDimension = 4096;
+
+            if ($width < $minDimension || $height < $minDimension) {
+                throw new \InvalidArgumentException("Image dimensions too small: {$width}x{$height}px. Minimum required: {$minDimension}x{$minDimension}px");
+            }
+
+            if ($width > $maxDimension || $height > $maxDimension) {
+                throw new \InvalidArgumentException("Image dimensions too large: {$width}x{$height}px. Maximum allowed: {$maxDimension}x{$maxDimension}px");
+            }
         }
     }
 

@@ -43,5 +43,5 @@ export interface SelfUserLogFilters {
     per_page: number;
 }
 
-export * from './visitor-analytics';
+// Use visitor-management types for visitor analytics (analytics-visitor branch)
 export * from './visitor-management';

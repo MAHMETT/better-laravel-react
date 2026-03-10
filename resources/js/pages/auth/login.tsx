@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,20 @@ export default function Login({
         return data;
     };
 
+    const handleFormSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+        const formData = new FormData(e.currentTarget);
+        const data = handleSubmit(formData);
+        
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formData.set(key, value.toString());
+            }
+        });
+
+        // Return formData for Inertia
+        return formData;
+    };
+
     return (
         <AuthLayout
             title="Log in to your account"
@@ -83,18 +98,28 @@ export default function Login({
             <Head title="Log in" />
 
             <Form
-                {...store.form()}
+                method="post"
+                action={store()}
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
-                onSubmit={(e) => {
-                    const formData = new FormData(e.currentTarget);
-                    const data = handleSubmit(formData);
-                    Object.entries(data).forEach(([key, value]) => {
-                        if (value !== undefined) {
-                            formData.set(key, value.toString());
-                        }
-                    });
-                    return formData;
+                onSubmit={handleFormSubmit}
+                onError={(errors) => {
+                    console.error('Login errors:', errors);
+                    if (Object.keys(errors).length > 0) {
+                        const errorMessages = Object.values(errors);
+                        errorMessages.forEach((error) => {
+                            toast.error('Login Failed', {
+                                description: error,
+                                duration: 8000,
+                            });
+                        });
+                    } else {
+                        toast.error('Login Failed', {
+                            description: 'These credentials do not match our records.',
+                            duration: 8000,
+                        });
+                    }
+                    return errors;
                 }}
             >
                 {({ processing, errors }) => (

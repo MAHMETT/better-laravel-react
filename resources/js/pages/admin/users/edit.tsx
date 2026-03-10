@@ -1,5 +1,6 @@
-import { PhotoUploadModal } from '@/components/avatar';
+import { AvatarUploader } from '@/components/avatar';
 import InputError from '@/components/input-error';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -17,11 +18,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useInitials } from '@/hooks';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, EditUserFormData, User } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, LoaderCircleIcon, UserCog } from 'lucide-react';
+import {
+    ArrowLeft,
+    CameraIcon,
+    CheckIcon,
+    ChessKingIcon,
+    LoaderCircleIcon,
+    UserCog,
+    UserIcon,
+    XIcon,
+} from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { create } from 'zustand';
@@ -37,14 +48,26 @@ interface EditUserPageState {
     showPasswordFields: boolean;
     isUploadingAvatar: boolean;
     showAvatarModal: boolean;
-    setFormData: (formData: EditUserFormData) => void;
+    setField: <K extends keyof EditUserFormData>(
+        key: K,
+        value: EditUserFormData[K],
+    ) => void;
     setValidationErrors: (validationErrors: Record<string, string>) => void;
     setProcessing: (processing: boolean) => void;
     setShowPasswordFields: (showPasswordFields: boolean) => void;
     setIsUploadingAvatar: (isUploadingAvatar: boolean) => void;
     setShowAvatarModal: (showAvatarModal: boolean) => void;
-    initialize: (formData: EditUserFormData) => void;
+    reset: (user: User) => void;
 }
+
+const getDefaultFormData = (user: User): EditUserFormData => ({
+    name: user.name,
+    email: user.email,
+    password: '',
+    password_confirmation: '',
+    role: user.role ?? 'user',
+    status: user.status ?? 'enable',
+});
 
 const useEditUserPageStore = create<EditUserPageState>((set) => ({
     formData: {
@@ -60,9 +83,10 @@ const useEditUserPageStore = create<EditUserPageState>((set) => ({
     showPasswordFields: false,
     isUploadingAvatar: false,
     showAvatarModal: false,
-    setFormData: (formData) => {
-        set({ formData });
-    },
+    setField: (key, value) =>
+        set((state) => ({
+            formData: { ...state.formData, [key]: value },
+        })),
     setValidationErrors: (validationErrors) => {
         set({ validationErrors });
     },
@@ -78,9 +102,9 @@ const useEditUserPageStore = create<EditUserPageState>((set) => ({
     setShowAvatarModal: (showAvatarModal) => {
         set({ showAvatarModal });
     },
-    initialize: (formData) => {
+    reset: (user) => {
         set({
-            formData,
+            formData: getDefaultFormData(user),
             validationErrors: {},
             processing: false,
             showPasswordFields: false,
@@ -120,7 +144,7 @@ export default function EditUser({ user }: Props) {
     const showAvatarModal = useEditUserPageStore(
         (state) => state.showAvatarModal,
     );
-    const setFormData = useEditUserPageStore((state) => state.setFormData);
+    const setField = useEditUserPageStore((state) => state.setField);
     const setValidationErrors = useEditUserPageStore(
         (state) => state.setValidationErrors,
     );
@@ -134,18 +158,12 @@ export default function EditUser({ user }: Props) {
     const setShowAvatarModal = useEditUserPageStore(
         (state) => state.setShowAvatarModal,
     );
-    const initialize = useEditUserPageStore((state) => state.initialize);
+    const reset = useEditUserPageStore((state) => state.reset);
 
+    // Reset form when user changes (handles Inertia navigation)
     useEffect(() => {
-        initialize({
-            name: user.name,
-            email: user.email,
-            password: '',
-            password_confirmation: '',
-            role: user.role,
-            status: user.status,
-        });
-    }, [initialize, user.email, user.name, user.role, user.status]);
+        reset(user);
+    }, [user.id, reset, user]);
 
     useEffect(() => {
         if (flash?.success) {
@@ -278,11 +296,8 @@ export default function EditUser({ user }: Props) {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('User updated successfully', { id: toastId });
-                setFormData({
-                    ...formData,
-                    password: '',
-                    password_confirmation: '',
-                });
+                setField('password', '');
+                setField('password_confirmation', '');
                 setValidationErrors({});
                 setShowPasswordFields(false);
             },
@@ -300,6 +315,8 @@ export default function EditUser({ user }: Props) {
         window.history.back();
     };
 
+    const getInitials = useInitials();
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit User" />
@@ -311,9 +328,9 @@ export default function EditUser({ user }: Props) {
                             variant="ghost"
                             size="icon"
                             onClick={handleCancel}
-                            className="h-10 w-10"
+                            className="size-10"
                         >
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="size-5" />
                         </Button>
                         <div>
                             <h1 className="text-2xl font-semibold">
@@ -329,7 +346,7 @@ export default function EditUser({ user }: Props) {
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <UserCog className="h-5 w-5 text-muted-foreground" />
+                            <UserCog className="size-5 text-muted-foreground" />
                             <CardTitle>User Information</CardTitle>
                         </div>
                         <CardDescription>
@@ -340,46 +357,30 @@ export default function EditUser({ user }: Props) {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="flex items-center gap-6">
-                                <div
-                                    className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full border-2 border-muted"
-                                    onClick={() => {
-                                        setShowAvatarModal(true);
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (
-                                            e.key === 'Enter' ||
-                                            e.key === ' '
-                                        ) {
-                                            setShowAvatarModal(true);
-                                        }
-                                    }}
-                                >
-                                    {user.avatar_url ? (
-                                        <img
-                                            src={user.avatar_url}
-                                            alt={user.name}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center bg-muted text-xl font-semibold">
-                                            {user.name.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <span className="text-xs text-white">
-                                            Change
-                                        </span>
-                                    </div>
-                                </div>
+                                <Avatar className="size-24 overflow-hidden rounded-full">
+                                    <AvatarImage
+                                        src={user.avatar_url}
+                                        alt={user.name}
+                                    />
+                                    <AvatarFallback className="rounded-lg bg-neutral-200 text-3xl text-black dark:bg-neutral-700 dark:text-white">
+                                        {getInitials(user.name)}
+                                    </AvatarFallback>
+                                </Avatar>
                                 <div>
                                     <p className="font-medium">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowAvatarModal(true);
+                                        }}
+                                    >
+                                        <CameraIcon className="mr-2 size-4" />
                                         {user.avatar_url
-                                            ? 'Click to change profile photo'
-                                            : 'No profile photo'}
-                                    </p>
+                                            ? 'Edit Picture'
+                                            : 'Upload Picture'}
+                                    </Button>
                                 </div>
                             </div>
 
@@ -390,10 +391,7 @@ export default function EditUser({ user }: Props) {
                                         id="name"
                                         value={formData.name}
                                         onChange={(e) => {
-                                            setFormData({
-                                                ...formData,
-                                                name: e.target.value,
-                                            });
+                                            setField('name', e.target.value);
                                         }}
                                         placeholder="John Doe"
                                         autoFocus
@@ -410,10 +408,7 @@ export default function EditUser({ user }: Props) {
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => {
-                                            setFormData({
-                                                ...formData,
-                                                email: e.target.value,
-                                            });
+                                            setField('email', e.target.value);
                                         }}
                                         placeholder="john@example.com"
                                     />
@@ -458,10 +453,10 @@ export default function EditUser({ user }: Props) {
                                             type="password"
                                             value={formData.password}
                                             onChange={(e) => {
-                                                setFormData({
-                                                    ...formData,
-                                                    password: e.target.value,
-                                                });
+                                                setField(
+                                                    'password',
+                                                    e.target.value,
+                                                );
                                             }}
                                             placeholder="Leave blank to keep current"
                                         />
@@ -488,11 +483,10 @@ export default function EditUser({ user }: Props) {
                                                 formData.password_confirmation
                                             }
                                             onChange={(e) => {
-                                                setFormData({
-                                                    ...formData,
-                                                    password_confirmation:
-                                                        e.target.value,
-                                                });
+                                                setField(
+                                                    'password_confirmation',
+                                                    e.target.value,
+                                                );
                                             }}
                                             placeholder="Confirm new password"
                                         />
@@ -510,11 +504,11 @@ export default function EditUser({ user }: Props) {
                                             size="sm"
                                             onClick={() => {
                                                 setShowPasswordFields(false);
-                                                setFormData({
-                                                    ...formData,
-                                                    password: '',
-                                                    password_confirmation: '',
-                                                });
+                                                setField('password', '');
+                                                setField(
+                                                    'password_confirmation',
+                                                    '',
+                                                );
                                             }}
                                         >
                                             Cancel Password Change
@@ -531,10 +525,7 @@ export default function EditUser({ user }: Props) {
                                         onValueChange={(
                                             v: 'admin' | 'user',
                                         ) => {
-                                            setFormData({
-                                                ...formData,
-                                                role: v,
-                                            });
+                                            setField('role', v);
                                         }}
                                     >
                                         <SelectTrigger>
@@ -542,9 +533,11 @@ export default function EditUser({ user }: Props) {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="user">
+                                                <UserIcon className="size-4" />
                                                 User
                                             </SelectItem>
                                             <SelectItem value="admin">
+                                                <ChessKingIcon className="size-4" />
                                                 Admin
                                             </SelectItem>
                                         </SelectContent>
@@ -561,10 +554,7 @@ export default function EditUser({ user }: Props) {
                                         onValueChange={(
                                             v: 'enable' | 'disable',
                                         ) => {
-                                            setFormData({
-                                                ...formData,
-                                                status: v,
-                                            });
+                                            setField('status', v);
                                         }}
                                     >
                                         <SelectTrigger>
@@ -572,9 +562,11 @@ export default function EditUser({ user }: Props) {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="enable">
+                                                <CheckIcon className="size-4" />
                                                 Enabled
                                             </SelectItem>
                                             <SelectItem value="disable">
+                                                <XIcon className="size-4" />
                                                 Disabled
                                             </SelectItem>
                                         </SelectContent>
@@ -617,17 +609,17 @@ export default function EditUser({ user }: Props) {
                     </CardContent>
                 </Card>
 
-                <PhotoUploadModal
+                <AvatarUploader
                     open={showAvatarModal}
                     onOpenChange={setShowAvatarModal}
                     currentAvatar={user.avatar_original_url ?? user.avatar_url}
                     userName={user.name}
-                    userId={user.id}
-                    onUpload={handleAvatarUpload}
-                    onDelete={handleAvatarDelete}
+                    onAvatarChange={handleAvatarUpload}
+                    onAvatarDelete={handleAvatarDelete}
                     canDelete={!!user.avatar_url}
                     isUploading={isUploadingAvatar}
                     isDeleting={isUploadingAvatar}
+                    canDownload={true}
                 />
             </div>
         </AppLayout>

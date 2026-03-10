@@ -28,6 +28,7 @@ class StoreUserRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::defaults()],
             'role' => ['sometimes', 'in:admin,user'],
             'status' => ['sometimes', 'in:enable,disable'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120'],
         ];
     }
 

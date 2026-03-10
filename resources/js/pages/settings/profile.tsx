@@ -1,21 +1,23 @@
-import { Transition } from '@headlessui/react';
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
-import { PhotoUploadModal } from '@/components/avatar';
+import { AvatarUploader } from '@/components/avatar';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { useInitials } from '@/hooks';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit, update } from '@/routes/profile';
 import { send } from '@/routes/verification';
+import { useProfileSettingsStore } from '@/stores/profile-settings';
 import type { BreadcrumbItem } from '@/types';
-import { Check, Camera } from 'lucide-react';
+import { Transition } from '@headlessui/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Camera, Check } from 'lucide-react';
 import { useEffect } from 'react';
-import { create } from 'zustand';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -25,28 +27,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface ProfilePageState {
-    showAvatarModal: boolean;
-    isUploading: boolean;
-    setShowAvatarModal: (showAvatarModal: boolean) => void;
-    setIsUploading: (isUploading: boolean) => void;
-    reset: () => void;
-}
-
-const useProfilePageStore = create<ProfilePageState>((set) => ({
-    showAvatarModal: false,
-    isUploading: false,
-    setShowAvatarModal: (showAvatarModal) => {
-        set({ showAvatarModal });
-    },
-    setIsUploading: (isUploading) => {
-        set({ isUploading });
-    },
-    reset: () => {
-        set({ showAvatarModal: false, isUploading: false });
-    },
-}));
-
 export default function Profile({
     mustVerifyEmail,
     status,
@@ -55,19 +35,15 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage().props;
-    const showAvatarModal = useProfilePageStore(
-        (state) => state.showAvatarModal,
-    );
-    const isUploading = useProfilePageStore((state) => state.isUploading);
-    const setShowAvatarModal = useProfilePageStore(
-        (state) => state.setShowAvatarModal,
-    );
-    const setIsUploading = useProfilePageStore((state) => state.setIsUploading);
-    const resetStore = useProfilePageStore((state) => state.reset);
+    const showAvatarModal = useProfileSettingsStore.use.showAvatarModal();
+    const isUploading = useProfileSettingsStore.use.isUploading();
+    const setShowAvatarModal =
+        useProfileSettingsStore.getState().setShowAvatarModal;
+    const setIsUploading = useProfileSettingsStore.getState().setIsUploading;
 
     useEffect(() => {
-        resetStore();
-    }, [resetStore]);
+        useProfileSettingsStore.getState().reset();
+    }, []);
 
     const handleAvatarUpload = (file: File) => {
         setIsUploading(true);
@@ -99,14 +75,14 @@ export default function Profile({
     };
 
     const currentAvatar =
-        auth.user.avatar ??
-        auth.user.avatar_thumbnail ??
-        auth.user.avatar_thumbnail_url;
+        auth.user.avatar ?? auth.user.avatar_thumbnail_url ?? undefined;
     const currentAvatarOriginal =
         auth.user.avatar_original ??
         auth.user.avatar_original_url ??
         currentAvatar ??
-        '';
+        undefined;
+
+    const getInitials = useInitials();
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -138,55 +114,17 @@ export default function Profile({
                                         <Label>Profile Picture</Label>
 
                                         <div className="flex items-start gap-6">
-                                            <div className="group relative">
-                                                <div
-                                                    className="h-24 w-24 cursor-pointer overflow-hidden rounded-full border-2 border-muted transition-colors group-hover:border-primary"
-                                                    onClick={() => {
-                                                        setShowAvatarModal(
-                                                            true,
-                                                        );
-                                                    }}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onKeyDown={(e) => {
-                                                        if (
-                                                            e.key === 'Enter' ||
-                                                            e.key === ' '
-                                                        ) {
-                                                            setShowAvatarModal(
-                                                                true,
-                                                            );
-                                                        }
-                                                    }}
-                                                >
-                                                    {currentAvatar ? (
-                                                        <img
-                                                            src={currentAvatar}
-                                                            alt={auth.user.name}
-                                                            className="h-full w-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="flex h-full w-full items-center justify-center bg-muted text-2xl font-semibold">
-                                                            {auth.user.name
-                                                                ?.charAt(0)
-                                                                .toUpperCase()}
-                                                        </div>
+                                            <Avatar className="size-24 overflow-hidden rounded-full">
+                                                <AvatarImage
+                                                    src={currentAvatar}
+                                                    alt={auth.user.name}
+                                                />
+                                                <AvatarFallback className="rounded-lg bg-neutral-200 text-3xl text-black dark:bg-neutral-700 dark:text-white">
+                                                    {getInitials(
+                                                        auth.user.name,
                                                     )}
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setShowAvatarModal(
-                                                            true,
-                                                        );
-                                                    }}
-                                                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                                                    aria-label="Change profile picture"
-                                                >
-                                                    <Camera className="h-6 w-6 text-white" />
-                                                </button>
-                                            </div>
+                                                </AvatarFallback>
+                                            </Avatar>
 
                                             <div className="flex flex-1 flex-col justify-center gap-2">
                                                 <div>
@@ -213,30 +151,9 @@ export default function Profile({
                                                     >
                                                         <Camera className="mr-2 size-4" />
                                                         {currentAvatar
-                                                            ? 'Change Picture'
+                                                            ? 'Edit Picture'
                                                             : 'Upload Picture'}
                                                     </Button>
-
-                                                    {currentAvatar && (
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                const link =
-                                                                    document.createElement(
-                                                                        'a',
-                                                                    );
-                                                                link.href =
-                                                                    currentAvatarOriginal;
-                                                                link.download =
-                                                                    'profile-picture';
-                                                                link.click();
-                                                            }}
-                                                        >
-                                                            Download
-                                                        </Button>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -354,13 +271,15 @@ export default function Profile({
 
                 <DeleteUser />
 
-                <PhotoUploadModal
+                <AvatarUploader
                     open={showAvatarModal}
                     onOpenChange={setShowAvatarModal}
                     currentAvatar={currentAvatarOriginal}
                     userName={auth.user.name}
-                    onUpload={handleAvatarUpload}
+                    onAvatarChange={handleAvatarUpload}
                     isUploading={isUploading}
+                    canDownload={true}
+                    canDelete={false}
                 />
             </SettingsLayout>
         </AppLayout>

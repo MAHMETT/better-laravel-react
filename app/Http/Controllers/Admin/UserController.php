@@ -6,48 +6,40 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
-use App\Services\Media\MediaService;
+use App\Queries\UserQuery;
+use App\Services\User\UserAvatarService;
+use App\Services\UserService;
+use App\Services\UserStatsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UserController extends Controller
 {
-    public function __construct(protected MediaService $mediaService) {}
+    public function __construct(
+        protected UserService $userService,
+        protected UserAvatarService $userAvatarService,
+        protected UserStatsService $userStatsService,
+        protected UserQuery $userQuery
+    ) {}
 
     /**
      * Display a listing of users.
      */
     public function index(Request $request): Response
     {
-        $filters = [
-            'search' => $request->input('search', ''),
-            'status' => $request->input('status', ''),
-            'role' => $request->input('role', ''),
-        ];
-        $perPage = (int) $request->input('per_page', 10);
+        $filters = $this->getFilters($request);
+        $perPage = $this->sanitizePerPage($request);
 
-        $users = User::query()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at'])
-            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
-            ->filter($filters)
-            ->orderBy('updated_at', 'desc')
-            ->paginate($perPage)
-            ->withQueryString();
-
-        $stats = [
-            'total' => User::query()->count(),
-            'enabled' => User::query()->where('status', 'enable')->count(),
-            'disabled' => User::query()->where('status', 'disable')->count(),
-            'admins' => User::query()->where('role', 'admin')->count(),
-        ];
+        $users = $this->userQuery->paginate($filters, $perPage);
+        $stats = $this->userStatsService->calculate();
 
         return Inertia::render('admin/users/index', [
             'users' => $users,
             'stats' => $stats,
-            'filters' => array_merge($filters, ['per_page' => $perPage]),
+            'filters' => [...$filters, 'per_page' => $perPage],
         ]);
     }
 
@@ -65,9 +57,20 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $validated['password'] = Hash::make($validated['password']);
+        $avatar = $request->file('avatar');
 
-        User::create($validated);
+        try {
+            $this->userService->create($validated, $avatar);
+        } catch (\Exception $e) {
+            Log::error('User creation failed', [
+                'exception' => [
+                    'message' => $e->getMessage(),
+                    'type' => get_class($e),
+                ],
+            ]);
+
+            return back()->withErrors(['general' => 'Failed to create user. Please try again.']);
+        }
 
         return redirect()
             ->route('users.index')
@@ -75,62 +78,11 @@ class UserController extends Controller
     }
 
     /**
-     * Get the user ID from the request route parameter.
+     * Display the specified user.
      */
-    private function getUserIdFromRequest(Request $request): int|string
+    public function show(User $user): Response
     {
-        $userParam = $request->route()->parameter('id')
-            ?? $request->route()->parameter('user');
-
-        if ($userParam === null) {
-            return 0;
-        }
-
-        if (is_numeric($userParam)) {
-            return (int) $userParam;
-        }
-
-        if (is_array($userParam) && isset($userParam['id'])) {
-            return $userParam['id'];
-        }
-
-        if ($userParam instanceof User) {
-            return $userParam->id;
-        }
-
-        return $userParam;
-    }
-
-    /**
-     * Find a user by ID with optional soft deletes.
-     */
-    private function findUser(int|string $userId, bool $withTrashed = false): ?User
-    {
-        return $withTrashed
-            ? User::withTrashed()->find($userId)
-            : User::find($userId);
-    }
-
-    /**
-     * Find a user by ID or fail with soft deletes.
-     */
-    private function findUserOrFail(int|string $userId, bool $withTrashed = false): User
-    {
-        return $withTrashed
-            ? User::withTrashed()->findOrFail($userId)
-            : User::findOrFail($userId);
-    }
-
-    /**
-     * Display the specified user (including soft-deleted).
-     */
-    public function show(Request $request): Response|RedirectResponse
-    {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = User::withTrashed()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at', 'deleted_at'])
-            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata', 'type', 'extension'])])
-            ->findOrFail($userId);
+        $user = $this->userQuery->findWithAvatarOrFail($user->id, withTrashed: true);
 
         return Inertia::render('admin/users/show', [
             'user' => $user,
@@ -140,12 +92,9 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified user.
      */
-    public function edit(Request $request): Response|RedirectResponse
+    public function edit(User $user): Response
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = User::withTrashed()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'created_at', 'updated_at', 'deleted_at'])
-            ->findOrFail($userId);
+        $user = $this->userQuery->findWithAvatarOrFail($user->id, withTrashed: true);
 
         return Inertia::render('admin/users/edit', [
             'user' => $user,
@@ -155,24 +104,11 @@ class UserController extends Controller
     /**
      * Update the specified user in storage.
      */
-    public function update(UpdateUserRequest $request): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
-        }
-
         $validated = $request->validated();
 
-        if (isset($validated['password']) && ! empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
-        $user->update($validated);
+        $this->userService->update($user, $validated);
 
         return redirect()
             ->route('users.index')
@@ -182,16 +118,16 @@ class UserController extends Controller
     /**
      * Soft delete the specified user.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
+        // Prevent admin from deleting themselves
+        if ($user->id === auth()->id()) {
+            return back()
+                ->withErrors(['general' => 'You cannot delete your own account. Please ask another administrator to delete your account.'])
+                ->with('error', 'Self-deletion not allowed');
         }
 
-        $user->delete();
+        $this->userService->delete($user);
 
         return redirect()
             ->route('users.index')
@@ -202,18 +138,9 @@ class UserController extends Controller
     /**
      * Toggle user status.
      */
-    public function toggleStatus(Request $request): RedirectResponse
+    public function toggleStatus(User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return to_route('users.index')->with('error', 'User not found.');
-        }
-
-        $user->update([
-            'status' => $user->status === 'enable' ? 'disable' : 'enable',
-        ]);
+        $this->userService->toggleStatus($user);
 
         return redirect()
             ->back()
@@ -223,11 +150,9 @@ class UserController extends Controller
     /**
      * Restore a soft-deleted user.
      */
-    public function restore(Request $request): RedirectResponse
+    public function restore(User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUserOrFail($userId, withTrashed: true);
-        $user->restore();
+        $this->userService->restore($user);
 
         return redirect()
             ->route('users.index')
@@ -237,13 +162,16 @@ class UserController extends Controller
     /**
      * Permanently delete a user.
      */
-    public function forceDelete(Request $request): RedirectResponse
+    public function forceDelete(User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUserOrFail($userId, withTrashed: true);
+        // Prevent admin from deleting themselves
+        if ($user->id === auth()->id()) {
+            return back()
+                ->withErrors(['general' => 'You cannot permanently delete your own account. Please ask another administrator.'])
+                ->with('error', 'Self-deletion not allowed');
+        }
 
-        // Force delete will trigger the UserObserver which handles avatar deletion
-        $user->forceDelete();
+        $this->userService->forceDelete($user);
 
         return redirect()
             ->route('users.trashed')
@@ -255,53 +183,30 @@ class UserController extends Controller
      */
     public function trashed(Request $request): Response
     {
-        $filters = [
-            'search' => $request->input('search', ''),
-            'status' => $request->input('status', ''),
-            'role' => $request->input('role', ''),
-        ];
-        $perPage = (int) $request->input('per_page', 10);
+        $filters = $this->getFilters($request);
+        $perPage = $this->sanitizePerPage($request);
 
-        $users = User::onlyTrashed()
-            ->select(['id', 'name', 'email', 'role', 'status', 'avatar', 'deleted_at', 'updated_at'])
-            ->with(['avatarMedia' => fn ($q) => $q->select(['id', 'path', 'disk', 'metadata'])])
-            ->filter($filters)
-            ->orderBy('updated_at', 'desc')
-            ->paginate($perPage)
-            ->withQueryString();
+        $users = $this->userQuery->paginateTrashed($filters, $perPage);
 
         return Inertia::render('admin/users/trashed', [
             'users' => $users,
-            'filters' => array_merge($filters, ['per_page' => $perPage]),
+            'filters' => [...$filters, 'per_page' => $perPage],
         ]);
     }
 
     /**
      * Update user avatar.
      */
-    public function updateAvatar(Request $request): RedirectResponse
+    public function updateAvatar(Request $request, User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return back()->withErrors(['avatar' => 'User not found.']);
-        }
-
         $request->validate([
             'avatar' => ['required', 'image', 'mimes:jpeg,png,gif,webp', 'max:5120', 'min:10'],
         ]);
 
         try {
-            $this->mediaService->replaceUserAvatar(
-                user: $user,
-                file: $request->file('avatar'),
-            );
+            $this->userAvatarService->uploadAvatar($user, $request->file('avatar'));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Avatar upload failed: '.$e->getMessage(), [
-                'user_id' => $user->id,
-                'exception' => $e,
-            ]);
+            $this->userAvatarService->logError($user, $e);
 
             return back()->withErrors(['avatar' => 'Failed to upload avatar. Please try again.']);
         }
@@ -312,17 +217,32 @@ class UserController extends Controller
     /**
      * Delete user avatar.
      */
-    public function deleteAvatar(Request $request): RedirectResponse
+    public function deleteAvatar(User $user): RedirectResponse
     {
-        $userId = $this->getUserIdFromRequest($request);
-        $user = $this->findUser($userId, withTrashed: true);
-
-        if (! $user) {
-            return back()->withErrors(['avatar' => 'User not found.']);
-        }
-
-        $this->mediaService->deleteUserAvatar($user);
+        $this->userAvatarService->deleteAvatar($user);
 
         return back()->with('success', 'Avatar deleted successfully.');
+    }
+
+    /**
+     * Get filters from request.
+     *
+     * @return array{search: string, status: string, role: string}
+     */
+    protected function getFilters(Request $request): array
+    {
+        return [
+            'search' => $request->input('search', ''),
+            'status' => $request->input('status', ''),
+            'role' => $request->input('role', ''),
+        ];
+    }
+
+    /**
+     * Sanitize pagination limit to prevent abuse.
+     */
+    protected function sanitizePerPage(Request $request): int
+    {
+        return min((int) $request->input('per_page', 10), 100);
     }
 }

@@ -1,17 +1,5 @@
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
-import { toast } from 'sonner';
-import { create } from 'zustand';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -20,83 +8,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
-interface LogoutDialogState {
-    showLogoutDialog: boolean;
-    isLoggingOut: boolean;
-    setShowLogoutDialog: (show: boolean) => void;
-    setIsLoggingOut: (loading: boolean) => void;
-    reset: () => void;
-}
-
-const useLogoutDialogStore = create<LogoutDialogState>((set) => ({
-    showLogoutDialog: false,
-    isLoggingOut: false,
-    setShowLogoutDialog: (showLogoutDialog) => {
-        set({ showLogoutDialog });
-    },
-    setIsLoggingOut: (isLoggingOut) => {
-        set({ isLoggingOut });
-    },
-    reset: () => {
-        set({ showLogoutDialog: false, isLoggingOut: false });
-    },
-}));
-
 interface Props {
     user: User;
+    onLogoutClick: () => void;
 }
 
-export function UserMenuContent({ user }: Props) {
+export function UserMenuContent({ user, onLogoutClick }: Props) {
     const cleanup = useMobileNavigation();
-    const showLogoutDialog = useLogoutDialogStore(
-        (state) => state.showLogoutDialog,
-    );
-    const isLoggingOut = useLogoutDialogStore((state) => state.isLoggingOut);
-    const setShowLogoutDialog = useLogoutDialogStore(
-        (state) => state.setShowLogoutDialog,
-    );
-    const setIsLoggingOut = useLogoutDialogStore(
-        (state) => state.setIsLoggingOut,
-    );
-    const resetStore = useLogoutDialogStore((state) => state.reset);
 
     const handleLogoutClick = () => {
-        setShowLogoutDialog(true);
-    };
-
-    const handleLogoutConfirm = async () => {
-        setShowLogoutDialog(false);
-        setIsLoggingOut(true);
-
-        cleanup();
-        router.flushAll();
-
-        try {
-            await new Promise<void>((resolve, reject) => {
-                router.visit(logout(), {
-                    method: 'post',
-                    onFinish: () => {
-                        resolve();
-                    },
-                    onError: (error) => {
-                        reject(error);
-                    },
-                });
-            });
-
-            toast.success('Logged out successfully');
-        } catch {
-            toast.error('Failed to logout. Please try again.');
-            setIsLoggingOut(false);
-        }
-    };
-
-    const handleLogoutCancel = () => {
-        resetStore();
+        onLogoutClick();
     };
 
     return (
@@ -132,35 +56,6 @@ export function UserMenuContent({ user }: Props) {
                     Log out
                 </button>
             </DropdownMenuItem>
-
-            <AlertDialog
-                open={showLogoutDialog}
-                onOpenChange={setShowLogoutDialog}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Logout Confirmation</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to logout? You will need to
-                            sign in again to access your account.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel
-                            disabled={isLoggingOut}
-                            onClick={handleLogoutCancel}
-                        >
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleLogoutConfirm}
-                            disabled={isLoggingOut}
-                        >
-                            {isLoggingOut ? 'Logging out...' : 'Logout'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </>
     );
 }

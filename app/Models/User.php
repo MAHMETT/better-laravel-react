@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -64,6 +65,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'status' => UserStatus::class,
         ];
     }
 
@@ -172,6 +174,10 @@ class User extends Authenticatable
      */
     public function getIsEnabledAttribute(): bool
     {
+        if ($this->status instanceof UserStatus) {
+            return $this->status === UserStatus::ENABLE;
+        }
+
         return $this->status === 'enable';
     }
 

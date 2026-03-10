@@ -6,6 +6,14 @@ export interface VisitorAnalyticsFilters {
     preset: AnalyticsPreset;
     granularity: ChartGranularity;
     per_page: number;
+    // Additional filters for visitor analytics
+    search?: string;
+    location?: string;
+    site?: string;
+    status?: string;
+    purpose?: string;
+    time_range?: string;
+    chart_mode?: string;
 }
 
 export type AnalyticsPreset =
