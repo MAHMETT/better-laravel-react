@@ -2,6 +2,7 @@
 export * from './use-appearance';
 export * from './use-clipboard';
 export * from './use-current-url';
+export * from './use-error-handler';
 export * from './use-initials';
 export * from './use-mobile';
 export * from './use-mobile-navigation';

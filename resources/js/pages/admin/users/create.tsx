@@ -1,4 +1,5 @@
 import { AvatarUploader } from '@/components/avatar';
+import { FormRestoredBanner, showFormRestoredToast } from '@/components/form-restored-banner';
 import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useInitials } from '@/hooks';
+import { useCreateUserFormPersistence } from '@/hooks/use-create-user-form-persistence';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, CreateUserFormData } from '@/types';
@@ -33,7 +35,7 @@ import {
     UserPlus,
     XIcon,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { create } from 'zustand';
 
@@ -143,11 +145,40 @@ export default function CreateUser() {
     );
     const resetStore = useCreateUserPageStore((state) => state.reset);
 
+    const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+    const [hasCheckedSavedData, setHasCheckedSavedData] = useState(false);
+
     const getInitials = useInitials();
+
+    // Form persistence
+    const { clearFormData, hasSavedData, discardSavedData } =
+        useCreateUserFormPersistence(formData, setFormData, {
+            enabled: true,
+            saveInterval: 1000,
+            clearOnSubmit: true,
+        });
 
     useEffect(() => {
         resetStore();
     }, [resetStore]);
+
+    // Show restoration toast if data was restored (on mount only)
+    if (!hasCheckedSavedData && hasSavedData()) {
+        setHasCheckedSavedData(true);
+        setShowRestoreBanner(true);
+        showFormRestoredToast(() => {
+            discardSavedData();
+            setFormData({
+                name: '',
+                email: '',
+                password: '',
+                password_confirmation: '',
+                role: 'user',
+                status: 'enable',
+            });
+            setShowRestoreBanner(false);
+        });
+    }
 
     // Cleanup preview URL on unmount
     useEffect(() => {
@@ -240,6 +271,7 @@ export default function CreateUser() {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('User created successfully', { id });
+                clearFormData(); // Clear saved form data
                 setFormData({ ...initialFormData });
                 setValidationErrors({});
                 setSelectedAvatarFile(null);
@@ -247,6 +279,7 @@ export default function CreateUser() {
                     URL.revokeObjectURL(selectedAvatarPreview);
                 }
                 setSelectedAvatarPreview(null);
+                setShowRestoreBanner(false);
             },
             onError: (errors) => {
                 setValidationErrors(errors);
@@ -302,6 +335,22 @@ export default function CreateUser() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <FormRestoredBanner
+                            show={showRestoreBanner}
+                            onDiscard={() => {
+                                discardSavedData();
+                                setFormData({
+                                    name: '',
+                                    email: '',
+                                    password: '',
+                                    password_confirmation: '',
+                                    role: 'user',
+                                    status: 'enable',
+                                });
+                                setShowRestoreBanner(false);
+                            }}
+                        />
+
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="flex items-center gap-6">
                                 <Avatar className="size-24 overflow-hidden rounded-full">

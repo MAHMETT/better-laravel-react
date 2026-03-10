@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UsersSeeder extends Seeder
 {
@@ -22,18 +23,23 @@ class UsersSeeder extends Seeder
             [
                 'name' => 'John Doe',
                 'email' => 'john@example.com',
+                'role' => 'user',
+                'status' => 'enable',
                 'password' => 'password',
             ]
         ];
 
-        // Create admin user (always created for testing)
+        // Create users with hashed passwords
         foreach ($UserArray as $userData) {
-            User::factory()->create([
-                'name' => $userData['name'],
-                'email' => $userData['email'],
-                'role' => $userData['role'] ?? 'user',
-                'password' => bcrypt($userData['password']),
-            ]);
+            User::updateOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'role' => $userData['role'] ?? 'user',
+                    'status' => 'enable', // Always enable users by default
+                    'password' => Hash::make($userData['password']), // Hash the password!
+                ]
+            );
         }
 
         // Create regular users
