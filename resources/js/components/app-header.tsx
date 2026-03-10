@@ -4,6 +4,16 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuTrigger,
@@ -33,12 +43,36 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { create } from 'zustand';
+import { toast } from 'sonner';
+import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { logout } from '@/routes';
 
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
 }
+
+const useLogoutDialogStore = create<{
+    showLogoutDialog: boolean;
+    isLoggingOut: boolean;
+    setShowLogoutDialog: (show: boolean) => void;
+    setIsLoggingOut: (loading: boolean) => void;
+    reset: () => void;
+}>((set) => ({
+    showLogoutDialog: false,
+    isLoggingOut: false,
+    setShowLogoutDialog: (showLogoutDialog) => {
+        set({ showLogoutDialog });
+    },
+    setIsLoggingOut: (isLoggingOut) => {
+        set({ isLoggingOut });
+    },
+    reset: () => {
+        set({ showLogoutDialog: false, isLoggingOut: false });
+    },
+}));
 
 const mainNavItems: NavItem[] = [
     {
@@ -69,6 +103,55 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    const cleanup = useMobileNavigation();
+    
+    const showLogoutDialog = useLogoutDialogStore(
+        (state) => state.showLogoutDialog,
+    );
+    const isLoggingOut = useLogoutDialogStore((state) => state.isLoggingOut);
+    const setShowLogoutDialog = useLogoutDialogStore(
+        (state) => state.setShowLogoutDialog,
+    );
+    const setIsLoggingOut = useLogoutDialogStore(
+        (state) => state.setIsLoggingOut,
+    );
+    const resetStore = useLogoutDialogStore((state) => state.reset);
+
+    const handleLogoutClick = () => {
+        setShowLogoutDialog(true);
+    };
+
+    const handleLogoutConfirm = async () => {
+        setShowLogoutDialog(false);
+        setIsLoggingOut(true);
+
+        cleanup();
+        router.flushAll();
+
+        try {
+            await new Promise<void>((resolve, reject) => {
+                router.visit(logout(), {
+                    method: 'post',
+                    onFinish: () => {
+                        resolve();
+                    },
+                    onError: (error) => {
+                        reject(error);
+                    },
+                });
+            });
+
+            toast.success('Logged out successfully');
+        } catch {
+            toast.error('Failed to logout. Please try again.');
+            setIsLoggingOut(false);
+        }
+    };
+
+    const handleLogoutCancel = () => {
+        resetStore();
+    };
+
     return (
         <>
             <div className="border-b border-sidebar-border/80">
@@ -233,7 +316,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end">
-                                <UserMenuContent user={auth.user} />
+                                <UserMenuContent user={auth.user} onLogoutClick={handleLogoutClick} />
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -246,6 +329,58 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
                 </div>
             )}
+            <LogoutDialog
+                showLogoutDialog={showLogoutDialog}
+                isLoggingOut={isLoggingOut}
+                setShowLogoutDialog={setShowLogoutDialog}
+                handleLogoutConfirm={handleLogoutConfirm}
+                handleLogoutCancel={handleLogoutCancel}
+            />
         </>
+    );
+}
+
+function LogoutDialog({
+    showLogoutDialog,
+    isLoggingOut,
+    setShowLogoutDialog,
+    handleLogoutConfirm,
+    handleLogoutCancel,
+}: {
+    showLogoutDialog: boolean;
+    isLoggingOut: boolean;
+    setShowLogoutDialog: (show: boolean) => void;
+    handleLogoutConfirm: () => void;
+    handleLogoutCancel: () => void;
+}) {
+    return (
+        <AlertDialog
+            open={showLogoutDialog}
+            onOpenChange={setShowLogoutDialog}
+        >
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Logout Confirmation</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to logout? You will need to
+                        sign in again to access your account.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel
+                        disabled={isLoggingOut}
+                        onClick={handleLogoutCancel}
+                    >
+                        Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleLogoutConfirm}
+                        disabled={isLoggingOut}
+                    >
+                        {isLoggingOut ? 'Logging out...' : 'Logout'}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }

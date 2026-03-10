@@ -15,7 +15,7 @@ import { UsersFilters } from '@/components/users/users-filters';
 import AppLayout from '@/layouts/app-layout';
 import users from '@/routes/users';
 import type { BreadcrumbItem, PaginatedData, User, UserFilters } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Eye, RefreshCw, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -156,6 +156,9 @@ export default function UsersTrashed({
     users: paginatedUsers,
     filters,
 }: Props) {
+    const page = usePage();
+    const authUser = page.props.auth?.user as User | undefined;
+    
     const search = useUsersTrashedPageStore((state) => state.search);
     const status = useUsersTrashedPageStore((state) => state.status);
     const role = useUsersTrashedPageStore((state) => state.role);
@@ -322,6 +325,11 @@ export default function UsersTrashed({
     };
 
     const handleForceDelete = (user: User) => {
+        // Check if user is trying to delete themselves
+        if (authUser && user.id === authUser.id) {
+            toast.error('You cannot permanently delete your own account. Please ask another administrator.');
+            return;
+        }
         setUserToDelete(user);
     };
 
@@ -524,7 +532,9 @@ export default function UsersTrashed({
                                                     onClick={() => {
                                                         handleForceDelete(user);
                                                     }}
-                                                    className="size-8 text-red-500 hover:text-red-600"
+                                                    disabled={authUser && user.id === authUser.id}
+                                                    className="size-8 text-red-500 hover:text-red-600 disabled:opacity-50"
+                                                    title={authUser && user.id === authUser.id ? 'Cannot delete your own account' : 'Permanently delete user'}
                                                 >
                                                     <Trash2 className="size-4" />
                                                 </Button>

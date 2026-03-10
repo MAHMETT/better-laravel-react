@@ -120,6 +120,13 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
+        // Prevent admin from deleting themselves
+        if ($user->id === auth()->id()) {
+            return back()
+                ->withErrors(['general' => 'You cannot delete your own account. Please ask another administrator to delete your account.'])
+                ->with('error', 'Self-deletion not allowed');
+        }
+
         $this->userService->delete($user);
 
         return redirect()
@@ -157,6 +164,13 @@ class UserController extends Controller
      */
     public function forceDelete(User $user): RedirectResponse
     {
+        // Prevent admin from deleting themselves
+        if ($user->id === auth()->id()) {
+            return back()
+                ->withErrors(['general' => 'You cannot permanently delete your own account. Please ask another administrator.'])
+                ->with('error', 'Self-deletion not allowed');
+        }
+
         $this->userService->forceDelete($user);
 
         return redirect()

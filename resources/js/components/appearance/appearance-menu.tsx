@@ -10,14 +10,20 @@ interface AppearanceOption {
     value: AppearanceVariant;
     icon: LucideIcon;
     label: string;
-    description?: string;
+    description: string;
 }
 
 const appearanceOptions: AppearanceOption[] = [
-    { value: 'light', icon: Sun, label: 'Light', description: 'Always light theme' },
-    { value: 'dark', icon: Moon, label: 'Dark', description: 'Always dark theme' },
-    { value: 'system', icon: Monitor, label: 'System', description: 'Follow system preference' },
+    { value: 'light', icon: Sun, label: 'Light', description: 'Always use light theme' },
+    { value: 'dark', icon: Moon, label: 'Dark', description: 'Always use dark theme' },
+    { value: 'system', icon: Monitor, label: 'System', description: 'Follow device settings' },
 ];
+
+const MENU_SIZES = {
+    sm: { button: 'px-2.5 py-1.5', text: 'text-xs', icon: 'size-3.5', gap: 'gap-2' },
+    md: { button: 'px-3.5 py-2', text: 'text-sm', icon: 'size-4', gap: 'gap-2.5' },
+    lg: { button: 'px-4 py-2.5', text: 'text-base', icon: 'size-5', gap: 'gap-3' },
+} as const;
 
 export interface AppearanceMenuProps extends HTMLAttributes<HTMLDivElement> {
     /**
@@ -47,18 +53,7 @@ export function AppearanceMenu({
     ...props
 }: AppearanceMenuProps) {
     const { appearance, setAppearance } = useAppearanceStore();
-
-    const sizeClasses = {
-        sm: 'px-2.5 py-1.5 text-xs',
-        md: 'px-3.5 py-2 text-sm',
-        lg: 'px-4 py-2.5 text-base',
-    };
-
-    const iconSizes = {
-        sm: 'size-3.5',
-        md: 'size-4',
-        lg: 'size-5',
-    };
+    const sizes = MENU_SIZES[size];
 
     return (
         <div
@@ -77,19 +72,19 @@ export function AppearanceMenu({
                     onClick={() => setAppearance(value)}
                     className={cn(
                         'group flex w-full items-center rounded-md transition-all duration-200',
-                        sizeClasses[size],
+                        sizes.button,
                         appearance === value
-                            ? 'bg-white shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
-                            : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60 dark:hover:text-neutral-200',
+                            ? 'bg-white shadow-sm text-neutral-900 dark:bg-neutral-700 dark:text-white'
+                            : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700/60 dark:hover:text-neutral-200',
                     )}
                     role="radio"
                     aria-checked={appearance === value}
                     aria-label={label}
                 >
-                    <Icon className={cn(iconSizes[size], 'flex-shrink-0')} />
+                    <Icon className={cn(sizes.icon, 'flex-shrink-0')} />
                     <div className={cn('ml-2 flex flex-col', orientation === 'vertical' && 'flex-1')}>
-                        <span className="font-medium">{label}</span>
-                        {showDescriptions && description && (
+                        <span className={cn('font-medium', sizes.text)}>{label}</span>
+                        {showDescriptions && (
                             <span className="text-xs text-neutral-400 dark:text-neutral-500">
                                 {description}
                             </span>
@@ -99,7 +94,7 @@ export function AppearanceMenu({
                         <div className="ml-auto pl-2">
                             <div className={cn(
                                 'rounded-full bg-current opacity-20',
-                                iconSizes[size],
+                                sizes.icon,
                             )} />
                         </div>
                     )}

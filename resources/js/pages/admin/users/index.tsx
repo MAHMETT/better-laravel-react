@@ -21,7 +21,7 @@ import type {
     UserFilters,
     UserStats,
 } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Power, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -160,6 +160,9 @@ export default function UsersIndex({
     stats,
     filters,
 }: Props) {
+    const page = usePage();
+    const authUser = page.props.auth?.user as User | undefined;
+    
     const search = useUsersIndexPageStore((state) => state.search);
     const status = useUsersIndexPageStore((state) => state.status);
     const role = useUsersIndexPageStore((state) => state.role);
@@ -291,6 +294,11 @@ export default function UsersIndex({
     };
 
     const handleDelete = (user: User) => {
+        // Check if user is trying to delete themselves
+        if (authUser && user.id === authUser.id) {
+            toast.error('You cannot delete your own account. Please ask another administrator to delete your account.');
+            return;
+        }
         setUserToDelete(user);
     };
 
@@ -597,7 +605,9 @@ export default function UsersIndex({
                                                     onClick={() => {
                                                         handleDelete(user);
                                                     }}
-                                                    className="size-8 text-red-500 hover:text-red-600"
+                                                    disabled={authUser && user.id === authUser.id}
+                                                    className="size-8 text-red-500 hover:text-red-600 disabled:opacity-50"
+                                                    title={authUser && user.id === authUser.id ? 'Cannot delete your own account' : 'Delete user'}
                                                 >
                                                     <Trash2 className="size-4" />
                                                 </Button>
@@ -635,9 +645,19 @@ export default function UsersIndex({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete User</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete {userToDelete?.name}
-                            ? This action can be undone by restoring the user
-                            from trash.
+                            {authUser && userToDelete?.id === authUser.id ? (
+                                <div className="rounded-md bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                                    <p className="font-medium">Cannot Delete Own Account</p>
+                                    <p className="mt-1 text-sm">
+                                        You cannot delete your own account. Please ask another administrator to delete your account.
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    Are you sure you want to delete <strong>{userToDelete?.name}</strong>?
+                                    This action can be undone by restoring the user from trash.
+                                </>
+                            )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

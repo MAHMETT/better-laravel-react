@@ -16,12 +16,13 @@ interface AppearanceOption {
     value: AppearanceVariant;
     icon: LucideIcon;
     label: string;
+    description: string;
 }
 
 const appearanceOptions: AppearanceOption[] = [
-    { value: 'light', icon: Sun, label: 'Light' },
-    { value: 'dark', icon: Moon, label: 'Dark' },
-    { value: 'system', icon: Monitor, label: 'System' },
+    { value: 'light', icon: Sun, label: 'Light', description: 'Always light theme' },
+    { value: 'dark', icon: Moon, label: 'Dark', description: 'Always dark theme' },
+    { value: 'system', icon: Monitor, label: 'System', description: 'Follow device settings' },
 ];
 
 export interface AppearanceDropdownProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -51,38 +52,53 @@ export function AppearanceDropdown({
     sideOffset = 8,
     ...props
 }: AppearanceDropdownProps) {
-    const { appearance, setAppearance } = useAppearanceStore();
+    const { appearance, setAppearance, resolvedAppearance } = useAppearanceStore();
 
-    const currentOption = appearanceOptions.find(
-        (opt) => opt.value === appearance,
-    );
+    const currentOption = appearanceOptions.find((opt) => opt.value === appearance);
     const CurrentIcon = currentOption?.icon ?? Sun;
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
                 className={cn(
-                    'inline-flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-xs transition-colors hover:bg-neutral-50 focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:ring-neutral-600',
+                    'inline-flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-xs transition-colors hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:ring-neutral-600',
                     className,
                 )}
                 {...props}
             >
                 <CurrentIcon className="size-4" />
-                {showCurrent && <span>{currentOption?.label}</span>}
+                {showCurrent && (
+                    <>
+                        <span>{currentOption?.label}</span>
+                        <span className="text-neutral-400">·</span>
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {resolvedAppearance === 'dark' ? 'Dark' : 'Light'}
+                        </span>
+                    </>
+                )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align={align} sideOffset={sideOffset}>
-                {appearanceOptions.map(({ value, icon: Icon, label }) => (
+                {appearanceOptions.map(({ value, icon: Icon, label, description }) => (
                     <DropdownMenuItem
                         key={value}
                         onClick={() => setAppearance(value)}
                         className={cn(
-                            'flex cursor-pointer items-center gap-2',
-                            appearance === value &&
-                                'bg-neutral-100 dark:bg-neutral-700',
+                            'flex cursor-pointer items-start gap-3 p-3',
+                            appearance === value && 'bg-neutral-100 dark:bg-neutral-700',
                         )}
                     >
-                        <Icon className="size-4" />
-                        <span>{label}</span>
+                        <Icon className="mt-0.5 size-4 flex-shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="font-medium">{label}</span>
+                            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                                {description}
+                            </span>
+                        </div>
+                        {appearance === value && (
+                            <span className="ml-auto text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                                Active
+                            </span>
+                        )}
                     </DropdownMenuItem>
                 ))}
             </DropdownMenuContent>
